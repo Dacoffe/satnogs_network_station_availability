@@ -50,6 +50,12 @@ class ObservationViewFilter(FilterSet):
         queryset=User.objects.all()
     )
 
+    observer = django_filters.ModelChoiceFilter(
+        label="observer",
+        field_name='author',
+        queryset=User.objects.filter(observations__isnull=False).distinct()
+    )
+
     # see https://django-filter.readthedocs.io/en/master/ref/filters.html for W0613
     def filter_status(self, queryset, name, value):  # pylint: disable=W0613,R0201
         """ Returns filtered observations for a given observation status"""
@@ -70,7 +76,7 @@ class ObservationViewFilter(FilterSet):
         fields = [
             'id', 'status', 'ground_station', 'start', 'end', 'satellite__norad_cat_id',
             'transmitter_uuid', 'transmitter_mode', 'transmitter_type', 'waterfall_status',
-            'vetted_status', 'vetted_user'
+            'vetted_status', 'vetted_user', 'observer'
         ]
 
 
