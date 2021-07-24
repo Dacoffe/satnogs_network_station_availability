@@ -291,24 +291,27 @@ def fetch_data():
     satellites_added = 0
     satellites_updated = 0
     for satellite in r_satellites.json():
-        norad_cat_id = satellite['norad_cat_id']
-        satellite.pop('decayed', None)
-        satellite.pop('launched', None)
-        satellite.pop('deployed', None)
-        satellite.pop('website', None)
-        satellite.pop('operator', None)
-        satellite.pop('countries', None)
-        try:
-            # Update Satellite
-            existing_satellite = Satellite.objects.get(norad_cat_id=norad_cat_id)
-            existing_satellite.__dict__.update(satellite)
-            existing_satellite.save()
-            satellites_updated += 1
-        except Satellite.DoesNotExist:
-            # Add Satellite
+        if satellite['norad_cat_id']:
+            norad_cat_id = satellite['norad_cat_id']
+            satellite.pop('decayed', None)
+            satellite.pop('launched', None)
+            satellite.pop('deployed', None)
+            satellite.pop('website', None)
+            satellite.pop('operator', None)
+            satellite.pop('countries', None)
             satellite.pop('telemetries', None)
-            Satellite.objects.create(**satellite)
-            satellites_added += 1
+            satellite.pop('sat_id', None)
+            satellite.pop('associated_satellites', None)
+            try:
+                # Update Satellite
+                existing_satellite = Satellite.objects.get(norad_cat_id=norad_cat_id)
+                existing_satellite.__dict__.update(satellite)
+                existing_satellite.save()
+                satellites_updated += 1
+            except Satellite.DoesNotExist:
+                # Add Satellite
+                Satellite.objects.create(**satellite)
+                satellites_added += 1
 
     LOGGER.info('Added/Updated %s/%s satellites from db.', satellites_added, satellites_updated)
 
