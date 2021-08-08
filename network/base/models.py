@@ -548,7 +548,7 @@ class DemodData(models.Model):
         with open(self.payload_demod.path, 'rb') as file_path:
             try:
                 Image.open(file_path)
-            except (IOError, TypeError, ValueError):
+            except (IOError, TypeError, ValueError, Image.DecompressionBombError):
                 return False
             else:
                 return True
