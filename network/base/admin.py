@@ -69,7 +69,7 @@ class AntennaAdmin(admin.ModelAdmin):
 class StationAdmin(admin.ModelAdmin):
     """Define Station view in django admin UI"""
     list_display = (
-        'id', 'name', 'owner', 'get_email', 'lng', 'lat', 'qthlocator', 'client_version',
+        'id', 'name', 'owner', 'get_email', 'lat', 'lng', 'qthlocator', 'client_version',
         'created_date', 'state', 'target_utilization'
     )
     list_filter = ('status', 'created', 'client_version')
