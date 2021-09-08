@@ -143,6 +143,16 @@ def zip_audio_files(force_zip=False):
     cache.delete('zip-task')
 
 
+def get_groups_for_archiving_audio_zip_files():
+    """ Returns the groups of audio files that haven't been archived yet"""
+    observation_ids = Observation.objects.filter(
+        audio_zipped=True, archived=False
+    ).values_list(
+        'pk', flat=True
+    )
+    return {get_observation_zip_group(pk) for pk in observation_ids}
+
+
 @shared_task
 def archive_audio_zip_files(force_archive=False):
     """Archive audio zip files to archive.org"""
@@ -153,12 +163,7 @@ def archive_audio_zip_files(force_archive=False):
             archived_groups = []
             skipped_groups = []
             archive_skip_time = now() - timedelta(hours=settings.ARCHIVE_SKIP_TIME)
-            observation_ids = Observation.objects.filter(
-                audio_zipped=True, archived=False
-            ).values_list(
-                'pk', flat=True
-            )
-            groups = {get_observation_zip_group(pk) for pk in observation_ids}
+            groups = get_groups_for_archiving_audio_zip_files()
             for group in groups:
                 group_range, zip_path = get_zip_range_and_path(group)
                 cache_key = '{0}-{1}-{2}'.format('ziplock', group_range[0], group_range[1])
@@ -214,7 +219,7 @@ def archive_audio_zip_files(force_archive=False):
                     )
                 except (requests.exceptions.RequestException, AuthenticationError) as error:
                     LOGGER.info('Upload of zip %s failed, reason:\n%s', zip_name, repr(error))
-                    return
+                    continue
 
                 if res[0].status_code == 200:
                     observations = Observation.objects.select_for_update().filter(
