@@ -18,7 +18,7 @@
       </h2>
     </div>
     {% if is_paginated %}
-      <div class="col-md-6 visible-md visible-lg">
+      <div class="col-md-6 visible-md visible-lg" id="page-selector">
         <span class="pull-right">{% load paginator %}{% paginator request 3%}</span>
       </div>
     {% endif %}
@@ -33,7 +33,7 @@
         </a>
       	{% if can_schedule %}
           <a class="btn btn-primary" href="{% url 'base:observation_new' %}">
-            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Observation
+            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Schedule Observations
           </a>
         {% endif %}
       </span>

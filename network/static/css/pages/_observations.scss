@@ -193,3 +193,18 @@ svg .timeline-label {
     background: #ff0000;
     display: inline-block;
 }
+
+#page-selector {
+    margin-left: 5%;
+}
+
+.col-md-3 {
+    width: auto;
+}
+
+@media (max-width: 1200px) {
+
+    #page-selector {
+        margin-left: -3%;
+    }
+}
