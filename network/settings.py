@@ -182,6 +182,19 @@ COMPRESS_FILTERS = {
 }
 COMPRESS_PRECOMPILERS = (('text/scss', 'sass --scss {infile} {outfile}'), )
 
+# S3 Storage
+# Setting use of S3 storage, it may require to add CSP rules for the S3 domain
+# Using S3 storage for audio, will disable audio zipping and archiving
+USE_S3_STORAGE_FOR_AUDIO = config('USE_S3_STORAGE_FOR_AUDIO', default=False, cast=bool)
+USE_S3_STORAGE_FOR_WATERFALL = config('USE_S3_STORAGE_FOR_WATERFALL', default=False, cast=bool)
+USE_S3_STORAGE_FOR_DATA = config('USE_S3_STORAGE_FOR_DATA', default=False, cast=bool)
+
+AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID', default='')
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY', default='')
+AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME', default='')
+AWS_S3_ENDPOINT_URL = config('AWS_S3_ENDPOINT_URL', default='')
+AWS_QUERYSTRING_AUTH = config('AWS_QUERYSTRING_AUTH', default=False, cast=bool)
+
 # App conf
 ROOT_URLCONF = 'network.urls'
 WSGI_APPLICATION = 'network.wsgi.application'
@@ -459,6 +472,7 @@ AVATAR_GRAVATAR_DEFAULT = config('AVATAR_GRAVATAR_DEFAULT', default='mm')
 PROCESS_AUDIO_LOCK_EXPIRATION = config('PROCESS_AUDIO_LOCK_EXPIRATION', default=900, cast=int)
 
 # Audio zip
+# Zipping audio files require local storage for audio file fields, check the setting USE_S3_STORAGE_FOR_AUDIO
 ZIP_AUDIO_FILES = config('ZIP_AUDIO_FILES', default=False, cast=bool)
 AUDIO_FILES_PER_ZIP = config('AUDIO_FILES_PER_ZIP', default=1000, cast=int)
 ZIP_FILE_PREFIX = config('ZIP_FILE_PREFIX', default='satnogs-observations')
@@ -468,6 +482,7 @@ ZIP_AUDIO_LOCK_EXPIRATION = config('ZIP_AUDIO_LOCK_EXPIRATION', default=600, cas
 ZIP_TASK_LOCK_EXPIRATION = config('ZIP_TASK_LOCK_EXPIRATION', default=3600, cast=int)
 
 # Archive.org
+# Archiving zip audio files require local storage for audio file fields, check the setting USE_S3_STORAGE_FOR_AUDIO
 ARCHIVE_ZIP_FILES = config('ARCHIVE_ZIP_FILES', default=False, cast=bool)
 ZIP_FILES_PER_ITEM = config('ZIP_FILES_PER_ITEM', default=10, cast=int)
 ITEM_IDENTIFIER_PREFIX = config('ITEM_IDENTIFIER_PREFIX', default='satnogs-observations')
