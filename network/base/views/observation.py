@@ -106,22 +106,29 @@ class ObservationListView(ListView):  # pylint: disable=R0901
 
         if results:
             if 'w0' in results:
-                observations = observations.filter(waterfall='')
+                observations = observations.filter(waterfall_old='', waterfall='')
             elif 'w1' in results:
-                observations = observations.exclude(waterfall='')
+                observations = observations.exclude(waterfall_old='', waterfall='')
             if 'a0' in results:
-                observations = observations.filter(archived=False, payload='')
+                observations = observations.filter(archived=False, payload_old='', payload='')
             elif 'a1' in results:
-                observations = observations.exclude(archived=False, payload='')
+                observations = observations.exclude(archived=False, payload_old='', payload='')
             if 'd0' in results:
-                observations = observations.filter(demoddata__payload_demod__isnull=True)
+                observations = observations.filter(
+                    demoddata__payload_demod__isnull=True,
+                    demoddata__demodulated_data__isnull=True
+                )
             elif 'd1' in results:
-                observations = observations.exclude(demoddata__payload_demod__isnull=True)
+                observations = observations.exclude(
+                    demoddata__payload_demod__isnull=True,
+                    demoddata__demodulated_data__isnull=True
+                )
 
         if rated:
             if 'rwu' in rated:
-                observations = observations.filter(waterfall_status__isnull=True
-                                                   ).exclude(waterfall='')
+                observations = observations.filter(waterfall_status__isnull=True).exclude(
+                    waterfall_old='', waterfall=''
+                )
             elif 'rw1' in rated:
                 observations = observations.filter(waterfall_status=True)
             elif 'rw0' in rated:

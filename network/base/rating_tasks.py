@@ -18,10 +18,13 @@ def find_and_rate_failed_observations():
     """
     time_limit = now() - timedelta(seconds=settings.OBS_NO_RESULTS_IGNORE_TIME)
     Observation.objects.filter(
+        waterfall_old='',
         waterfall='',
         archived=False,
+        payload_old='',
         payload='',
         demoddata__payload_demod__isnull=True,
+        demoddata__demodulated_data__isnull=True,
         end__lt=time_limit
     ).exclude(status=-1000).update(status=-1000)
 

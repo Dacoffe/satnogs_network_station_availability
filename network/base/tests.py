@@ -99,7 +99,7 @@ class ObservationFactory(factory.django.DjangoModelFactory):  # pylint: disable=
     tle_line_2 = ''
     tle_source = ''
     tle_updated = None
-    payload = factory.django.FileField(filename='data.ogg')
+    payload_old = factory.django.FileField(filename='data.ogg')
     waterfall_status_datetime = factory.LazyAttribute(
         lambda x: x.end + timedelta(hours=random.randint(1, 20))
     )
@@ -150,6 +150,7 @@ class DemodDataFactory(factory.django.DjangoModelFactory):
     """DemodData model factory."""
     observation = factory.Iterator(Observation.objects.all())
     payload_demod = factory.django.FileField()
+    demodulated_data = factory.django.FileField()
 
     class Meta:
         model = DemodData

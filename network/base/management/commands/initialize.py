@@ -58,8 +58,8 @@ class Command(BaseCommand):
         self.stdout.write("Added {} observations.".format(observation_fixture_count))
         for _ in range(demoddata_fixture_count):
             DemodDataFactory.create(
-                payload_demod__data=generate_payload(),
-                payload_demod__filename=generate_payload_name()
+                demodulated_data__data=generate_payload(),
+                demodulated_data__filename=generate_payload_name()
             )
         self.stdout.write("Added {} DemodData objects.".format(demoddata_fixture_count))
 

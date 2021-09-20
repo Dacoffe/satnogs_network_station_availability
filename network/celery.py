@@ -97,12 +97,12 @@ def setup_periodic_tasks(sender, **kwargs):  # pylint: disable=W0613
         name='notify_for_stations_without_results'
     )
 
-    if settings.ARCHIVE_ZIP_FILES:
+    if settings.ARCHIVE_ZIP_FILES and not settings.USE_S3_STORAGE_FOR_AUDIO:
         sender.add_periodic_task(
             RUN_HOURLY, archive_audio_zip_files.s(), name='archive_audio_zip_files'
         )
 
-    if settings.ZIP_AUDIO_FILES:
+    if settings.ZIP_AUDIO_FILES and not settings.USE_S3_STORAGE_FOR_AUDIO:
         sender.add_periodic_task(RUN_EVERY_15_MINUTES, zip_audio_files.s(), name='zip_audio_files')
 
     sender.add_periodic_task(

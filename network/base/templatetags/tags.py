@@ -66,11 +66,18 @@ def percentagerest(value):
         return 0
 
 
+def get_demoddata_filenames(demoddata):
+    """Returns the filename of a demoddata file"""
+    if demoddata.payload_demod:
+        return demoddata.payload_demod.name.split('/')[-1]
+    return demoddata.demodulated_data.name.split('/')[-1]
+
+
 @register.filter
 def sortdemoddata(demoddata):
     """Returns a date sorted list of DemodData"""
     try:
-        return sorted(list(demoddata), key=lambda x: str(x.payload_demod).split('/', 2)[2:])
+        return sorted(list(demoddata), key=get_demoddata_filenames)
     except (TypeError, ValueError):
         return demoddata
 

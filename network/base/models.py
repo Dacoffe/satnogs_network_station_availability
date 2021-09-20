@@ -1,12 +1,12 @@
 """Django database base model for SatNOGS Network"""
 import codecs
-import os
 import re
 from datetime import timedelta
 
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.core.files.storage import DefaultStorage
 from django.core.validators import MaxLengthValidator, MaxValueValidator, MinLengthValidator, \
     MinValueValidator
 from django.db import models
@@ -18,6 +18,7 @@ from django.utils.timezone import now
 from PIL import Image
 from rest_framework.authtoken.models import Token
 from shortuuidfield import ShortUUIDField
+from storages.backends.s3boto3 import S3Boto3Storage
 
 from network.base.managers import ObservationManager
 from network.base.utils import bands_from_range
@@ -55,6 +56,36 @@ def _name_obs_demoddata(instance, filename):
     """Return a filepath for DemodData formatted by Observation ID"""
     # On change of the string bellow, change it also at api/views.py
     return 'data_obs/{0}/{1}'.format(instance.observation.id, filename)
+
+
+def _name_observation_data(instance, filename):
+    """Return a filepath formatted by Observation ID"""
+    return 'data_obs/{0}/{1}/{2}/{3}/{4}/{5}'.format(
+        instance.start.year, instance.start.month, instance.start.day, instance.start.hour,
+        instance.id, filename
+    )
+
+
+def _name_observation_demoddata(instance, filename):
+    """Return a filepath for DemodData formatted by Observation ID"""
+    # On change of the string bellow, change it also at api/views.py
+    return 'data_obs/{0}/{1}/{2}/{3}/{4}/{5}'.format(
+        instance.observation.start.year, instance.observation.start.month,
+        instance.observation.start.day, instance.observation.start.hour, instance.observation.id,
+        filename
+    )
+
+
+def _select_audio_storage():
+    return S3Boto3Storage() if settings.USE_S3_STORAGE_FOR_AUDIO else DefaultStorage()
+
+
+def _select_waterfall_storage():
+    return S3Boto3Storage() if settings.USE_S3_STORAGE_FOR_WATERFALL else DefaultStorage()
+
+
+def _select_data_storage():
+    return S3Boto3Storage() if settings.USE_S3_STORAGE_FOR_DATA else DefaultStorage()
 
 
 def validate_image(fieldfile_obj):
@@ -347,8 +378,14 @@ class Observation(models.Model):
     )
     client_version = models.CharField(max_length=255, blank=True)
     client_metadata = models.TextField(blank=True)
-    payload = models.FileField(upload_to=_name_obs_files, blank=True, null=True)
-    waterfall = models.ImageField(upload_to=_name_obs_files, blank=True, null=True)
+    payload_old = models.FileField(upload_to=_name_obs_files, blank=True, null=True)
+    payload = models.FileField(
+        upload_to=_name_observation_data, storage=_select_audio_storage, blank=True
+    )
+    waterfall_old = models.ImageField(upload_to=_name_obs_files, blank=True, null=True)
+    waterfall = models.ImageField(
+        upload_to=_name_observation_data, storage=_select_waterfall_storage, blank=True
+    )
     """
     Meaning of values:
     True -> Waterfall has signal of the observed satellite (with-signal)
@@ -473,28 +510,33 @@ class Observation(models.Model):
     @property
     def has_waterfall(self):
         """Run some checks on the waterfall for existence of data."""
-        if self.waterfall is None:
-            return False
-        if not os.path.isfile(os.path.join(settings.MEDIA_ROOT, self.waterfall.name)):
-            return False
-        if self.waterfall.size == 0:
-            return False
-        return True
+        if self.waterfall_old:
+            if (not self.waterfall_old.storage.exists(self.waterfall_old.name
+                                                      )) or self.waterfall_old.size == 0:
+                return False
+            return True
+        if self.waterfall:
+            if (not self.waterfall.storage.exists(self.waterfall.name
+                                                  )) or self.waterfall.size == 0:
+                return False
+            return True
+        return False
 
     @property
     def has_audio(self):
         """Run some checks on the payload for existence of data."""
         if self.archive_url:
             return True
-        if not self.payload:
-            return False
-        if self.payload is None:
-            return False
-        if not os.path.isfile(os.path.join(settings.MEDIA_ROOT, self.payload.name)):
-            return False
-        if self.payload.size == 0:
-            return False
-        return True
+        if self.payload_old:
+            if (not self.payload_old.storage.exists(self.payload_old.name
+                                                    )) or self.payload_old.size == 0:
+                return False
+            return True
+        if self.payload:
+            if (not self.payload.storage.exists(self.payload.name)) or self.payload.size == 0:
+                return False
+            return True
+        return False
 
     @property
     def has_demoddata(self):
@@ -509,6 +551,8 @@ class Observation(models.Model):
         if self.has_audio:
             if self.archive_url:
                 return self.archive_url
+            if self.payload_old:
+                return self.payload_old.url
             return self.payload.url
         return ''
 
@@ -527,12 +571,14 @@ class Observation(models.Model):
 @receiver(models.signals.post_delete, sender=Observation)
 def observation_remove_files(sender, instance, **kwargs):  # pylint: disable=W0613
     """Remove audio and waterfall files of an observation if the observation is deleted"""
+    if instance.payload_old:
+        instance.payload_old.delete(save=False)
+    if instance.waterfall_old:
+        instance.waterfall_old.delete(save=False)
     if instance.payload:
-        if os.path.isfile(instance.payload.path):
-            os.remove(instance.payload.path)
+        instance.payload.delete(save=False)
     if instance.waterfall:
-        if os.path.isfile(instance.waterfall.path):
-            os.remove(instance.waterfall.path)
+        instance.waterfall.delete(save=False)
 
 
 class DemodData(models.Model):
@@ -540,25 +586,39 @@ class DemodData(models.Model):
     observation = models.ForeignKey(
         Observation, related_name='demoddata', on_delete=models.CASCADE
     )
-    payload_demod = models.FileField(upload_to=_name_obs_demoddata, unique=True)
+    payload_demod = models.FileField(upload_to=_name_obs_demoddata, blank=True)
+    demodulated_data = models.FileField(
+        upload_to=_name_observation_demoddata, storage=_select_data_storage, blank=True
+    )
     copied_to_db = models.BooleanField(default=False)
 
     def is_image(self):
         """Return true if data file is an image"""
-        with open(self.payload_demod.path, 'rb') as file_path:
-            try:
-                Image.open(file_path)
-            except (IOError, TypeError, ValueError, Image.DecompressionBombError):
-                return False
+        try:
+            if self.payload_demod:
+                with self.payload_demod.storage.open(self.payload_demod.name,
+                                                     mode='rb') as data_file:
+                    Image.open(data_file)
             else:
-                return True
+                with self.demodulated_data.storage.open(self.demodulated_data.name,
+                                                        mode='rb') as data_file:
+                    Image.open(data_file)
+        except (IOError, TypeError, ValueError, Image.DecompressionBombError):
+            return False
+        else:
+            return True
 
     def display_payload_hex(self):
         """
         Return the content of the data file as hex dump of the following form: `DE AD C0 DE`.
         """
-        with open(self.payload_demod.path, 'rb') as data_file:
-            payload = data_file.read()
+        if self.payload_demod:
+            with self.payload_demod.storage.open(self.payload_demod.name, mode='rb') as data_file:
+                payload = data_file.read()
+        else:
+            with self.demodulated_data.storage.open(self.demodulated_data.name,
+                                                    mode='rb') as data_file:
+                payload = data_file.read()
 
         return _decode_pretty_hex(payload)
 
@@ -567,8 +627,13 @@ class DemodData(models.Model):
         Return the content of the data file decoded as UTF-8. If this fails,
         show as hex dump.
         """
-        with open(self.payload_demod.path, 'rb') as data_file:
-            payload = data_file.read()
+        if self.payload_demod:
+            with self.payload_demod.storage.open(self.payload_demod.name, mode='rb') as data_file:
+                payload = data_file.read()
+        else:
+            with self.demodulated_data.storage.open(self.demodulated_data.name,
+                                                    mode='rb') as data_file:
+                payload = data_file.read()
 
         try:
             return payload.decode('utf-8')
@@ -576,12 +641,15 @@ class DemodData(models.Model):
             return _decode_pretty_hex(payload)
 
     def __str__(self):
-        return '{} - {}'.format(self.id, self.payload_demod)
+        if self.payload_demod:
+            return '{} - {}'.format(self.id, self.payload_demod)
+        return '{} - {}'.format(self.id, self.demodulated_data)
 
 
 @receiver(models.signals.post_delete, sender=DemodData)
 def demoddata_remove_files(sender, instance, **kwargs):  # pylint: disable=W0613
     """Remove data file of an observation if the observation is deleted"""
     if instance.payload_demod:
-        if os.path.isfile(instance.payload_demod.path):
-            os.remove(instance.payload_demod.path)
+        instance.payload_demod.delete(save=False)
+    if instance.demodulated_data:
+        instance.demodulated_data.delete(save=False)

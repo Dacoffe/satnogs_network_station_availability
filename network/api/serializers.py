@@ -17,9 +17,29 @@ from network.base.validators import ObservationOverlapError, OutOfRangeError, ch
 
 class DemodDataSerializer(serializers.ModelSerializer):
     """SatNOGS Network DemodData API Serializer"""
+    payload_demod = serializers.SerializerMethodField()
+
     class Meta:
         model = DemodData
         fields = ('payload_demod', )
+
+    def get_payload_demod(self, obj):
+        """Returns DemodData Link"""
+        request = self.context.get("request")
+        if obj.payload_demod:
+            return request.build_absolute_uri(obj.payload_demod.url)
+        if obj.demodulated_data:
+            return request.build_absolute_uri(obj.demodulated_data.url)
+        return None
+
+
+class UpdateObservationSerializer(serializers.ModelSerializer):
+    """SatNOGS Network Observation API Serializer for uploading audio and waterfall.
+    This is Serializer is used temporarily until waterfall_old and payload_old fields are removed.
+    """
+    class Meta:
+        model = Observation
+        fields = ('id', 'payload', 'waterfall')
 
 
 class ObservationSerializer(serializers.ModelSerializer):
@@ -27,6 +47,8 @@ class ObservationSerializer(serializers.ModelSerializer):
     transmitter = serializers.SerializerMethodField()
     transmitter_updated = serializers.SerializerMethodField()
     norad_cat_id = serializers.SerializerMethodField()
+    payload = serializers.SerializerMethodField()
+    waterfall = serializers.SerializerMethodField()
     station_name = serializers.SerializerMethodField()
     station_lat = serializers.SerializerMethodField()
     station_lng = serializers.SerializerMethodField()
@@ -90,6 +112,24 @@ class ObservationSerializer(serializers.ModelSerializer):
     def get_norad_cat_id(self, obj):
         """Returns Satellite NORAD ID"""
         return obj.satellite.norad_cat_id
+
+    def get_payload(self, obj):
+        """Returns Audio Link"""
+        request = self.context.get("request")
+        if obj.payload_old:
+            return request.build_absolute_uri(obj.payload_old.url)
+        if obj.payload:
+            return request.build_absolute_uri(obj.payload.url)
+        return None
+
+    def get_waterfall(self, obj):
+        """Returns Watefall Link"""
+        request = self.context.get("request")
+        if obj.waterfall_old:
+            return request.build_absolute_uri(obj.waterfall_old.url)
+        if obj.waterfall:
+            return request.build_absolute_uri(obj.waterfall.url)
+        return None
 
     def get_station_name(self, obj):
         """Returns Station name"""

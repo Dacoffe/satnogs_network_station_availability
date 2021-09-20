@@ -472,7 +472,8 @@ AVATAR_GRAVATAR_DEFAULT = config('AVATAR_GRAVATAR_DEFAULT', default='mm')
 PROCESS_AUDIO_LOCK_EXPIRATION = config('PROCESS_AUDIO_LOCK_EXPIRATION', default=900, cast=int)
 
 # Audio zip
-# Zipping audio files require local storage for audio file fields, check the setting USE_S3_STORAGE_FOR_AUDIO
+# Zipping audio files require local storage for audio file fields,
+# check the setting USE_S3_STORAGE_FOR_AUDIO
 ZIP_AUDIO_FILES = config('ZIP_AUDIO_FILES', default=False, cast=bool)
 AUDIO_FILES_PER_ZIP = config('AUDIO_FILES_PER_ZIP', default=1000, cast=int)
 ZIP_FILE_PREFIX = config('ZIP_FILE_PREFIX', default='satnogs-observations')
@@ -482,7 +483,8 @@ ZIP_AUDIO_LOCK_EXPIRATION = config('ZIP_AUDIO_LOCK_EXPIRATION', default=600, cas
 ZIP_TASK_LOCK_EXPIRATION = config('ZIP_TASK_LOCK_EXPIRATION', default=3600, cast=int)
 
 # Archive.org
-# Archiving zip audio files require local storage for audio file fields, check the setting USE_S3_STORAGE_FOR_AUDIO
+# Archiving zip audio files require local storage for audio file fields,
+# check the setting USE_S3_STORAGE_FOR_AUDIO
 ARCHIVE_ZIP_FILES = config('ARCHIVE_ZIP_FILES', default=False, cast=bool)
 ZIP_FILES_PER_ITEM = config('ZIP_FILES_PER_ITEM', default=10, cast=int)
 ITEM_IDENTIFIER_PREFIX = config('ITEM_IDENTIFIER_PREFIX', default='satnogs-observations')

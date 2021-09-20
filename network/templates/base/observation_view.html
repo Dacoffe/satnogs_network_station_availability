@@ -244,7 +244,7 @@
       </div>
 
       <div class="front-line">
-        {% if observation.has_audio or observation.waterfall %}
+        {% if observation.has_audio or observation.has_waterfall %}
           <span class="label label-default">Downloads</span>
           <span class="front-data">
           {% if observation.has_audio and observation.audio_url %}
@@ -256,8 +256,16 @@
               </button>
             </a>
           {% endif %}
-          {% if observation.waterfall %}
-            <a href="{{ MEDIA_URL }}{{ observation.waterfall }}"
+          {% if observation.waterfall_old %}
+            <a href="{{ observation.waterfall_old.url }}"
+               target="_blank"
+               download="">
+              <button type="button" class="btn btn-default btn-xs">
+                <span class="glyphicon glyphicon-download"></span> Waterfall
+              </button>
+            </a>
+          {% elif observation.waterfall %}
+            <a href="{{ observation.waterfall.url }}"
                target="_blank"
                download="">
               <button type="button" class="btn btn-default btn-xs">
@@ -364,7 +372,11 @@
                 {% endif %}
               </div>
               <div id="waterfall-{{ observation.id }}" class="waterfall">
-                <img class="img-responsive waterfall" src="{{ MEDIA_URL }}{{ observation.waterfall }}" alt="waterfall">
+                {% if observation.waterfall_old %}
+                  <img class="img-responsive waterfall" src="{{ observation.waterfall_old.url }}" alt="waterfall">
+                {% else %}
+                  <img class="img-responsive waterfall" src="{{ observation.waterfall.url }}" alt="waterfall">
+                {% endif %}
               </div>
             {% else %}
               <div class="notice">
@@ -408,15 +420,29 @@
                 </div>
               </div>
               {% for demoddata in observation.demoddata.all|sortdemoddata %}
-                <span class="label label-default data-label">
-                  <a href="{{ demoddata.payload_demod.url }}" class="data-link">
-                    {{ demoddata.payload_demod }}
-                  </a>
-                </span>
+                {% if demoddata.payload_demod %}
+                  <span class="label label-default data-label">
+                    <a href="{{ demoddata.payload_demod.url }}" class="data-link">
+                      {{ demoddata.payload_demod }}
+                    </a>
+                  </span>
+                {% else %}
+                  <span class="label label-default data-label">
+                    <a href="{{ demoddata.demodulated_data.url }}" class="data-link">
+                      {{ demoddata.demodulated_data }}
+                    </a>
+                  </span>
+                {% endif %}
                 {% if demoddata.is_image %}
-                  <div class="well well-sm data-well">
-                    <img src="{{ demoddata.payload_demod.url }}" alt="observation-{{ observation.pk }}" class="img-responsive">
-                  </div>
+                  {% if demoddata.payload_demod %}
+                    <div class="well well-sm data-well">
+                      <img src="{{ demoddata.payload_demod.url }}" alt="observation-{{ observation.pk }}" class="img-responsive">
+                    </div>
+                  {% else %}
+                    <div class="well well-sm data-well">
+                      <img src="{{ demoddata.demodulated_data.url }}" alt="observation-{{ observation.pk }}" class="img-responsive">
+                    </div>
+                  {% endif %}
                 {% elif observation.transmitter_mode == 'CW' %}
                   <div class="well well-sm data-well">
                     {{ demoddata.display_payload_utf8 }}

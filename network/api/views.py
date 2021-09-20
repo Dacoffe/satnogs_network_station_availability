@@ -43,6 +43,8 @@ class ObservationView(  # pylint: disable=R0901
         """Returns the right serializer depending on http method that is used"""
         if self.action == 'create':
             return serializers.NewObservationSerializer
+        if self.action == 'update':
+            return serializers.UpdateObservationSerializer
         return serializers.ObservationSerializer
 
     def create(self, request, *args, **kwargs):
@@ -76,10 +78,11 @@ class ObservationView(  # pylint: disable=R0901
                 instance.ground_station.save()
             if request.data.get('demoddata'):
                 try:
-                    file_path = 'data_obs/{0}/{1}'.format(
-                        instance.id, request.data.get('demoddata')
+                    name = 'data_obs/{0}/{1}/{2}/{3}/{4}/{5}'.format(
+                        instance.start.year, instance.start.month, instance.start.day,
+                        instance.start.hour, instance.id, request.data.get('demoddata')
                     )
-                    instance.demoddata.get(payload_demod=file_path)
+                    instance.demoddata.get(demodulated_data=name)
                     return Response(
                         data='This data file has already been uploaded',
                         status=status.HTTP_403_FORBIDDEN
@@ -88,7 +91,7 @@ class ObservationView(  # pylint: disable=R0901
                     # Check if observation has data before saving the current ones
                     observation_has_data = instance.demoddata.exists()
                     demoddata = instance.demoddata.create(
-                        payload_demod=request.data.get('demoddata')
+                        demodulated_data=request.data.get('demoddata')
                     )
                     demoddata_id = demoddata.id
             if request.data.get('waterfall'):
@@ -144,7 +147,7 @@ class TransmitterView(  # pylint: disable=R0901
 
 class JobView(viewsets.ReadOnlyModelViewSet):  # pylint: disable=R0901
     """SatNOGS Network Job API view class"""
-    queryset = Observation.objects.filter(payload='')
+    queryset = Observation.objects.all()
     serializer_class = serializers.JobSerializer
     filterset_class = filters.ObservationViewFilter
     filterset_fields = ('ground_station')
