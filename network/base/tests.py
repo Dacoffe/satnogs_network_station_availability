@@ -332,16 +332,12 @@ class ObservationDeleteTest(TestCase):
         self.client.force_login(self.user)
         for _ in range(1, 10):
             self.satellites.append(SatelliteFactory())
-        self.future_observation = ObservationFactory()
-        self.future_observation.author = self.user
-        self.future_observation.start = now() + timedelta(days=1)
-        self.future_observation.end = self.future_observation.start + timedelta(minutes=15)
-        self.future_observation.save()
-        self.past_observation = ObservationFactory()
-        self.past_observation.author = self.user
-        self.past_observation.start = now() - timedelta(days=1)
-        self.past_observation.end = self.past_observation.start + timedelta(minutes=15)
-        self.past_observation.save()
+        self.future_observation = ObservationFactory(
+            start=now() + timedelta(days=1), author=self.user
+        )
+        self.past_observation = ObservationFactory(
+            start=now() - timedelta(days=1), author=self.user
+        )
 
     def test_future_observation_delete_author(self):
         """Deletion OK when user is the author of the observation and observation is in future"""

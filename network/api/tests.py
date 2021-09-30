@@ -1,8 +1,10 @@
 """SatNOGS Network API test suites"""
 import json
+from datetime import timedelta
 
 import pytest
 from django.test import TestCase
+from django.utils.timezone import now
 from rest_framework.utils.encoders import JSONEncoder
 
 from network.base.tests import AntennaFactory, FrequencyRangeFactory, ObservationFactory, \
@@ -23,13 +25,16 @@ class JobViewApiTest(TestCase):
             self.satellites.append(SatelliteFactory())
         for _ in range(1, 10):
             self.stations.append(StationFactory())
-        self.observation = ObservationFactory()
+        self.future_observation = ObservationFactory(start=now() + timedelta(days=1))
+        self.past_observation = ObservationFactory(start=now() - timedelta(days=1))
 
     def test_job_view_api(self):
         """Test the Job View API"""
         response = self.client.get('/api/jobs/')
         response_json = json.loads(response.content)
-        self.assertEqual(response_json, [])
+        self.assertEqual(len(response_json), 1)
+        self.assertEqual(response_json[0]['id'], self.future_observation.id)
+        self.assertNotEqual(response_json[0]['id'], self.past_observation.id)
 
 
 @pytest.mark.django_db(transaction=True)
