@@ -273,6 +273,13 @@
               </button>
             </a>
           {% endif %}
+          {% if observation.has_artifact %}
+            <button type="button"
+                    class="btn btn-default btn-xs"
+                    title="Artifact for this observation is available via SatNOGS DB API.">
+              <span class="glyphicon glyphicon-download"></span> Artifact
+            </button>
+          {% endif %}
           </span>
         {% endif %}
       </div>

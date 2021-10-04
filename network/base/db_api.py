@@ -112,3 +112,9 @@ def get_transmitters_by_uuid_set(uuid_set):
         raise ValueError('Invalid Transmitter UUID: {0}'.format(invalid_transmitters[0]))
 
     raise ValueError('Invalid Transmitter UUIDs: {0}'.format(invalid_transmitters))
+
+
+def get_artifact_metadata_by_observation_id(observation_id):
+    """Return the artifact metadata for the given observation id"""
+    artifacts_url = "{}artifacts/?network_obs_id={}".format(DB_API_URL, observation_id)
+    return satnogs_db_api_request_authed(artifacts_url)

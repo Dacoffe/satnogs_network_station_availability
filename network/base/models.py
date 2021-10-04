@@ -2,6 +2,7 @@
 import codecs
 import re
 from datetime import timedelta
+from operator import truth
 
 from django.conf import settings
 from django.core.cache import cache
@@ -20,6 +21,7 @@ from rest_framework.authtoken.models import Token
 from shortuuidfield import ShortUUIDField
 from storages.backends.s3boto3 import S3Boto3Storage
 
+from network.base.db_api import get_artifact_metadata_by_observation_id
 from network.base.managers import ObservationManager
 from network.base.utils import bands_from_range
 from network.users.models import User
@@ -544,6 +546,12 @@ class Observation(models.Model):
         if self.demoddata.exists():
             return True
         return False
+
+    @property
+    def has_artifact(self):
+        """Check if the observation has an associated artifact in satnogs-db."""
+        artifact_metadata = get_artifact_metadata_by_observation_id(self.id)
+        return truth(artifact_metadata)
 
     @property
     def audio_url(self):
