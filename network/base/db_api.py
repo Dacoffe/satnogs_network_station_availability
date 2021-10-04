@@ -10,8 +10,8 @@ class DBConnectionError(Exception):
     """Error when there are connection issues with DB API"""
 
 
-def tle_api_request(url):
-    """Perform TLE query on SatNOGS DB API and return the results"""
+def satnogs_db_api_request_authed(url):
+    """Perform authenticated query on SatNOGS DB API and return the results"""
     headers = {}
     if DB_API_KEY:
         headers['authorization'] = 'Token {0}'.format(DB_API_KEY)
@@ -27,13 +27,13 @@ def tle_api_request(url):
 def get_tle_set_by_norad_id(norad_id):
     """Returns TLE set filtered by NORAD ID"""
     tle_url = "{}tle/?norad_cat_id={}".format(DB_API_URL, norad_id)
-    return tle_api_request(tle_url)
+    return satnogs_db_api_request_authed(tle_url)
 
 
 def get_tle_sets():
     """Returns TLE sets"""
     tle_url = "{}tle/".format(DB_API_URL)
-    return tle_api_request(tle_url)
+    return satnogs_db_api_request_authed(tle_url)
 
 
 def get_tle_sets_by_norad_id_set(norad_id_set):
@@ -54,8 +54,8 @@ def get_tle_sets_by_norad_id_set(norad_id_set):
     return tle_sets
 
 
-def transmitters_api_request(url):
-    """Perform transmitter query on SatNOGS DB API and return the results"""
+def satnogs_db_api_request(url):
+    """Perform query on SatNOGS DB API and return the results"""
     if not DB_API_URL:
         raise DBConnectionError('Error in DB API connection. Blank DB API URL!')
     try:
@@ -68,25 +68,25 @@ def transmitters_api_request(url):
 def get_transmitter_by_uuid(uuid):
     """Returns transmitter filtered by Transmitter UUID"""
     transmitters_url = "{}transmitters/?uuid={}".format(DB_API_URL, uuid)
-    return transmitters_api_request(transmitters_url)
+    return satnogs_db_api_request(transmitters_url)
 
 
 def get_transmitters_by_norad_id(norad_id):
     """Returns transmitters filtered by NORAD ID"""
     transmitters_url = "{}transmitters/?satellite__norad_cat_id={}".format(DB_API_URL, norad_id)
-    return transmitters_api_request(transmitters_url)
+    return satnogs_db_api_request(transmitters_url)
 
 
 def get_transmitters_by_status(status):
     """Returns transmitters filtered by status"""
     transmitters_url = "{}transmitters/?status={}".format(DB_API_URL, status)
-    return transmitters_api_request(transmitters_url)
+    return satnogs_db_api_request(transmitters_url)
 
 
 def get_transmitters():
     """Returns all transmitters"""
     transmitters_url = "{}transmitters".format(DB_API_URL)
-    return transmitters_api_request(transmitters_url)
+    return satnogs_db_api_request(transmitters_url)
 
 
 def get_transmitters_by_uuid_set(uuid_set):
