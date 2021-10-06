@@ -559,7 +559,7 @@ class Observation(models.Model):
         artifact_metadata = get_artifact_metadata_by_observation_id(self.id)
         if not artifact_metadata:
             return ''
-        return artifact_metadata['artifact_file']
+        return artifact_metadata[0]['artifact_file']
 
     @property
     def audio_url(self):
