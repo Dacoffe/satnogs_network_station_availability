@@ -554,6 +554,14 @@ class Observation(models.Model):
         return truth(artifact_metadata)
 
     @property
+    def artifact_url(self):
+        """Return url for the oberations artifact file (if it exists)"""
+        artifact_metadata = get_artifact_metadata_by_observation_id(self.id)
+        if not artifact_metadata:
+            return ''
+        return artifact_metadata['artifact_file']
+
+    @property
     def audio_url(self):
         """Return url for observation's audio file"""
         if self.has_audio:
