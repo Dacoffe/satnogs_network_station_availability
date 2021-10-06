@@ -329,7 +329,7 @@
             </div>
           </td>
         </tr>
-        {% if observation.has_audio or observation.has_waterfall %}
+        {% if observation.has_audio or observation.has_waterfall or observation.has_artifact %}
           <tr>
             <td>
               <span class="badge badge-secondary">Downloads</span>
