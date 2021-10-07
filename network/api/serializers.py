@@ -39,7 +39,7 @@ class UpdateObservationSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Observation
-        fields = ('id', 'payload', 'waterfall')
+        fields = ('id', 'payload', 'waterfall', 'client_metadata', 'client_version')
 
 
 class ObservationSerializer(serializers.ModelSerializer):
