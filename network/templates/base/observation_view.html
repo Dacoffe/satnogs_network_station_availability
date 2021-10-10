@@ -314,8 +314,8 @@
                role="tab"
                data-toggle="tab">
               Data
-              {% if observation.demoddata.all %}
-                <span class="badge">{{ observation.demoddata.all|length }}</span>
+              {% if observation.demoddata.exists %}
+                <span class="badge">{{ observation.demoddata.count }}</span>
               {% endif %}
             </a>
           </li>
@@ -423,47 +423,49 @@
             {% endif %}
           </div>
           <div role="tabpanel" class="tab-pane tab-data" id="tab-data">
-            {% if observation.demoddata.all %}
-              <div align="right">
-                <div class="btn-group btn-group-xs decode-btn-group" role="group">
-                  <button type="button" class="btn btn-default" id="asciibutton">ASCII</button>
-                  <button type="button" class="btn btn-primary" id="hexbutton" disabled>HEX</button>
+            {% if observation.demoddata.exists %}
+              {% with total_data=observation.demoddata.count %}
+                <div align="right">
+                  <div class="btn-group btn-group-xs decode-btn-group" role="group">
+                    <button type="button" class="btn btn-default" id="asciibutton">ASCII</button>
+                    <button type="button" class="btn btn-primary" id="hexbutton" disabled>HEX</button>
+                  </div>
                 </div>
-              </div>
-              {% for demoddata in observation.demoddata.all|sortdemoddata %}
-                {% if demoddata.payload_demod %}
-                  <span class="label label-default data-label">
-                    <a href="{{ demoddata.payload_demod.url }}" class="data-link">
-                      {{ demoddata.payload_demod }}
-                    </a>
-                  </span>
-                {% else %}
-                  <span class="label label-default data-label">
-                    <a href="{{ demoddata.demodulated_data.url }}" class="data-link">
-                      {{ demoddata.demodulated_data }}
-                    </a>
-                  </span>
-                {% endif %}
-                {% if demoddata.is_image %}
+                {% for demoddata in observation.demoddata.all|sortdemoddata %}
                   {% if demoddata.payload_demod %}
+                    <span class="label label-default data-label">
+                      <a href="{{ demoddata.payload_demod.url }}" class="data-link">
+                        {{ demoddata.payload_demod }}
+                      </a>
+                    </span>
+                  {% else %}
+                    <span class="label label-default data-label">
+                      <a href="{{ demoddata.demodulated_data.url }}" class="data-link">
+                        {{ demoddata.demodulated_data }}
+                      </a>
+                    </span>
+                  {% endif %}
+                  {% if total_data < 7 and demoddata.is_image %}
+                    {% if demoddata.payload_demod %}
+                      <div class="well well-sm data-well">
+                        <img src="{{ demoddata.payload_demod.url }}" alt="observation-{{ observation.pk }}" class="img-responsive">
+                      </div>
+                    {% else %}
+                      <div class="well well-sm data-well">
+                        <img src="{{ demoddata.demodulated_data.url }}" alt="observation-{{ observation.pk }}" class="img-responsive">
+                      </div>
+                    {% endif %}
+                  {% elif observation.transmitter_mode == 'CW' %}
                     <div class="well well-sm data-well">
-                      <img src="{{ demoddata.payload_demod.url }}" alt="observation-{{ observation.pk }}" class="img-responsive">
+                      {{ demoddata.display_payload_utf8 }}
                     </div>
                   {% else %}
-                    <div class="well well-sm data-well">
-                      <img src="{{ demoddata.demodulated_data.url }}" alt="observation-{{ observation.pk }}" class="img-responsive">
+                    <div class="well well-sm data-well hex">
+                      {{ demoddata.display_payload_hex }}
                     </div>
                   {% endif %}
-                {% elif observation.transmitter_mode == 'CW' %}
-                  <div class="well well-sm data-well">
-                    {{ demoddata.display_payload_utf8 }}
-                  </div>
-                {% else %}
-                  <div class="well well-sm data-well hex">
-                    {{ demoddata.display_payload_hex }}
-                  </div>
-                {% endif %}
-              {% endfor %}
+                {% endfor %}
+              {% endwith %}
             {% else %}
               <div class="notice">
                 Waiting for demoded data

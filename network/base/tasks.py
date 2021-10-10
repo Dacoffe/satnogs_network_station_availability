@@ -364,9 +364,6 @@ def sync_to_db(frame_id=None):
         if frame.payload_demod:
             if not frame.payload_demod.storage.exists(frame.payload_demod.name):
                 continue
-        if frame.demodulated_data:
-            if not frame.demodulated_data.storage.exists(frame.demodulated_data.name):
-                continue
         try:
             sync_demoddata_to_db(frame)
         except requests.exceptions.RequestException:

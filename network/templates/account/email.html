@@ -8,7 +8,7 @@
   <div class="row">
     <div class="col-md-5">
       <h2>Email</h2>
-      {% if user.emailaddress_set.all %}
+      {% if user.emailaddress_set.exists %}
         <p>The following email addresses are associated with your account:</p>
 
         <form action="{% url 'account_email' %}" class="email_list" method="post">{% csrf_token %}
