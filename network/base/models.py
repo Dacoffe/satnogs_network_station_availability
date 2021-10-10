@@ -517,6 +517,8 @@ class Observation(models.Model):
                                                       )) or self.waterfall_old.size == 0:
                 return False
             return True
+        if self.waterfall:
+            return True
         return False
 
     @property
@@ -528,6 +530,8 @@ class Observation(models.Model):
             if (not self.payload_old.storage.exists(self.payload_old.name
                                                     )) or self.payload_old.size == 0:
                 return False
+            return True
+        if self.payload:
             return True
         return False
 
