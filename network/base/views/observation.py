@@ -192,22 +192,17 @@ def observation_view(request, observation_id):
             ' if the problem persists please contact an administrator.'
         )
 
+    has_comments = False
+    discuss_url = ''
+    discuss_slug = ''
     if settings.ENVIRONMENT == 'production':
         discussion_details = community_get_discussion_details(
             observation.id, observation.satellite.name, observation.satellite.norad_cat_id,
             'https:%2F%2F{}{}'.format(request.get_host(), request.path)
         )
-
-        return render(
-            request, 'base/observation_view.html', {
-                'observation': observation,
-                'has_comments': discussion_details['has_comments'],
-                'discuss_url': discussion_details['url'],
-                'discuss_slug': discussion_details['slug'],
-                'can_vet': can_vet,
-                'can_delete': can_delete
-            }
-        )
+        has_comments = discussion_details['has_comments']
+        discuss_url = discussion_details['url']
+        discuss_slug = discussion_details['slug']
 
     has_demoddata = observation.demoddata.all().exists()
     demoddata = observation.demoddata.all()
@@ -288,7 +283,10 @@ def observation_view(request, observation_id):
             'demoddata_details': demoddata_details,
             'show_hex_to_ascii_button': show_hex_to_ascii_button,
             'can_vet': can_vet,
-            'can_delete': can_delete
+            'can_delete': can_delete,
+            'has_comments': has_comments,
+            'discuss_url': discuss_url,
+            'discuss_slug': discuss_slug
         }
     )
 
