@@ -44,6 +44,10 @@
     display: block;
 }
 
+.demoddata {
+    display: none;
+}
+
 .data-label {
     margin-top: 10px;
     display: inline-block;
@@ -81,10 +85,16 @@
     color: white;
 }
 
-.decode-btn-group {
+#load-data-btn-group button {
+    margin-right: 5px;
+}
+
+#decode-btn-group,
+#load-data-btn-group {
     margin-top: 5px;
 }
 
+#demoddata-spinner,
 #vetting-spinner,
 #rating-spinner {
     display: none;

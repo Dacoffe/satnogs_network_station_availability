@@ -209,9 +209,84 @@ def observation_view(request, observation_id):
             }
         )
 
+    has_demoddata = observation.demoddata.all().exists()
+    demoddata = observation.demoddata.all()
+    demoddata_count = len(demoddata)
+    demoddata_details = []
+    show_hex_to_ascii_button = False
+
+    if has_demoddata:
+        content_type = 'binary'
+        # CW and *SK* modes is a temporary solution for avoiding calling is_image function
+        # this will be replaced when is_image will become a field in DemodData model
+        if (demoddata_count < 7 and observation.transmitter_mode != 'CW'
+                and 'SK' not in observation.transmitter_mode):
+            for datum in demoddata:
+                if datum.is_image():
+                    if datum.payload_demod:
+                        demoddata_details.append(
+                            {
+                                'url': datum.payload_demod.url,
+                                'name': datum.payload_demod.name,
+                                'type': 'image'
+                            }
+                        )
+                    else:
+                        demoddata_details.append(
+                            {
+                                'url': datum.demodulated_data.url,
+                                'name': datum.demodulated_data.name,
+                                'type': 'image'
+                            }
+                        )
+                else:
+                    show_hex_to_ascii_button = True
+                    if datum.payload_demod:
+                        demoddata_details.append(
+                            {
+                                'url': datum.payload_demod.url,
+                                'name': datum.payload_demod.name,
+                                'type': content_type
+                            }
+                        )
+                    else:
+                        demoddata_details.append(
+                            {
+                                'url': datum.demodulated_data.url,
+                                'name': datum.demodulated_data.name,
+                                'type': content_type
+                            }
+                        )
+        else:
+            if observation.transmitter_mode == 'CW':
+                content_type = 'text'
+            else:
+                show_hex_to_ascii_button = True
+            for datum in demoddata:
+                if datum.payload_demod:
+                    demoddata_details.append(
+                        {
+                            'url': datum.payload_demod.url,
+                            'name': datum.payload_demod.name,
+                            'type': content_type
+                        }
+                    )
+                else:
+                    demoddata_details.append(
+                        {
+                            'url': datum.demodulated_data.url,
+                            'name': datum.demodulated_data.name,
+                            'type': content_type
+                        }
+                    )
+    demoddata_details = sorted(demoddata_details, key=lambda d: d['name'])
+
     return render(
         request, 'base/observation_view.html', {
             'observation': observation,
+            'demoddata_count': demoddata_count,
+            'demoddata_details': demoddata_details,
+            'show_hex_to_ascii_button': show_hex_to_ascii_button,
             'can_vet': can_vet,
             'can_delete': can_delete
         }

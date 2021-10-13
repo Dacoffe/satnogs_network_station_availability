@@ -314,8 +314,8 @@
                role="tab"
                data-toggle="tab">
               Data
-              {% if observation.demoddata.exists %}
-                <span class="badge">{{ observation.demoddata.count }}</span>
+              {% if demoddata_count > 0 %}
+                <span class="badge">{{ demoddata_count }}</span>
               {% endif %}
             </a>
           </li>
@@ -423,49 +423,41 @@
             {% endif %}
           </div>
           <div role="tabpanel" class="tab-pane tab-data" id="tab-data">
-            {% if observation.demoddata.exists %}
-              {% with total_data=observation.demoddata.count %}
-                <div align="right">
-                  <div class="btn-group btn-group-xs decode-btn-group" role="group">
-                    <button type="button" class="btn btn-default" id="asciibutton">ASCII</button>
-                    <button type="button" class="btn btn-primary" id="hexbutton" disabled>HEX</button>
+            {% if demoddata_count > 0 %}
+                <div class="row">
+                  <div class="col-xs-6">
+                    <div class="btn-group btn-group-sm" id="load-data-btn-group" role="group">
+                      <button type="button" class="btn btn-primary" id="load-next-10-button">Load More Data(<span id='next-data-num'></span>)</button>
+                      <button type="button" class="btn btn-info" id="load-all-button">Load All Data(<span id='all-data-num'></span>) </button>
+                      <span id="demoddata-spinner">
+                        <div class="spinner">
+                          <div class="bounce1"></div>
+                          <div class="bounce2"></div>
+                          <div class="bounce3"></div>
+                        </div>
+                      </span>
+                    </div>
                   </div>
+                  {% if show_hex_to_ascii_button %}
+                    <div class="col-xs-6" align="right">
+                      <div class="btn-group btn-group-xs" id="decode-btn-group" role="group">
+                        <button type="button" class="btn btn-default" id="ascii-button">ASCII</button>
+                        <button type="button" class="btn btn-primary" id="hex-button" disabled>HEX</button>
+                      </div>
+                    </div>
+                  {% endif %}
                 </div>
-                {% for demoddata in observation.demoddata.all|sortdemoddata %}
-                  {% if demoddata.payload_demod %}
+                {% for demoddata_entry in demoddata_details %}
+                  <div class="demoddata" data-type="{{ demoddata_entry.type }}">
                     <span class="label label-default data-label">
-                      <a href="{{ demoddata.payload_demod.url }}" class="data-link">
-                        {{ demoddata.payload_demod }}
+                      <a href="{{ demoddata_entry.url }}" class="data-link">
+                        {{ demoddata_entry.name }}
                       </a>
                     </span>
-                  {% else %}
-                    <span class="label label-default data-label">
-                      <a href="{{ demoddata.demodulated_data.url }}" class="data-link">
-                        {{ demoddata.demodulated_data }}
-                      </a>
-                    </span>
-                  {% endif %}
-                  {% if total_data < 7 and demoddata.is_image %}
-                    {% if demoddata.payload_demod %}
-                      <div class="well well-sm data-well">
-                        <img src="{{ demoddata.payload_demod.url }}" alt="observation-{{ observation.pk }}" class="img-responsive">
-                      </div>
-                    {% else %}
-                      <div class="well well-sm data-well">
-                        <img src="{{ demoddata.demodulated_data.url }}" alt="observation-{{ observation.pk }}" class="img-responsive">
-                      </div>
-                    {% endif %}
-                  {% elif observation.transmitter_mode == 'CW' %}
                     <div class="well well-sm data-well">
-                      {{ demoddata.display_payload_utf8 }}
                     </div>
-                  {% else %}
-                    <div class="well well-sm data-well hex">
-                      {{ demoddata.display_payload_hex }}
-                    </div>
-                  {% endif %}
+                  </div>
                 {% endfor %}
-              {% endwith %}
             {% else %}
               <div class="notice">
                 Waiting for demoded data

@@ -74,15 +74,6 @@ def get_demoddata_filenames(demoddata):
 
 
 @register.filter
-def sortdemoddata(demoddata):
-    """Returns a date sorted list of DemodData"""
-    try:
-        return sorted(list(demoddata), key=get_demoddata_filenames)
-    except (TypeError, ValueError):
-        return demoddata
-
-
-@register.filter
 def lookup_with_key(dictionary, key):
     """Returns a value from dictionary for a given key"""
     return dictionary.get(key)

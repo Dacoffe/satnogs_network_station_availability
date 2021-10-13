@@ -28,7 +28,7 @@ $(document).ready(function() {
             var $playbackTime = $('#playback-time-' + wid);
             var progressDiv = $('#progress-bar-' + wid);
             var progressBar = $('.progress-bar', progressDiv);
- 
+
             var showProgress = function (percent) {
                 if (percent == 100) {
                     $(loading).text('Analyzing data...');
@@ -37,7 +37,7 @@ $(document).ready(function() {
                 progressBar.css('width', percent + '%');
                 progressBar.text(percent + '%');
             };
- 
+
             var hideProgress = function () {
                 progressDiv.css('display', 'none');
             };
@@ -46,7 +46,7 @@ $(document).ready(function() {
                 hideProgress();
                 $('#tab-audio').replaceWith('<div class="notice">Something went wrong, try again later.</div><div class="notice">If the problem persists, please contact an administrator.</div>');
             };
- 
+
             var wavesurfer = WaveSurfer.create({
                 container: container_el,
                 waveColor: '#bf7fbf',
@@ -60,27 +60,27 @@ $(document).ready(function() {
                     })
                 ]
             });
- 
+
             wavesurfer.on('destroy', hideProgress);
             wavesurfer.on('error', onError);
- 
+
             wavesurfer.on('loading', function(percent) {
                 showProgress(percent);
                 $(loading).show();
             });
- 
+
             $this.parents('.observation-data').find('.playpause').click( function(){
                 wavesurfer.playPause();
             });
- 
+
             wavesurfer.load(data_audio_url);
 
             wavesurfer.on('ready', function() {
                 hideProgress();
- 
+
                 //$playbackTime.text(formatTime(wavesurfer.getCurrentTime()));
                 $playbackTime.text(formatTime(wavesurfer.getCurrentTime()));
- 
+
                 wavesurfer.on('audioprocess', function(evt) {
                     $playbackTime.text(formatTime(evt));
                 });
@@ -97,7 +97,7 @@ $(document).ready(function() {
         load_audio_tab();
         $('a[href="#tab-audio"]').off('shown.bs.tab');
     });
- 
+
     // Handle Observation tabs
     var uri = new URL(location.href);
     var tab = uri.hash;
@@ -231,39 +231,108 @@ $(document).ready(function() {
 
     $('svg#polar').append(polarPlotSVG);
 
+    // Return hex string from ArrayBuffer that contains DemodData bytes
+    function buffer_to_hex(buffer){
+        var hex_string = '';
+        var hex_digit = '0123456789ABCDEF';
+        (new Uint8Array(buffer)).forEach((v) => {hex_string += hex_digit[v >> 4] + hex_digit[v & 15]+' '; });
+        return hex_string.slice(0,-1);
+    }
+
+    // Load dynamicaly DemodData files
+    function load_demoddata(num){
+        $('#load-data-btn-group button').hide();
+        $('#demoddata-spinner').show();
+        var demoddata_to_show = $('.demoddata:hidden').slice(0, num);
+        var number_of_divs = demoddata_to_show.length;
+        var divs_shown = 0;
+        demoddata_to_show.each(function(){
+            var demoddata_div = $(this);
+            var content_type = demoddata_div.data('type');
+            var url = demoddata_div.find('span:first > a').attr('href');
+            if (content_type == 'image'){
+                demoddata_div.find('.data-well').append('<img src="' + url + '" alt="DemodData Image" class="img-responsive">');
+                demoddata_div.show();
+                divs_shown += 1;
+                if(divs_shown == number_of_divs){
+                    var remaining_data = $('.demoddata:hidden').length;
+                    $('#next-data-num').text(Math.min(remaining_data, 10));
+                    $('#all-data-num').text(remaining_data);
+                    $('#demoddata-spinner').hide();
+                    if(remaining_data > 0){
+                        $('#load-data-btn-group button').show();
+                    }
+                }
+            } else {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                xhr.responseType = 'arraybuffer';
+
+                xhr.onload = function() {
+                    if (this.status == 200) {
+                        if (content_type == 'binary'){
+                            demoddata_div.find('.data-well').append('<span class="hex">' + buffer_to_hex(this.response) + '</span>');
+                            var ascii_enc = new TextDecoder('ascii');
+                            demoddata_div.find('.data-well').append('<span class="ascii">' + ascii_enc.decode(this.response) + '</span>');
+                            demoddata_div.find('.ascii').hide();
+                        } else if (content_type == 'text'){
+                            var utf_enc = new TextDecoder('utf-8');
+                            demoddata_div.find('.data-well').append('<span class="utf-8">' + utf_enc.decode(this.response) + '</span>');
+                        }
+                        demoddata_div.show();
+                        divs_shown += 1;
+                        if(divs_shown == number_of_divs){
+                            var remaining_data = $('.demoddata:hidden').length;
+                            $('#next-data-num').text(Math.min(remaining_data, 10));
+                            $('#all-data-num').text(remaining_data);
+                            $('#demoddata-spinner').hide();
+                            if(remaining_data > 0){
+                                $('#load-data-btn-group button').show();
+                            }
+                        }
+                    }
+                };
+
+                xhr.send();
+            }
+        });
+    }
+
+    load_demoddata(10);
+
+    $('#load-next-10-button').click(function(){
+        load_demoddata(10);
+    });
+
+    $('#load-all-button').click(function(){
+        load_demoddata($('.demoddata:hidden').length);
+    });
+
     // Function to convert hex data in each data blob to ASCII, while storing
     // the original blob in a jquery .data, for later reversal back to hex
     // (see next function)
-    $('#asciibutton').click(function(){
-        $('.hex').each(function(){
-            $(this).data('hex', $(this).text());
-            var hex = $(this).text().replace(/ /g,'').replace(/\r?\n|\r/g, '');
-            var str = '';
-            for (var i = 0; i < hex.length; i += 2) {
-                str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
-            }
-            $(this).html(str);
-        });
-        $('#asciibutton').toggleClass('btn-default');
-        $('#asciibutton').toggleClass('btn-primary');
-        $('#hexbutton').toggleClass('btn-default');
-        $('#hexbutton').toggleClass('btn-primary');
-        $('#asciibutton').attr('disabled', 'disabled');
-        $('#hexbutton').removeAttr('disabled');
+    $('#ascii-button').click(function(){
+        $('.hex').hide();
+        $('.ascii').show();
+        $('#ascii-button').toggleClass('btn-default');
+        $('#ascii-button').toggleClass('btn-primary');
+        $('#hex-button').toggleClass('btn-default');
+        $('#hex-button').toggleClass('btn-primary');
+        $('#ascii-button').attr('disabled', 'disabled');
+        $('#hex-button').removeAttr('disabled');
     });
 
     // retrieve saved hex data and replace the decoded blob with the original
     // hex text
-    $('#hexbutton').click(function(){
-        $('.hex').each(function(){
-            $(this).html($(this).data('hex'));
-        });
-        $('#asciibutton').toggleClass('btn-default');
-        $('#asciibutton').toggleClass('btn-primary');
-        $('#hexbutton').toggleClass('btn-default');
-        $('#hexbutton').toggleClass('btn-primary');
-        $('#hexbutton').attr('disabled', 'disabled');
-        $('#asciibutton').removeAttr('disabled');
+    $('#hex-button').click(function(){
+        $('.hex').show();
+        $('.ascii').hide();
+        $('#ascii-button').toggleClass('btn-default');
+        $('#ascii-button').toggleClass('btn-primary');
+        $('#hex-button').toggleClass('btn-default');
+        $('#hex-button').toggleClass('btn-primary');
+        $('#hex-button').attr('disabled', 'disabled');
+        $('#ascii-button').removeAttr('disabled');
     });
 
     // Hotkeys bindings
