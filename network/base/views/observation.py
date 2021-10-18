@@ -212,12 +212,12 @@ def observation_view(request, observation_id):
 
     if has_demoddata:
         content_type = 'binary'
-        # CW and *SK* modes is a temporary solution for avoiding calling is_image function
+        # CW and *SK* modes is a temporary solution for avoiding calling is__image function
         # this will be replaced when is_image will become a field in DemodData model
         if (demoddata_count < 7 and observation.transmitter_mode != 'CW'
                 and 'SK' not in observation.transmitter_mode):
             for datum in demoddata:
-                if datum.is_image():
+                if datum.is__image():
                     if datum.payload_demod:
                         demoddata_details.append(
                             {

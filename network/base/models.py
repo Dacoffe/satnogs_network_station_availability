@@ -603,7 +603,7 @@ class DemodData(models.Model):
     )
     copied_to_db = models.BooleanField(default=False)
 
-    def is_image(self):
+    def is__image(self):
         """Return true if data file is an image"""
         try:
             if self.payload_demod:

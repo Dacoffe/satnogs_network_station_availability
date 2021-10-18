@@ -359,7 +359,7 @@ def sync_to_db(frame_id=None):
         frames = frames.filter(pk=frame_id)[:1]
 
     for frame in frames:
-        if frame.is_image():
+        if frame.is__image():
             continue
         if frame.payload_demod:
             if not frame.payload_demod.storage.exists(frame.payload_demod.name):
