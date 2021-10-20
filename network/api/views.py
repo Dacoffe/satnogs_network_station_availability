@@ -90,9 +90,14 @@ class ObservationView(  # pylint: disable=R0901
                 except ObjectDoesNotExist:
                     # Check if observation has data before saving the current ones
                     observation_has_data = instance.demoddata.exists()
-                    demoddata = instance.demoddata.create(
-                        demodulated_data=request.data.get('demoddata')
+                    demoddata_serializer = serializers.CreateDemodDataSerializer(
+                        data={
+                            'observation': instance.pk,
+                            'demodulated_data': request.data.get('demoddata')
+                        }
                     )
+                    demoddata_serializer.is_valid(raise_exception=True)
+                    demoddata = demoddata_serializer.save()
                     demoddata_id = demoddata.id
             if request.data.get('waterfall'):
                 if instance.has_waterfall:

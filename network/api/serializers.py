@@ -2,6 +2,7 @@
 #  pylint: disable=no-self-use
 from collections import defaultdict
 
+from PIL import Image
 from rest_framework import serializers
 
 from network.base.db_api import DBConnectionError, get_tle_sets_by_norad_id_set, \
@@ -13,6 +14,34 @@ from network.base.stats import transmitter_stats_by_uuid
 from network.base.validators import ObservationOverlapError, OutOfRangeError, check_end_datetime, \
     check_overlaps, check_start_datetime, check_start_end_datetimes, \
     check_transmitter_station_pairs
+
+
+class CreateDemodDataSerializer(serializers.ModelSerializer):
+    """SatNOGS Network DemodData API Serializer for creating demoddata."""
+    class Meta:
+        model = DemodData
+        fields = (
+            'observation',
+            'demodulated_data',
+        )
+
+    def create(self, validated_data):
+        """Creates demoddata from a list of validated data after checking if demodulated_data is an
+        image and add the result in is_image field
+        """
+        try:
+            image = Image.open(validated_data['demodulated_data'])
+            image.verify()
+            validated_data['is_image'] = True
+        except Exception:  # pylint: disable=W0703
+            validated_data['is_image'] = False
+        return DemodData.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        """Updates demoddata from a list of validated data
+        currently disabled and returns None
+        """
+        return None
 
 
 class DemodDataSerializer(serializers.ModelSerializer):

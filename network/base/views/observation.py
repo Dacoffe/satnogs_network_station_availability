@@ -217,7 +217,7 @@ def observation_view(request, observation_id):
         if (demoddata_count < 7 and observation.transmitter_mode != 'CW'
                 and 'SK' not in observation.transmitter_mode):
             for datum in demoddata:
-                if datum.is__image():
+                if datum.is_image or datum.is__image():
                     if datum.payload_demod:
                         demoddata_details.append(
                             {

@@ -602,6 +602,7 @@ class DemodData(models.Model):
         upload_to=_name_observation_demoddata, storage=_select_data_storage, blank=True
     )
     copied_to_db = models.BooleanField(default=False)
+    is_image = models.BooleanField(default=False)
 
     def is__image(self):
         """Return true if data file is an image"""
