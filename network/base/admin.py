@@ -129,3 +129,13 @@ class ObservationAdmin(admin.ModelAdmin):
     inlines = [
         DemodDataInline,
     ]
+
+
+@admin.register(DemodData)
+class DemodDataAdmin(admin.ModelAdmin):
+    """Define DemodData view in django admin UI"""
+    list_display = (
+        'id', 'observation', 'payload_demod', 'demodulated_data', 'copied_to_db', 'is_image'
+    )
+    list_filter = ('copied_to_db', 'is_image')
+    search_fields = ('id', 'observation__id')
