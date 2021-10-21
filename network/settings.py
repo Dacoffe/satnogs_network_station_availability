@@ -77,6 +77,9 @@ MIDDLEWARE = (
 if DEBUG:
     MIDDLEWARE = ('debug_toolbar.middleware.DebugToolbarMiddleware', ) + MIDDLEWARE
 
+# Migration Settings
+IGNORE_MIGRATION = config('IGNORE_MIGRATION', default=False, cast=bool)
+
 # Email
 if DEBUG:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
