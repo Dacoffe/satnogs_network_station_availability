@@ -120,7 +120,7 @@ class ObservationAdmin(admin.ModelAdmin):
     """Define Observation view in django admin UI"""
     list_display = (
         'id', 'author', 'satellite', 'transmitter_uuid', 'start', 'end', 'archived',
-        'audio_zipped', 'status'
+        'audio_zipped', 'status', 'payload_old', 'payload', 'waterfall_old', 'waterfall'
     )
     list_filter = ('start', 'end', 'archived', 'audio_zipped', 'status', 'satellite', 'author')
     search_fields = (
