@@ -81,6 +81,13 @@ To add new or remove existing third-party static assets:
      ./node_modules/.bin/gulp assets
 
 
+Backend development
+-------------------
+
+When running satnogs-network using the docker container the webserver auto-reloads when files get changed.
+You need to restart the network-web container only when you change something in `settings.py`.
+All the other changes are directly applied with refreshing the page you are currently working on.
+
 Simulating station heartbeats
 -----------------------------
 
