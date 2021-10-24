@@ -274,7 +274,15 @@ $(document).ready(function() {
                             demoddata_div.find('.data-well').append('<span class="hex">' + buffer_to_hex(this.response) + '</span>');
                             var ascii_enc = new TextDecoder('ascii');
                             demoddata_div.find('.data-well').append('<span class="ascii">' + ascii_enc.decode(this.response) + '</span>');
-                            demoddata_div.find('.ascii').hide();
+
+                            // check if currently ASCII button is active or HEX and display accordingly
+                            if ($('#hex-button').prop('disabled')) { 
+                                demoddata_div.find('.ascii').hide();
+                            }
+                            else {  
+                                demoddata_div.find('.hex').hide();
+                            }
+
                         } else if (content_type == 'text'){
                             var utf_enc = new TextDecoder('utf-8');
                             demoddata_div.find('.data-well').append('<span class="utf-8">' + utf_enc.decode(this.response) + '</span>');
