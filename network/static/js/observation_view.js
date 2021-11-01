@@ -274,13 +274,45 @@ $(document).ready(function() {
                             demoddata_div.find('.data-well').append('<span class="hex">' + buffer_to_hex(this.response) + '</span>');
                             var ascii_enc = new TextDecoder('ascii');
                             demoddata_div.find('.data-well').append('<span class="ascii">' + ascii_enc.decode(this.response) + '</span>');
+                            let ax25_html = '';
+                            try {
+                                const parsedAx25 = new Ax25monitor(new KaitaiStream(this.response)); // eslint-disable-line no-undef
+                                const srcCallsign = parsedAx25.ax25Frame.ax25Header.srcCallsignRaw.callsignRor.callsign;
+                                const dstCallsign = parsedAx25.ax25Frame.ax25Header.destCallsignRaw.callsignRor.callsign;
+                                const alphanum_with_white_spaces_regex = /^[a-z0-9-\s]+$/i;
+                                /* eslint-disable quotes*/
+                                ax25_html = "<span class='ax25'><div class='row'> <div class='col-md-7'> \
+                                <div class='front-line'><span class='label label-default'>Source Callsign</span><span class='front-data'>" + srcCallsign + "</span></div>\
+                                <div class='front-line'><span class='label label-default'>Destination Callsign</span><span class='front-data'>" + dstCallsign + "</span></div>\
+                                <div class='front-line'><span class='label label-default'>Source SSID</span><span class='front-data'>" + parsedAx25.ax25Frame.ax25Header.srcSsidRaw.ssid + "</span></div>\
+                                <div class='front-line'><span class='label label-default'>Destination SSID</span><span class='front-data'>" + parsedAx25.ax25Frame.ax25Header.destSsidRaw.ssid + "</span></div>\
+                                <div class='front-line'><span class='label label-default'>Ctl</span><span class='front-data'>" + parsedAx25.ax25Frame.ax25Header.ctl + "</span></div>\
+                                <div class='front-line'><span class='label label-default'>Pid</span><span class='front-data'>" + parsedAx25.ax25Frame.payload.pid + "</span></div>\
+                                <div class='front-line'><span class='label label-default'>Monitor</span><span class='front-data'>" + parsedAx25.ax25Frame.payload.ax25Info.dataMonitor + "</span></div>\
+                                </div></div></span>";
+                                /* eslint-enable quotes*/
+                                if(alphanum_with_white_spaces_regex.test(srcCallsign) === true && alphanum_with_white_spaces_regex.test(dstCallsign) === true) {
+                                    $('#ax25-button').show();
+                                }
+                            }  catch (error) {
+                                ax25_html = '<span class="ax25">An error occured during decoding. This might not be an AX25 packet</span>';
+                            }
 
-                            // check if currently ASCII button is active or HEX and display accordingly
+                            demoddata_div.find('.data-well').append(ax25_html);
+
+                            // check if currently ASCII/HEX/AX25 button is active and display accordingly
                             if ($('#hex-button').prop('disabled')) { 
                                 demoddata_div.find('.ascii').hide();
+                                demoddata_div.find('.ax25').hide();
+                            }
+                            else if ($('#ascii-button').prop('disabled'))
+                            {
+                                demoddata_div.find('.hex').hide();
+                                demoddata_div.find('.ax25').hide();
                             }
                             else {  
                                 demoddata_div.find('.hex').hide();
+                                demoddata_div.find('.ascii').hide();
                             }
 
                         } else if (content_type == 'text'){
@@ -321,13 +353,17 @@ $(document).ready(function() {
     // (see next function)
     $('#ascii-button').click(function(){
         $('.hex').hide();
+        $('.ax25').hide();
         $('.ascii').show();
-        $('#ascii-button').toggleClass('btn-default');
-        $('#ascii-button').toggleClass('btn-primary');
-        $('#hex-button').toggleClass('btn-default');
-        $('#hex-button').toggleClass('btn-primary');
+        $('#ascii-button').removeClass('btn-default');
+        $('#ascii-button').addClass('btn-primary');
+        $('#hex-button').addClass('btn-default');
+        $('#hex-button').removeClass('btn-primary');
+        $('#ax25-button').addClass('btn-default');
+        $('#ax25-button').removeClass('btn-primary');
         $('#ascii-button').attr('disabled', 'disabled');
         $('#hex-button').removeAttr('disabled');
+        $('#ax25-button').removeAttr('disabled');
     });
 
     // retrieve saved hex data and replace the decoded blob with the original
@@ -335,12 +371,30 @@ $(document).ready(function() {
     $('#hex-button').click(function(){
         $('.hex').show();
         $('.ascii').hide();
-        $('#ascii-button').toggleClass('btn-default');
-        $('#ascii-button').toggleClass('btn-primary');
-        $('#hex-button').toggleClass('btn-default');
-        $('#hex-button').toggleClass('btn-primary');
+        $('.ax25').hide();
+        $('#ascii-button').addClass('btn-default');
+        $('#ascii-button').removeClass('btn-primary');
+        $('#ax25-button').addClass('btn-default');
+        $('#ax25-button').removeClass('btn-primary');
+        $('#hex-button').removeClass('btn-default');
+        $('#hex-button').addClass('btn-primary');
         $('#hex-button').attr('disabled', 'disabled');
         $('#ascii-button').removeAttr('disabled');
+        //$('#ax25-button').removeAttr('disabled');
+    });
+
+    $('#ax25-button').click(function(){
+        $('.hex').hide();
+        $('.ascii').hide();
+        $('.ax25').show();
+        $('#ax25-button').addClass('btn-primary');
+        $('#ascii-button').removeClass('btn-primary');
+        $('#ascii-button').addClass('btn-default');
+        $('#hex-button').removeClass('btn-primary');
+        $('#hex-button').addClass('btn-default');
+        $('#ax25-button').attr('disabled', 'disabled');
+        $('#ascii-button').removeAttr('disabled');
+        $('#hex-button').removeAttr('disabled');
     });
 
     // Hotkeys bindings
