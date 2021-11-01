@@ -204,6 +204,8 @@ $(document).ready( function(){
                                                     No transmitter available
                                                   </option>`).prop('disabled', true);
                 $('#transmitter-selection').selectpicker('refresh');
+                $('#station-field-loading').hide();
+                $('#station-field').show();
             }
             $('#transmitter-field-loading').hide();
             $('#transmitter-field').show();
