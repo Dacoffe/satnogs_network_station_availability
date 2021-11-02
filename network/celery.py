@@ -30,6 +30,14 @@ def update_future_observations_with_new_tle_sets():
 
 
 @APP.task
+def update_future_observations_with_new_transmitter_details():
+    """Wrapper task for 'update_future_observations_with_new_transmitter_details' shared task"""
+    from network.base.tasks import (  # isort:skip
+        update_future_observations_with_new_transmitter_details as periodic_task)
+    periodic_task()
+
+
+@APP.task
 def fetch_data():
     """Wrapper task for 'fetch_data' shared task"""
     from network.base.tasks import fetch_data as periodic_task
@@ -85,6 +93,12 @@ def setup_periodic_tasks(sender, **kwargs):  # pylint: disable=W0613
         RUN_TWICE_HOURLY,
         update_future_observations_with_new_tle_sets.s(),
         name='update_future_observations_with_new_tle_sets'
+    )
+
+    sender.add_periodic_task(
+        RUN_TWICE_HOURLY,
+        update_future_observations_with_new_transmitter_details.s(),
+        name='update_future_observations_with_new_transmitter_details'
     )
 
     sender.add_periodic_task(RUN_HOURLY, fetch_data.s(), name='fetch_data')

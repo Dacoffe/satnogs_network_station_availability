@@ -18,7 +18,8 @@ from internetarchive import upload
 from internetarchive.exceptions import AuthenticationError
 from tinytag import TinyTag, TinyTagException
 
-from network.base.db_api import DBConnectionError, get_tle_sets_by_norad_id_set
+from network.base.db_api import DBConnectionError, get_tle_sets_by_norad_id_set, \
+    get_transmitters_by_uuid_set
 from network.base.models import DemodData, Observation, Satellite, Station
 from network.base.rating_tasks import rate_observation
 from network.base.utils import sync_demoddata_to_db
@@ -286,6 +287,43 @@ def update_future_observations_with_new_tle_sets():
             tle_line_2=tle_set['tle2'],
             tle_source=tle_set['tle_source'],
             tle_updated=tle_set['updated'],
+        )
+
+
+@shared_task
+def update_future_observations_with_new_transmitter_details():
+    """ Update future observations with latest Transmitter details"""
+    start = now() + timedelta(minutes=10)
+    future_observations = Observation.objects.filter(start__gt=start)
+    uuid_set = set(future_observations.values_list('transmitter_uuid', flat=True))
+
+    try:
+        if uuid_set:
+            transmitters_set = get_transmitters_by_uuid_set(uuid_set)
+        else:
+            return
+    except DBConnectionError:
+        return
+
+    for uuid in transmitters_set.keys():
+        transmitter = transmitters_set[uuid]
+        transmitter_updated = datetime.strptime(transmitter['updated'], "%Y-%m-%dT%H:%M:%S.%f%z")
+
+        future_observations.filter(
+            transmitter_uuid=uuid, transmitter_created__lt=transmitter_updated
+        ).update(
+            transmitter_description=transmitter['description'],
+            transmitter_type=transmitter['type'],
+            transmitter_uplink_low=transmitter['uplink_low'],
+            transmitter_uplink_high=transmitter['uplink_high'],
+            transmitter_uplink_drift=transmitter['uplink_drift'],
+            transmitter_downlink_low=transmitter['downlink_low'],
+            transmitter_downlink_high=transmitter['downlink_high'],
+            transmitter_downlink_drift=transmitter['downlink_drift'],
+            transmitter_mode=transmitter['mode'],
+            transmitter_invert=transmitter['invert'],
+            transmitter_baud=transmitter['baud'],
+            transmitter_created=transmitter['updated'],
         )
 
 
