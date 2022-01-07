@@ -4,6 +4,7 @@ $(document).ready(function() {
     $('#SatelliteModal').on('show.bs.modal', function (event) {
         var satlink = $(event.relatedTarget);
         var modal = $(this);
+        var satnogs_db_url = 'https://db.satnogs.org';
 
         $.ajax({
             url: '/satellites/' + satlink.data('id') + '/'
@@ -12,7 +13,7 @@ $(document).ready(function() {
             modal.find('.satellite-names').text(data.names);
             modal.find('#SatelliteModalTitle').text(data.name);
             modal.find('.satellite-id').text(satlink.data('id'));
-            modal.find('#db-link').attr('href', 'https://db.satnogs.org/satellite/' + satlink.data('id'));
+            modal.find('#db-link').attr('href', satnogs_db_url + '/satellite/' + satlink.data('id'));
             modal.find('#new-obs-link').attr('href', '/observations/new/?norad=' + satlink.data('id'));
             modal.find('#old-obs-link').attr('href', '/observations/?norad=' + satlink.data('id'));
             modal.find('#good-sat-obs').attr('href', '/observations/?future=0&good=1&bad=0&unknown=0&failed=0&norad=' + satlink.data('id'));
@@ -66,7 +67,8 @@ $(document).ready(function() {
                 );
             });
             if (data.image) {
-                modal.find('.satellite-img-full').attr('src', data.image);
+                var image_url = (new URL(data.image, satnogs_db_url + '/media/')).href;
+                modal.find('.satellite-img-full').attr('src', image_url);
             } else {
                 modal.find('.satellite-img-full').attr('src', '/static/img/sat.png');
             }
