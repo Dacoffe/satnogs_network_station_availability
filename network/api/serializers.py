@@ -415,10 +415,10 @@ class StationSerializer(serializers.ModelSerializer):
     # Using SerializerMethodField instead of directly the reverse relation (antennas) with the
     # AntennaSerializer for not breaking the API, it should change in next API version
     antenna = serializers.SerializerMethodField()
-    altitude = serializers.SerializerMethodField()
     min_horizon = serializers.SerializerMethodField()
     observations = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
+    altitude = serializers.IntegerField(min_value=0, source='alt')
 
     class Meta:
         model = Station
@@ -427,10 +427,6 @@ class StationSerializer(serializers.ModelSerializer):
             'created', 'last_seen', 'status', 'observations', 'description', 'client_version',
             'target_utilization'
         )
-
-    def get_altitude(self, obj):
-        """Returns Station elevation"""
-        return obj.alt
 
     def get_min_horizon(self, obj):
         """Returns Station minimum horizon"""

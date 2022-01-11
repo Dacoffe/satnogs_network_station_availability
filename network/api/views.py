@@ -153,24 +153,36 @@ class TransmitterView(  # pylint: disable=R0901
 class JobView(viewsets.ReadOnlyModelViewSet):  # pylint: disable=R0901
     """SatNOGS Network Job API view class"""
     queryset = Observation.objects.all()
-    serializer_class = serializers.JobSerializer
     filterset_class = filters.ObservationViewFilter
+    serializer_class = serializers.JobSerializer
     filterset_fields = ('ground_station')
 
-    def get_queryset(self):
-        """Returns queryset for Job API view"""
-        queryset = self.queryset.filter(start__gte=now())
+    def list(self, request, *args, **kwargs):
+        lat = self.request.query_params.get('lat', None)
+        lon = self.request.query_params.get('lon', None)
+        alt = self.request.query_params.get('alt', None)
         ground_station_id = self.request.query_params.get('ground_station', None)
         if ground_station_id and self.request.user.is_authenticated:
             ground_station = get_object_or_404(Station, id=ground_station_id)
             if ground_station.owner == self.request.user:
-                lat = self.request.query_params.get('lat', None)
-                lon = self.request.query_params.get('lon', None)
-                alt = self.request.query_params.get('alt', None)
                 if not (lat is None or lon is None or alt is None):
-                    ground_station.lat = float(lat)
-                    ground_station.lng = float(lon)
-                    ground_station.alt = int(alt)
-                ground_station.last_seen = now()
-                ground_station.save()
+                    data = {"lat": lat, "lng": lon, "altitude": alt, "last_seen": now()}
+                else:
+                    data = {"last_seen": now()}
+
+                serializer = serializers.StationSerializer(ground_station, data=data, partial=True)
+                if serializer.is_valid() is False:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+                serializer.save()
+
+        job_serializer = serializers.JobSerializer(
+            self.filter_queryset(self.get_queryset()), many=True
+        )
+        return Response(job_serializer.data, status=status.HTTP_200_OK)
+
+    def get_queryset(self):
+        """Returns queryset for Job API view"""
+        queryset = self.queryset.filter(start__gte=now())
+
         return queryset
