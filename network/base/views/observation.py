@@ -26,7 +26,7 @@ class ObservationListView(ListView):  # pylint: disable=R0901
     context_object_name = "observations"
     paginate_by = settings.ITEMS_PER_PAGE
     template_name = 'base/observations.html'
-    str_filters = ['norad', 'observer', 'station', 'start', 'end']
+    str_filters = ['norad', 'observer', 'station', 'start', 'end', 'transmitter_mode']
     flag_filters = ['bad', 'good', 'unknown', 'future', 'failed']
     filtered = None
 
@@ -70,6 +70,7 @@ class ObservationListView(ListView):  # pylint: disable=R0901
             'station': 'ground_station_id',
             'start': 'start__gt',
             'end': 'end__lt',
+            'transmitter_mode': 'transmitter_mode__icontains',
         }
 
         # Create observations filter based on the received HTTP POST parameters
@@ -157,6 +158,7 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         context['failed'] = self.request.GET.get('failed', '1')
         context['results'] = self.request.GET.getlist('results')
         context['rated'] = self.request.GET.getlist('rated')
+        context['transmitter_mode'] = self.request.GET.get('transmitter_mode', None)
         context['filtered'] = bool(self.filtered)
         if norad_cat_id is not None and norad_cat_id != '':
             context['norad'] = int(norad_cat_id)
