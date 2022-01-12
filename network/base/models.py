@@ -333,7 +333,6 @@ class Satellite(models.Model):
     name = models.CharField(max_length=45)
     names = models.TextField(blank=True)
     image = models.CharField(max_length=100, blank=True, null=True)
-    manual_tle = models.BooleanField(default=False)
     status = models.CharField(
         choices=list(zip(SATELLITE_STATUS, SATELLITE_STATUS)), max_length=10, default='alive'
     )
