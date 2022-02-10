@@ -124,7 +124,7 @@ class ObservationAdmin(admin.ModelAdmin):
     )
     list_filter = ('start', 'end', 'archived', 'audio_zipped', 'status', 'satellite', 'author')
     search_fields = (
-        'satellite__name', 'satellite__names', 'satellite__norad_cat_id', 'author__username'
+        'id', 'satellite__name', 'satellite__names', 'satellite__norad_cat_id', 'author__username'
     )
     inlines = [
         DemodDataInline,
