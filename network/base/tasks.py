@@ -108,7 +108,7 @@ def process_audio(observation_id, force_zip=False):
             if audio_metadata.duration is None or audio_metadata.duration < 1:
                 observation.payload.delete()
                 return
-            rate_observation.delay(observation_id, 'audio_upload', audio_metadata.duration)
+            rate_observation(observation_id, 'audio_upload', audio_metadata.duration)
             if (settings.ZIP_AUDIO_FILES or force_zip) and not settings.USE_S3_STORAGE_FOR_AUDIO:
                 zip_audio(observation_id, observation.payload.path)
         except TinyTagException:
