@@ -12,14 +12,6 @@ API access is open to anyone.
 All API data are freely distributed under the `CC BY-SA <https://creativecommons.org/licenses/by-sa/4.0/>`_ license.
 
 
-Python API Client
------------------
-
-A Python client package is automatically generated for each release.
-The package is named ``satnogs-network-api-client``.
-This Python client is available in `PyPI <https://pypi.org/project/satnogs-network-api-client/>`_.
-
-
 API Reference
 -------------
 
