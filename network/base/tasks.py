@@ -299,7 +299,7 @@ def update_future_observations_with_new_transmitter_details():
 
     try:
         if uuid_set:
-            transmitters_set = get_transmitters_by_uuid_set(uuid_set)
+            transmitters_set = get_transmitters_by_uuid_set(uuid_set, raise_error=False)
         else:
             return
     except DBConnectionError:

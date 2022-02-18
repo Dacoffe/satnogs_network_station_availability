@@ -89,14 +89,14 @@ def get_transmitters():
     return satnogs_db_api_request(transmitters_url)
 
 
-def get_transmitters_by_uuid_set(uuid_set):
+def get_transmitters_by_uuid_set(uuid_set, raise_error=True):
     """Returns transmitters filtered by Transmitter UUID list"""
     if not uuid_set:
         raise ValueError('Expected a non empty list of UUIDs.')
     if len(uuid_set) == 1:
         transmitter_uuid = next(iter(uuid_set))
         transmitter = get_transmitter_by_uuid(transmitter_uuid)
-        if not transmitter:
+        if not transmitter and raise_error:
             raise ValueError('Invalid Transmitter UUID: {0}'.format(str(transmitter_uuid)))
         return {transmitter[0]['uuid']: transmitter[0]}
 
