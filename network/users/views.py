@@ -1,7 +1,8 @@
 """Django users views for SatNOGS Network"""
 from braces.views import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.timezone import now
 from django.views.generic import RedirectView, UpdateView
@@ -32,6 +33,16 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):  # pylint: disable=R0901
 
     def get_object(self, queryset=None):
         return User.objects.get(username=self.request.user.username)
+
+
+@login_required
+def update_user_token(request):
+    """View for API Key renewal"""
+    token = Token.objects.filter(user=request.user)
+    new_key = token[0].generate_key()
+    token.update(key=new_key, created=now())
+
+    return redirect(reverse("users:view_user", kwargs={"username": request.user.username}))
 
 
 def view_user(request, username):

@@ -212,7 +212,44 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <div class="row">
+              <div class="col-md-10">
+                <button class="btn btn-danger" data-toggle="modal" data-target="#renewAPIModal" href="#">Renew API Key</button>
+              </div>
+              <div class="col-md-1">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              </div>
+              </div>           
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Confirm renew API Modal -->
+    <div class="modal fade" id="renewAPIModal" tabindex="-1" role="dialog" aria-labelledby="renewAPIModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title" id="renewAPIModalLabel">Renew API Key</h4>
+          </div>
+          <div class="modal-body">
+            <div>Do you really want to renew your API key ?</div>
+            <div>If you change it, you will need to update the configuration of your satnogs-client/station.</div>
+          </div>
+          <div class="modal-footer">
+            <div class="row">
+              <div class="col-md-10">
+                <form method="post"
+                  action="{% url 'users:update_user_token' %}">{% csrf_token %}
+                  <button type="submit" class="btn btn-primary">Renew</button>
+                </form>
+              </div>
+              <div class="col-md-1">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              </div>
+              </div>           
+            </div>
           </div>
         </div>
       </div>

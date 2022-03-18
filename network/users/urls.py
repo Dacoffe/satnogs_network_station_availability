@@ -7,6 +7,7 @@ USERS_URLPATTERNS = (
     [
         path('redirect/', views.UserRedirectView.as_view(), name='redirect_user'),
         path('update/', views.UserUpdateView.as_view(), name='update_user'),
+        path('update/token/', views.update_user_token, name='update_user_token'),
         re_path(r'^(?P<username>[\w.@+-]+)/$', views.view_user, name='view_user'),
     ], 'users'
 )
