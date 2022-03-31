@@ -306,7 +306,7 @@ $(document).ready(function() {
                             demoddata_div.find('.data-well').append(ax25_html);
 
                             // check if currently ASCII/HEX/AX25 button is active and display accordingly
-                            if ($('#hex-button').prop('disabled')) { 
+                            if ($('#hex-button').prop('disabled')) {
                                 demoddata_div.find('.ascii').hide();
                                 demoddata_div.find('.ax25').hide();
                             }
@@ -315,7 +315,7 @@ $(document).ready(function() {
                                 demoddata_div.find('.hex').hide();
                                 demoddata_div.find('.ax25').hide();
                             }
-                            else {  
+                            else {
                                 demoddata_div.find('.hex').hide();
                                 demoddata_div.find('.ascii').hide();
                             }
@@ -385,7 +385,7 @@ $(document).ready(function() {
         $('#hex-button').addClass('btn-primary');
         $('#hex-button').attr('disabled', 'disabled');
         $('#ascii-button').removeAttr('disabled');
-        //$('#ax25-button').removeAttr('disabled');
+        $('#ax25-button').removeAttr('disabled');
     });
 
     $('#ax25-button').click(function(){
