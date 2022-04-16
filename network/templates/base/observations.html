@@ -112,7 +112,7 @@
             <option value="" selected>All</option>
             {% for satellite in satellites %}
               <option data-norad="{{ satellite.norad_cat_id }}" value="{{ satellite.norad_cat_id }}"
-                      {% ifequal satellite.norad_cat_id norad %}selected{% endifequal %}>
+                      {% if satellite.norad_cat_id == norad %}selected{% endif %}>
                 {{ satellite.norad_cat_id }} - {{ satellite.name }}
               </option>
             {% endfor %}
@@ -124,7 +124,7 @@
             <option value="" selected>All</option>
             {% for author in authors %}
               <option data-author="{{ author.id }}" value="{{ author.id }}"
-                      {% ifequal author.id observer_id %}selected{% endifequal %}>
+                      {% if author.id == observer_id %}selected{% endif %}>
                 {{ author.displayname }}
               </option>
             {% endfor %}
@@ -136,7 +136,7 @@
             <option value="" selected>All</option>
             {% for station in stations %}
               <option data-station="{{ station }}" value="{{ station.id }}"
-                      {% ifequal station.id station_id %}selected{% endifequal %}>
+                      {% if station.id == station_id %}selected{% endif %}>
                 {{ station.id }} - {{ station.name }}
               </option>
             {% endfor %}

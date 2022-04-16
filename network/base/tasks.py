@@ -16,7 +16,8 @@ from django.db.models import Q
 from django.utils.timezone import now
 from internetarchive import upload
 from internetarchive.exceptions import AuthenticationError
-from tinytag import TinyTag, TinyTagException
+from tinytag import TinyTag
+from tinytag.tinytag import TinyTagException
 
 from network.base.db_api import DBConnectionError, get_tle_sets_by_norad_id_set, \
     get_transmitters_by_uuid_set

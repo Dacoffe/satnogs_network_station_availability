@@ -134,7 +134,9 @@ class StationView(  # pylint: disable=R0901
     """SatNOGS Network Station API view class"""
     queryset = Station.objects.annotate(
         total_obs=Count('observations'),
-    ).prefetch_related('antennas', 'antennas__antenna_type', 'antennas__frequency_ranges')
+    ).order_by('id').prefetch_related(
+        'antennas', 'antennas__antenna_type', 'antennas__frequency_ranges'
+    )
     serializer_class = serializers.StationSerializer
     filterset_class = filters.StationViewFilter
     pagination_class = pagination.LinkedHeaderPageNumberPagination

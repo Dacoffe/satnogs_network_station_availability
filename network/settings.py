@@ -4,13 +4,14 @@ For local installation settings please copy .env-dist to .env and edit
 the appropriate settings in that file. You should not need to edit this
 file for local settings!
 """
+from pathlib import Path
+
 from decouple import Csv, config
 from dj_database_url import parse as db_url
 from sentry_sdk import init as sentry_sdk_init
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
-from unipath import Path
 
 from network import __version__
 
@@ -105,13 +106,13 @@ CACHES = {
             default='django.core.cache.backends.locmem.LocMemCache',
         ),
         'LOCATION': config('CACHE_LOCATION', default='unique-location'),
-        'OPTIONS': {
-            'MAX_ENTRIES': 5000,
-            'CLIENT_CLASS': config('CACHE_CLIENT_CLASS', default=''),
-        },
         'KEY_PREFIX': 'network-{0}'.format(ENVIRONMENT),
     }
 }
+
+if CACHES['default']['BACKEND'] == 'django.core.cache.backends.locmem.LocMemCache':
+    CACHES['default']['OPTIONS'] = {'MAX_ENTRIES': 5000}
+
 CACHE_TTL = config('CACHE_TTL', default=300, cast=int)
 
 # Internationalization
@@ -127,7 +128,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            Path(ROOT).child('templates').resolve(),
+            Path(ROOT).joinpath('templates').resolve(),
         ],
         'OPTIONS': {
             'context_processors': [
@@ -161,7 +162,7 @@ TEMPLATES = [
 STATIC_ROOT = config('STATIC_ROOT', default=Path('staticfiles').resolve())
 STATIC_URL = config('STATIC_URL', default='/static/')
 STATICFILES_DIRS = [
-    Path(ROOT).child('static').resolve(),
+    Path(ROOT).joinpath('static').resolve(),
 ]
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
@@ -181,7 +182,8 @@ COMPRESS_FILTERS = {
     'css': [
         'compressor.filters.css_default.CssAbsoluteFilter',
         'compressor.filters.cssmin.rCSSMinFilter'
-    ]
+    ],
+    'js': ['compressor.filters.jsmin.JSMinFilter']
 }
 COMPRESS_PRECOMPILERS = (('text/scss', 'sass --scss {infile} {outfile}'), )
 
@@ -201,6 +203,7 @@ AWS_QUERYSTRING_AUTH = config('AWS_QUERYSTRING_AUTH', default=False, cast=bool)
 # App conf
 ROOT_URLCONF = 'network.urls'
 WSGI_APPLICATION = 'network.wsgi.application'
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 # Auth
