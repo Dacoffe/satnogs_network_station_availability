@@ -343,6 +343,7 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost', cast=Csv())
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
 CSP_DEFAULT_SRC = config(
     'CSP_DEFAULT_SRC',
     cast=lambda v: tuple(s.strip() for s in v.split(',')),
