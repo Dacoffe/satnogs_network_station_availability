@@ -72,7 +72,7 @@ run() {
 run_celery() {
 	case "$1" in
 		worker|beat)
-			exec celery -A "$DJANGO_APP" "$1" -l INFO --workdir "$CELERY_VAR_RUN"
+			exec celery --workdir "$CELERY_VAR_RUN" -A "$DJANGO_APP" "$1" -l INFO
 			;;
 		*)
 			usage
