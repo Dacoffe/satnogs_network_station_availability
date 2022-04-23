@@ -8,8 +8,8 @@ asgiref==3.5.0
 async-timeout==4.0.2
 attrs==21.4.0
 billiard==3.6.4.0
-boto3==1.21.43
-botocore==1.24.43
+boto3==1.21.46
+botocore==1.24.46
 celery==5.2.6
 certifi==2021.10.8
 cffi==1.15.0
@@ -27,7 +27,7 @@ Django==4.0.4
 django-allauth==0.50.0
 django-appconf==1.0.5
 django-avatar @ git+https://github.com/ntoll/django-avatar@68340e8ac603401cfbf05b71bd3f6ad6232fe66c
-django-compressor @ git+https://github.com/django-compressor/django-compressor.git@00910e0bd5295044befacdad7b88249ec7bbf142
+django-compressor==4.0
 django-crispy-forms==1.14.0
 django-csp==3.7
 django-debug-toolbar==3.2.4
