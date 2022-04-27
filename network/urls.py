@@ -1,6 +1,5 @@
 """Base Django URL mapping for SatNOGS Network"""
 from allauth import urls as allauth_urls
-from avatar import urls as avatar_urls
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path, re_path
@@ -16,7 +15,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include(USERS_URLPATTERNS)),
     path('accounts/', include(allauth_urls)),
-    path('avatar/', include(avatar_urls)),
     path('api/', include(API_URLPATTERNS))
 ]
 

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load avatar_tags %}
 {% load static %}
 {% load tags %}
+{% load cache %}
 {% load humanize %}
 
 {% block title %}
@@ -11,12 +11,15 @@
 {% block content %}
   <div class="row">
     <div class="col-sm-12">
-      <h2>{% avatar user 50 %} {{ user.displayname }}
+      <h2>
+        {% cache 3600 profile-avatar user.email %}
+          <img src="{{ user.email|gravatar_url:50 }}" class="img-avatar"/>
+        {% endcache %}
+        {{ user.displayname }}
         {% if user == request.user %}
           <div class="pull-right edit-profile-buttons">
             <a class="btn btn-primary" href="{% url 'users:update_user' %}">Settings</a>
             <a class="btn btn-primary" href="{% url 'account_email' %}">Email</a>
-            <a class="btn btn-primary" href="{% url 'avatar_change' %}">Avatar</a>
             <a class="btn btn-info" data-toggle="modal" data-target="#APIModal" href="#">API Key</a>
           </div>
         {% endif %}

@@ -1,8 +1,19 @@
 """Django template tags for SatNOGS Network"""
+from hashlib import md5
+
 from django import template
 from django.urls import reverse
 
 register = template.Library()
+
+
+# TEMPLATE USE:  {{ email|gravatar_url:150 }}
+@register.filter
+def gravatar_url(email, size=40):
+    """Returns the Gravatar URL based on user's email address"""
+    return "https://www.gravatar.com/avatar/%s?s=%s" % (
+        md5(email.lower().encode('utf-8')).hexdigest(), str(size)
+    )
 
 
 @register.simple_tag

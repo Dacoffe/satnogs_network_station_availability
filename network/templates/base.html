@@ -1,6 +1,6 @@
 {% load static %}
-{% load avatar_tags %}
 {% load tags %}
+{% load cache %}
 {% load compress %}
 
 <!DOCTYPE html>
@@ -73,7 +73,9 @@
                 <a href="#"
                    class="dropdown-toggle"
                    data-toggle="dropdown">
-                  {% avatar request.user 35 %}
+                  {% cache 3600 nav-avatar request.user.email %}
+                    <img src="{{ request.user.email|gravatar_url:35 }}" class="img-avatar"/>
+                  {% endcache %}
                   <span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu" role="menu">

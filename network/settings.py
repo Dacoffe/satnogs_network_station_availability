@@ -33,7 +33,6 @@ DJANGO_APPS = (
     'django.contrib.humanize',
 )
 THIRD_PARTY_APPS = (
-    'avatar',
     'rest_framework',
     'rest_framework.authtoken',
     'drf_spectacular',
