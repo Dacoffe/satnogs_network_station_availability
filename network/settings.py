@@ -474,9 +474,6 @@ COMMUNITY_TIMEOUT = config('COMMUNITY_TIMEOUT', default=2.0, cast=float)
 # ListView pagination
 ITEMS_PER_PAGE = config('ITEMS_PER_PAGE', default=25, cast=int)
 
-# User settings
-AVATAR_GRAVATAR_DEFAULT = config('AVATAR_GRAVATAR_DEFAULT', default='mm')
-
 # Cache expiration of the lock for "process audio" task
 PROCESS_AUDIO_LOCK_EXPIRATION = config('PROCESS_AUDIO_LOCK_EXPIRATION', default=900, cast=int)
 
