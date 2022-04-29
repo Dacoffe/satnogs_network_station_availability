@@ -2,7 +2,7 @@
 #
 # Script to refresh requirements.txt file
 #
-# Copyright (C) 2019-2021 Libre Space Foundation <https://libre.space/>
+# Copyright (C) 2019-2022 Libre Space Foundation <https://libre.space/>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,10 +17,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-EXCLUDE_REGEXP="^\(pkg[-_]resources\|satnogs-network\)"
+EXCLUDE_REGEXP="^\\(pkg[-_]resources\\|satnogs-network\\)"
 COMPATIBLE_REGEXP=""
 VIRTUALENV_DIR=$(mktemp -d)
 PIP_COMMAND="$VIRTUALENV_DIR/bin/pip"
+REQUIREMENTS="
+comm
+grep
+sed
+sort
+virtualenv
+"
+
+# Check for required utilities
+for req in $REQUIREMENTS; do
+	if ! which "$req" >/dev/null; then
+		if [ -z "$has_missing" ]; then
+			echo "$(basename "$0"): Missing script requirements!" 1>&2
+			echo "Please install:" 1>&2
+			has_missing=1
+		fi
+		echo " - '$req'" 1>&2
+	fi
+done
+if [ -n "$has_missing" ]; then
+	exit 1
+fi
 
 # Create virtualenv
 virtualenv "$VIRTUALENV_DIR"
