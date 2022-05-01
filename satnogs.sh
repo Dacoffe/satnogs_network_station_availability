@@ -25,6 +25,7 @@ REFRESH_CMD="./contrib/refresh-requirements.sh"
 TOX_CMD="tox"
 MANAGE_CMD="django-admin"
 NPM_CMD="npm"
+PYTHON_VERSION="3.9"
 
 usage() {
 	cat <<EOF
@@ -108,7 +109,7 @@ virtualenv_initialize() {
 }
 
 virtualenv_install() {
-	virtualenv .virtualenv
+	virtualenv -p python$PYTHON_VERSION .virtualenv
 	.virtualenv/bin/pip install \
 			    --no-cache-dir \
 			    --no-deps \

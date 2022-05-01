@@ -21,6 +21,7 @@ EXCLUDE_REGEXP="^\\(pkg[-_]resources\\|satnogs-network\\)"
 COMPATIBLE_REGEXP=""
 VIRTUALENV_DIR=$(mktemp -d)
 PIP_COMMAND="$VIRTUALENV_DIR/bin/pip"
+PYTHON_VERSION="3.9"
 REQUIREMENTS="
 comm
 grep
@@ -45,7 +46,7 @@ if [ -n "$has_missing" ]; then
 fi
 
 # Create virtualenv
-virtualenv "$VIRTUALENV_DIR"
+virtualenv -p python$PYTHON_VERSION "$VIRTUALENV_DIR"
 
 # Install package with dependencies
 "$PIP_COMMAND" install --no-cache-dir --force-reinstall .
