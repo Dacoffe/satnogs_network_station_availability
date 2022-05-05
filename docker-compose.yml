@@ -65,7 +65,7 @@ services:
       - '.:/usr/local/src/satnogs-network:z'
       - type: 'volume'
         source: 'static'
-        target: '/var/lib/satnogs-network/static'
+        target: '/var/lib/satnogs-network/staticfiles'
       - type: 'volume'
         source: 'media'
         target: '/var/lib/satnogs-network/media'
