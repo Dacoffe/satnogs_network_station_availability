@@ -70,9 +70,9 @@ class StationAdmin(admin.ModelAdmin):
     """Define Station view in django admin UI"""
     list_display = (
         'id', 'name', 'owner', 'get_email', 'lat', 'lng', 'qthlocator', 'client_version',
-        'created_date', 'state', 'target_utilization'
+        'created_date', 'state', 'target_utilization', 'violator_scheduling'
     )
-    list_filter = ('status', 'created', 'client_version')
+    list_filter = ('status', 'created', 'client_version', 'violator_scheduling')
     search_fields = ('id', 'name', 'owner__username')
 
     actions = [export_as_csv, export_station_status]

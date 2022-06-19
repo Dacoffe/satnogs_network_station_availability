@@ -37,6 +37,11 @@ STATION_STATUSES = (
     (1, 'Testing'),
     (0, 'Offline'),
 )
+STATION_VIOLATOR_SCHEDULING_CHOICES = (
+    (0, 'Noone'),
+    (1, 'Only Operators'),
+    (2, 'Everyone'),
+)
 SATELLITE_STATUS = ['alive', 'dead', 'future', 're-entered']
 TRANSMITTER_STATUS = ['active', 'inactive', 'invalid']
 TRANSMITTER_TYPE = ['Transmitter', 'Transceiver', 'Transponder']
@@ -119,6 +124,9 @@ class Station(models.Model):
     testing = models.BooleanField(default=True)
     last_seen = models.DateTimeField(null=True, blank=True)
     status = models.IntegerField(choices=STATION_STATUSES, default=0)
+    violator_scheduling = models.IntegerField(
+        choices=STATION_VIOLATOR_SCHEDULING_CHOICES, default=0
+    )
     horizon = models.PositiveIntegerField(help_text='In degrees above 0', default=10)
     description = models.TextField(max_length=500, blank=True, help_text='Max 500 characters')
     client_version = models.CharField(max_length=45, blank=True)

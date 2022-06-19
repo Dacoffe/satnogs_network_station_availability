@@ -118,6 +118,28 @@
             <hr>
 
             <div class="form-group">
+              <label for="violator_scheduling" class="control-label">Scheduling of Frequency Violators by</label>
+              <select id="violator_scheduling" class="form-control selectpicker show-tick" name="violator_scheduling" autocomplete="off">
+                {% for choice in station_form.violator_scheduling.field.choices %}
+                  <option value="{{ choice.0 }}" {% if choice.0 == station_form.violator_scheduling.value %} selected {% endif %}>{{ choice.1 }}</option>
+                {% endfor %}
+              </select>
+              <div class="help-block">
+                  <p id='violator-scheduling-0' class="violator-scheduling-option-description">
+                      Noone will be able to schedule satellites that violate frequencies. For SSA purposes and recording violations, please consider to change this option to "Only Operators".
+                  </p>
+                  <p id='violator-scheduling-1' class="violator-scheduling-option-description">
+                      Only operators will be able to schedule satellites that violate frequencies. Only necessary observations will be scheduled for SSA purposes and recording violations.
+                  </p>
+                  <p id='violator-scheduling-2' class="violator-scheduling-option-description">
+                      Everyone, who has permission to schedule, will be able to schedule satellites that violate frequencies. However scheduling will be limited to use the minimum of Network and DB resources.
+                  </p>
+              </div>
+            </div>
+
+            <hr>
+
+            <div class="form-group">
               <div class="checkbox">
                 <label>
                   <input type="checkbox" name="testing" {% if station_form.testing.value %}checked="True"{% endif %} {% if not station_form.instance.id %}disabled{% endif %}>

@@ -454,6 +454,12 @@ $(document).ready(function() {
         send_remove_file = image_exists;
     });
 
+    $('#violator_scheduling').change(function(){
+        $('.violator-scheduling-option-description').hide();
+        $('#violator-scheduling-'+ this.value).show();
+    });
+    $('#violator_scheduling').change();
+
     // Submit or Cancel form
     $('#cancel').on('click', function(){
         if(this.textContent == 'Back to Dashboard'){

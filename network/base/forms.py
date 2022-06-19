@@ -1,12 +1,13 @@
 """SatNOGS Network django base Forms class"""
 from django.conf import settings
 from django.forms import BaseFormSet, BaseInlineFormSet, CharField, DateTimeField, FloatField, \
-    Form, ImageField, IntegerField, ModelChoiceField, ModelForm, ValidationError, \
-    formset_factory, inlineformset_factory
+    Form, ImageField, IntegerField, ModelChoiceField, ModelForm, TypedChoiceField, \
+    ValidationError, formset_factory, inlineformset_factory
 
 from network.base.db_api import DBConnectionError, get_tle_sets_by_norad_id_set, \
     get_transmitters_by_uuid_set
-from network.base.models import Antenna, FrequencyRange, Observation, Station
+from network.base.models import STATION_VIOLATOR_SCHEDULING_CHOICES, Antenna, FrequencyRange, \
+    Observation, Station
 from network.base.perms import UserNoPermissionError, check_schedule_perms_per_station
 from network.base.validators import ObservationOverlapError, OutOfRangeError, check_end_datetime, \
     check_overlaps, check_start_datetime, check_start_end_datetimes, \
@@ -154,12 +155,13 @@ class StationForm(ModelForm):
     """Model Form class for Station objects"""
     lat = FloatField(min_value=-90.0, max_value=90.0)
     lng = FloatField(min_value=-180.0, max_value=180.0)
+    violator_scheduling = TypedChoiceField(choices=STATION_VIOLATOR_SCHEDULING_CHOICES, coerce=int)
 
     class Meta:
         model = Station
         fields = [
             'name', 'image', 'alt', 'lat', 'lng', 'qthlocator', 'horizon', 'testing',
-            'description', 'target_utilization'
+            'description', 'target_utilization', 'violator_scheduling'
         ]
         image = ImageField(required=False)
 
