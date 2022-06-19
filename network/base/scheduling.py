@@ -420,9 +420,15 @@ def create_new_observation(station, transmitter, start, end, author, tle_set=Non
     )
 
 
-def get_available_stations(stations, downlink, user):
+def get_available_stations(stations, downlink, user, satellite):
     """Returns stations for scheduling filtered by a specific downlink and user's permissions"""
     available_stations = []
+
+    if satellite.is_frequency_violator:
+        stations = stations.exclude(violator_scheduling=0)
+        if not user.groups.filter(name='Operators').exists():
+            stations = stations.exclude(violator_scheduling=1)
+
     stations_perms = schedule_stations_perms(user, stations)
     stations_with_permissions = [station for station in stations if stations_perms[station.id]]
     for station in stations_with_permissions:

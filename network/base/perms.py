@@ -6,6 +6,19 @@ class UserNoPermissionError(Exception):
     """Error when user has not persmission"""
 
 
+def schedule_station_violators_perms(station, user):
+    """
+    This context flag will determine if user can schedule satellites that violate frequencies on
+    the given station.
+    """
+    if user.is_authenticated:
+        if station.violator_scheduling > 0:
+            if station.violator_scheduling == 2 or user.groups.filter(name='Operators').exists():
+                return True
+
+    return False
+
+
 def schedule_perms(user):
     """
     This context flag will determine if user can schedule an observation.

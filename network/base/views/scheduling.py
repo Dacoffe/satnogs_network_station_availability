@@ -19,7 +19,7 @@ from network.base.db_api import DBConnectionError, get_tle_set_by_norad_id, get_
 from network.base.decorators import ajax_required
 from network.base.forms import ObservationFormSet, SatelliteFilterForm
 from network.base.models import Observation, Satellite, Station
-from network.base.perms import schedule_perms
+from network.base.perms import schedule_perms, schedule_station_violators_perms
 from network.base.scheduling import create_new_observation, get_available_stations, \
     predict_available_observation_windows
 from network.base.serializers import StationSerializer
@@ -164,14 +164,15 @@ def prediction_windows(request):
 
     # Check the selected satellite exists and is alive
     try:
-        sat = Satellite.objects.filter(status='alive').get(norad_cat_id=params['sat_norad_id'])
+        satellite = Satellite.objects.filter(status='alive'
+                                             ).get(norad_cat_id=params['sat_norad_id'])
     except Satellite.DoesNotExist:
         data = [{'error': 'You should select a Satellite first.'}]
         return JsonResponse(data, safe=False)
 
     try:
         # Check if there is a TLE available for this satellite
-        tle_set = get_tle_set_by_norad_id(sat.norad_cat_id)
+        tle_set = get_tle_set_by_norad_id(satellite.norad_cat_id)
         if tle_set:
             tle = tle_set[0]
         else:
@@ -208,7 +209,7 @@ def prediction_windows(request):
                 data = [{'error': 'Stations are offline or they don\'t exist.'}]
             return JsonResponse(data, safe=False)
 
-    available_stations = get_available_stations(stations, downlink, request.user)
+    available_stations = get_available_stations(stations, downlink, request.user, satellite)
 
     data = []
     passes_found = defaultdict(list)
@@ -267,6 +268,8 @@ def pass_predictions(request, station_id):
     )
 
     satellites = Satellite.objects.filter(status='alive')
+    if not schedule_station_violators_perms(station, request.user):
+        satellites = satellites.filter(is_frequency_violator='False')
 
     nextpasses = []
     start = make_aware(datetime.utcnow(), utc)
@@ -363,13 +366,17 @@ def scheduling_stations(request):
         if downlink is None:
             data = [{'error': 'You should select a valid Transmitter.'}]
             return JsonResponse(data, safe=False)
+        satellite = Satellite.objects.get(norad_cat_id=transmitter[0]['norad_cat_id'])
     except DBConnectionError as error:
         data = [{'error': str(error)}]
+        return JsonResponse(data, safe=False)
+    except Satellite.DoesNotExist:
+        data = {'error': 'Unable to find satellite for the selected transmitter.'}
         return JsonResponse(data, safe=False)
 
     stations = Station.objects.filter(status__gt=0
                                       ).prefetch_related('antennas', 'antennas__frequency_ranges')
-    available_stations = get_available_stations(stations, downlink, request.user)
+    available_stations = get_available_stations(stations, downlink, request.user, satellite)
     data = {
         'stations': StationSerializer(available_stations, many=True).data,
     }
@@ -383,7 +390,7 @@ def transmitters_view(request):
     station_id = request.POST.get('station_id', None)
     try:
         if norad_id:
-            Satellite.objects.get(norad_cat_id=norad_id)
+            satellite = Satellite.objects.get(norad_cat_id=norad_id)
         else:
             data = {'error': 'Satellite not provided.'}
             return JsonResponse(data, safe=False)
@@ -405,6 +412,10 @@ def transmitters_view(request):
         station = Station.objects.prefetch_related('antennas', 'antennas__frequency_ranges').get(
             id=station_id
         )
+        if satellite.is_frequency_violator and not schedule_station_violators_perms(station,
+                                                                                    request.user):
+            data = {'error': 'No permission to schedule this satellite on this station.'}
+            return JsonResponse(data, safe=False)
         for transmitter in transmitters:
             transmitter_supported = is_transmitter_in_station_range(transmitter, station)
             if transmitter_supported:
