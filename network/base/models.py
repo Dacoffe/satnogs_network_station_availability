@@ -336,6 +336,7 @@ class Satellite(models.Model):
     status = models.CharField(
         choices=list(zip(SATELLITE_STATUS, SATELLITE_STATUS)), max_length=10, default='alive'
     )
+    is_frequency_violator = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['norad_cat_id']

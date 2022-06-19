@@ -330,7 +330,7 @@ def update_future_observations_with_new_transmitter_details():
 
 @shared_task
 def fetch_data():
-    """Fetch all satellites and transmitters from SatNOGS DB
+    """Fetch all satellites from SatNOGS DB
 
        Throws: requests.exceptions.ConectionError"""
 
