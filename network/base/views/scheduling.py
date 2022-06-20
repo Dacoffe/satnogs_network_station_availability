@@ -268,7 +268,7 @@ def pass_predictions(request, station_id):
     )
 
     satellites = Satellite.objects.filter(status='alive')
-    if not schedule_station_violators_perms(station, request.user):
+    if not schedule_station_violators_perms(request.user, station):
         satellites = satellites.filter(is_frequency_violator='False')
 
     nextpasses = []
@@ -412,8 +412,8 @@ def transmitters_view(request):
         station = Station.objects.prefetch_related('antennas', 'antennas__frequency_ranges').get(
             id=station_id
         )
-        if satellite.is_frequency_violator and not schedule_station_violators_perms(station,
-                                                                                    request.user):
+        if satellite.is_frequency_violator and not schedule_station_violators_perms(request.user,
+                                                                                    station):
             data = {'error': 'No permission to schedule this satellite on this station.'}
             return JsonResponse(data, safe=False)
         for transmitter in transmitters:

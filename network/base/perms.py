@@ -6,7 +6,28 @@ class UserNoPermissionError(Exception):
     """Error when user has not persmission"""
 
 
-def schedule_station_violators_perms(station, user):
+def check_stations_without_permissions(stations_perms):
+    """
+    Check if in the given dictionary of scheduling permissions per station, there are stations that
+    don\'t have scheduling permissions.
+    """
+    stations_without_permissions = [
+        int(station_id) for station_id in stations_perms.keys() if not stations_perms[station_id]
+    ]
+    if stations_without_permissions:
+        if len(stations_without_permissions) == 1:
+            raise UserNoPermissionError(
+                'No permission to schedule observations on station: {0}'.format(
+                    stations_without_permissions[0]
+                )
+            )
+        raise UserNoPermissionError(
+            'No permission to schedule observations on stations: {0}'.
+            format(stations_without_permissions)
+        )
+
+
+def schedule_station_violators_perms(user, station):
     """
     This context flag will determine if user can schedule satellites that violate frequencies on
     the given station.
@@ -17,6 +38,26 @@ def schedule_station_violators_perms(station, user):
                 return True
 
     return False
+
+
+def schedule_stations_violators_perms(user, stations):
+    """
+    This context flag will determine if user can schedule satellites that violate frequencies on
+    the given stations.
+    """
+    if user.is_authenticated:
+        return {
+            station.id: schedule_station_violators_perms(user, station)
+            for station in stations
+        }
+
+    return {station.id: False for station in stations}
+
+
+def check_schedule_perms_of_violators_per_station(user, station_set):
+    """Checks if user has permissions to schedule on stations"""
+    stations_perms = schedule_stations_violators_perms(user, station_set)
+    check_stations_without_permissions(stations_perms)
 
 
 def schedule_perms(user):
@@ -95,23 +136,10 @@ def schedule_stations_perms(user, stations):
     return {station.id: False for station in stations}
 
 
-def check_schedule_perms_per_station(user, station_list):
+def check_schedule_perms_per_station(user, station_set):
     """Checks if user has permissions to schedule on stations"""
-    stations_perms = schedule_stations_perms(user, station_list)
-    stations_without_permissions = [
-        int(station_id) for station_id in stations_perms.keys() if not stations_perms[station_id]
-    ]
-    if stations_without_permissions:
-        if len(stations_without_permissions) == 1:
-            raise UserNoPermissionError(
-                'No permission to schedule observations on station: {0}'.format(
-                    stations_without_permissions[0]
-                )
-            )
-        raise UserNoPermissionError(
-            'No permission to schedule observations on stations: {0}'.
-            format(stations_without_permissions)
-        )
+    stations_perms = schedule_stations_perms(user, station_set)
+    check_stations_without_permissions(stations_perms)
 
 
 def delete_perms(user, observation):

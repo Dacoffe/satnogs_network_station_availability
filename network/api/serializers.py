@@ -7,8 +7,9 @@ from rest_framework import serializers
 
 from network.base.db_api import DBConnectionError, get_tle_sets_by_norad_id_set, \
     get_transmitters_by_uuid_set
-from network.base.models import Antenna, DemodData, FrequencyRange, Observation, Station
-from network.base.perms import UserNoPermissionError, check_schedule_perms_per_station
+from network.base.models import Antenna, DemodData, FrequencyRange, Observation, Satellite, Station
+from network.base.perms import UserNoPermissionError, \
+    check_schedule_perms_of_violators_per_station, check_schedule_perms_per_station
 from network.base.scheduling import create_new_observation
 from network.base.stats import transmitter_stats_by_uuid
 from network.base.validators import ObservationOverlapError, OutOfRangeError, check_end_datetime, \
@@ -229,18 +230,21 @@ class NewObservationListSerializer(serializers.ListSerializer):
     """SatNOGS Network New Observation API List Serializer"""
     transmitters = {}
     tle_sets = set()
+    violators = []
 
     def validate(self, attrs):
         """Validates data from a list of new observations"""
+
         station_set = set()
         transmitter_uuid_set = set()
         transmitter_uuid_station_set = set()
+        norad_id_set = set()
+        uuid_to_norad_id = {}
         start_end_per_station = defaultdict(list)
 
         for observation in attrs:
             station = observation.get('ground_station')
             transmitter_uuid = observation.get('transmitter_uuid')
-
             station_set.add(station)
             transmitter_uuid_set.add(transmitter_uuid)
             transmitter_uuid_station_set.add((transmitter_uuid, station))
@@ -259,17 +263,35 @@ class NewObservationListSerializer(serializers.ListSerializer):
             raise serializers.ValidationError(error, code='forbidden')
 
         try:
-            transmitters = get_transmitters_by_uuid_set(transmitter_uuid_set)
-            self.transmitters = transmitters
-            norad_id_set = {transmitters[uuid]['norad_cat_id'] for uuid in transmitter_uuid_set}
+            self.transmitters = get_transmitters_by_uuid_set(transmitter_uuid_set)
+            for uuid in transmitter_uuid_set:
+                norad_id_set.add(self.transmitters[uuid]['norad_cat_id'])
+                uuid_to_norad_id[uuid] = self.transmitters[uuid]['norad_cat_id']
             self.tle_sets = get_tle_sets_by_norad_id_set(norad_id_set)
         except ValueError as error:
             raise serializers.ValidationError(error, code='invalid')
         except DBConnectionError as error:
             raise serializers.ValidationError(error)
 
+        self.violators = Satellite.objects.filter(
+            norad_cat_id__in=norad_id_set, is_frequency_violator=True
+        )
+        violators_norad_ids = [satellite.norad_cat_id for satellite in self.violators]
+        station_with_violators_set = {
+            station
+            for transmitter_uuid, station in transmitter_uuid_station_set
+            if uuid_to_norad_id[transmitter_uuid] in violators_norad_ids
+        }
+        try:
+            check_schedule_perms_of_violators_per_station(
+                self.context['request'].user, station_with_violators_set
+            )
+        except UserNoPermissionError as error:
+            raise serializers.ValidationError(error, code='forbidden')
+
         transmitter_station_list = [
-            (transmitters[pair[0]], pair[1]) for pair in transmitter_uuid_station_set
+            (self.transmitters[transmitter_uuid], station)
+            for transmitter_uuid, station in transmitter_uuid_station_set
         ]
         try:
             check_transmitter_station_pairs(transmitter_station_list)

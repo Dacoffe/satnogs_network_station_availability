@@ -1,4 +1,6 @@
 """SatNOGS Network django base Forms class"""
+from collections import defaultdict
+
 from django.conf import settings
 from django.forms import BaseFormSet, BaseInlineFormSet, CharField, DateTimeField, FloatField, \
     Form, ImageField, IntegerField, ModelChoiceField, ModelForm, TypedChoiceField, \
@@ -7,8 +9,9 @@ from django.forms import BaseFormSet, BaseInlineFormSet, CharField, DateTimeFiel
 from network.base.db_api import DBConnectionError, get_tle_sets_by_norad_id_set, \
     get_transmitters_by_uuid_set
 from network.base.models import STATION_VIOLATOR_SCHEDULING_CHOICES, Antenna, FrequencyRange, \
-    Observation, Station
-from network.base.perms import UserNoPermissionError, check_schedule_perms_per_station
+    Observation, Satellite, Station
+from network.base.perms import UserNoPermissionError, \
+    check_schedule_perms_of_violators_per_station, check_schedule_perms_per_station
 from network.base.validators import ObservationOverlapError, OutOfRangeError, check_end_datetime, \
     check_overlaps, check_start_datetime, check_start_end_datetimes, \
     check_transmitter_station_pairs
@@ -83,6 +86,7 @@ class BaseObservationFormSet(BaseFormSet):
     """Base FormSet class for Observation objects forms"""
     transmitters = {}
     tle_sets = set()
+    violators = []
 
     def __init__(self, user, *args, **kwargs):
         """Initializes Observation FormSet"""
@@ -95,50 +99,61 @@ class BaseObservationFormSet(BaseFormSet):
             # If there are errors in forms validation no need for validating the formset
             return
 
-        station_list = []
+        station_set = set()
         transmitter_uuid_set = set()
-        transmitter_uuid_station_list = []
-        start_end_per_station = {}
+        transmitter_uuid_station_set = set()
+        norad_id_set = set()
+        uuid_to_norad_id = {}
+        start_end_per_station = defaultdict(list)
 
         for form in self.forms:
             station = form.cleaned_data.get('ground_station')
             transmitter_uuid = form.cleaned_data.get('transmitter_uuid')
-            start = form.cleaned_data.get('start')
-            end = form.cleaned_data.get('end')
-            station_id = int(station.id)
-            station_list.append(station)
+            station_set.add(station)
             transmitter_uuid_set.add(transmitter_uuid)
-            transmitter_uuid_station_list.append((transmitter_uuid, station))
-            if station_id in start_end_per_station:
-                start_end_per_station[station_id].append((start, end))
-            else:
-                start_end_per_station[station_id] = []
-                start_end_per_station[station_id].append((start, end))
+            transmitter_uuid_station_set.add((transmitter_uuid, station))
+            start_end_per_station[int(station.id)].append(
+                (form.cleaned_data.get('start'), form.cleaned_data.get('end'))
+            )
 
         try:
             check_overlaps(start_end_per_station)
         except ObservationOverlapError as error:
             raise ValidationError(error, code='invalid') from error
 
-        station_list = list(set(station_list))
         try:
-            check_schedule_perms_per_station(self.user, station_list)
+            check_schedule_perms_per_station(self.user, station_set)
         except UserNoPermissionError as error:
             raise ValidationError(error, code='forbidden') from error
 
         try:
-            transmitters = get_transmitters_by_uuid_set(transmitter_uuid_set)
-            self.transmitters = transmitters
-            norad_id_set = {transmitters[uuid]['norad_cat_id'] for uuid in transmitter_uuid_set}
+            self.transmitters = get_transmitters_by_uuid_set(transmitter_uuid_set)
+            for uuid in transmitter_uuid_set:
+                norad_id_set.add(self.transmitters[uuid]['norad_cat_id'])
+                uuid_to_norad_id[uuid] = self.transmitters[uuid]['norad_cat_id']
             self.tle_sets = get_tle_sets_by_norad_id_set(norad_id_set)
         except ValueError as error:
             raise ValidationError(error, code='invalid') from error
         except DBConnectionError as error:
             raise ValidationError(error) from error
 
-        transmitter_uuid_station_set = set(transmitter_uuid_station_list)
+        self.violators = Satellite.objects.filter(
+            norad_cat_id__in=norad_id_set, is_frequency_violator=True
+        )
+        violators_norad_ids = [satellite.norad_cat_id for satellite in self.violators]
+        station_with_violators_set = {
+            station
+            for transmitter_uuid, station in transmitter_uuid_station_set
+            if uuid_to_norad_id[transmitter_uuid] in violators_norad_ids
+        }
+        try:
+            check_schedule_perms_of_violators_per_station(self.user, station_with_violators_set)
+        except UserNoPermissionError as error:
+            raise ValidationError(error, code='forbidden') from error
+
         transmitter_station_list = [
-            (transmitters[pair[0]], pair[1]) for pair in transmitter_uuid_station_set
+            (self.transmitters[transmitter_uuid], station)
+            for transmitter_uuid, station in transmitter_uuid_station_set
         ]
         try:
             check_transmitter_station_pairs(transmitter_station_list)

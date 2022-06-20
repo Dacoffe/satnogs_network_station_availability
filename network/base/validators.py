@@ -83,8 +83,9 @@ def is_transmitter_in_station_range(transmitter, station):
 def check_transmitter_station_pairs(transmitter_station_list):
     """Validate the pairs of transmitter and stations"""
     out_of_range_pairs = [
-        (str(pair[0]['uuid']), int(pair[1].id)) for pair in transmitter_station_list
-        if not is_transmitter_in_station_range(pair[0], pair[1])
+        (str(transmitter['uuid']), int(station.id))
+        for transmitter, station in transmitter_station_list
+        if not is_transmitter_in_station_range(transmitter, station)
     ]
     if out_of_range_pairs:
         if len(out_of_range_pairs) == 1:
