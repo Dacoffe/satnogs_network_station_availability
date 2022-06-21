@@ -429,6 +429,13 @@ ARCHIVE_AUDIO_LOCK_EXPIRATION = config('ARCHIVE_AUDIO_LOCK_EXPIRATION', default=
 NOT_SYNCED_MODES = config(
     'NOT_SYNCED_MODES', default='AHRPT,AM,APT,CW,FM,FMN,HRPT,LRPT,LSB,SSTV,USB', cast=Csv()
 )
+# Observations per Satellite that is frequency violator
+OBSERVATIONS_PER_VIOLATOR_SATELLITE = config(
+    'OBSERVATIONS_PER_VIOLATOR_SATELLITE', default=2, cast=int
+)
+OBSERVATIONS_PER_VIOLATOR_SATELLITE_PERIOD = config(
+    'OBSERVATIONS_PER_VIOLATOR_SATELLITE_PERIOD', default=86400, cast=int
+)
 
 # Station settings
 # Heartbeat for keeping a station online in minutes

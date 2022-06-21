@@ -1,4 +1,5 @@
 """Django base validators for SatNOGS Network"""
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -23,6 +24,10 @@ class SinglePassError(Exception):
 
 class NoTleSetError(Exception):
     """Error when satellite doesn't have available TLE set"""
+
+
+class SchedulingLimitError(Exception):
+    """Error when observations exceed scheduling limit"""
 
 
 def check_start_datetime(start):
@@ -115,3 +120,65 @@ def check_overlaps(stations_dict):
                     raise ObservationOverlapError(
                         'Observations of station {0} overlap'.format(station)
                     )
+
+
+def return_no_fit_periods(scheduled_observations, observations_limit, time_limit):
+    """
+    Return periods that can not fit any other observation due to observation limit for a certain
+    time limit.
+    """
+    scheduled_observations.sort()
+    no_fit_periods = []
+    obs_to_reach_limit = observations_limit - 1
+    for pointer in range(0, len(scheduled_observations) - obs_to_reach_limit):
+        first_obs_start = scheduled_observations[pointer]
+        last_obs_start = scheduled_observations[pointer + obs_to_reach_limit]
+        first_last_timedelta = last_obs_start - first_obs_start
+        if first_last_timedelta.total_seconds() < time_limit:
+            time_limit_period = timedelta(seconds=time_limit)
+            no_fit_periods.append(
+                (last_obs_start - time_limit_period, first_obs_start + time_limit_period)
+            )
+    return no_fit_periods
+
+
+def fit_observation_into_scheduled_observations(
+    observation, scheduled_observations, observations_limit, time_limit, limit_reason
+):
+    """
+    Checks if given observation exceeds the scheduling limit and if not then appends it in given
+    scheduled observations list
+    """
+    no_fit_periods = return_no_fit_periods(scheduled_observations, observations_limit, time_limit)
+    for period in no_fit_periods:
+        if period[0] <= observation <= period[1]:
+            observation_start = observation.strftime("%Y-%m-%d %H:%M:%S UTC")
+            period_start = period[0].strftime("%Y-%m-%d %H:%M:%S UTC")
+            period_end = period[1].strftime("%Y-%m-%d %H:%M:%S UTC")
+            raise SchedulingLimitError(
+                (
+                    'Scheduling observation that starts at {0} exceeds scheduling limit for the'
+                    ' period from {1} to {2}\nReason for scheduling limit: {3}'
+                ).format(observation_start, period_start, period_end, limit_reason)
+            )
+    scheduled_observations.append(observation)
+
+
+def check_violators_scheduling_limit(violators, observations_per_norad_id):
+    """
+    Check if observations to be scheduled for satellite violators exceed the scheduling limit.
+    """
+    scheduled_observations_per_norad_id = defaultdict(list)
+    time_limit = settings.OBSERVATIONS_PER_VIOLATOR_SATELLITE_PERIOD
+    observations_limit = settings.OBSERVATIONS_PER_VIOLATOR_SATELLITE
+    for satellite in violators:
+        for observation in satellite.observations.filter(
+                start__gte=make_aware(datetime.now() - timedelta(seconds=time_limit), utc)):
+            scheduled_observations_per_norad_id[satellite.norad_cat_id].append(observation.start)
+        for observation in observations_per_norad_id[satellite.norad_cat_id]:
+            fit_observation_into_scheduled_observations(
+                observation, scheduled_observations_per_norad_id[satellite.norad_cat_id],
+                observations_limit, time_limit, '{0}({1}) is frequency violator satellite'.format(
+                    satellite.name, satellite.norad_cat_id
+                )
+            )

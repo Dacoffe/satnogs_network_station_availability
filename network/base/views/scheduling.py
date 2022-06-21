@@ -25,16 +25,20 @@ from network.base.scheduling import create_new_observation, get_available_statio
 from network.base.serializers import StationSerializer
 from network.base.stats import satellite_stats_by_transmitter_list, transmitters_with_stats
 from network.base.validators import NegativeElevationError, NoTleSetError, \
-    ObservationOverlapError, SinglePassError, is_transmitter_in_station_range
+    ObservationOverlapError, SchedulingLimitError, SinglePassError, \
+    check_violators_scheduling_limit, is_transmitter_in_station_range
 
 
 def create_new_observations(formset, user):
     """Creates new observations from formset. Error handling is performed by upper layers."""
     new_observations = []
+    observations_per_norad_id = defaultdict(list)
     for observation_data in formset.cleaned_data:
         transmitter_uuid = observation_data['transmitter_uuid']
         transmitter = formset.transmitters[transmitter_uuid]
         tle_set = formset.tle_sets[transmitter['norad_cat_id']]
+
+        observations_per_norad_id[transmitter['norad_cat_id']].append(observation_data['start'])
 
         observation = create_new_observation(
             station=observation_data['ground_station'],
@@ -45,6 +49,9 @@ def create_new_observations(formset, user):
             tle_set=tle_set,
         )
         new_observations.append(observation)
+
+    if formset.violators and not user.groups.filter(name='Operators').exists():
+        check_violators_scheduling_limit(formset.violators, observations_per_norad_id)
 
     for observation in new_observations:
         observation.save()
@@ -84,7 +91,7 @@ def observation_new_post(request):
             messages.success(request, str(total) + ' Observations were scheduled successfully.')
             response = redirect(reverse('base:observations_list'))
     except (ObservationOverlapError, NegativeElevationError, NoTleSetError, SinglePassError,
-            ValidationError, ValueError) as error:
+            ValidationError, ValueError, SchedulingLimitError) as error:
         messages.error(request, str(error))
         response = redirect(reverse('base:observation_new'))
     return response

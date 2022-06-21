@@ -14,7 +14,7 @@ from network.base.scheduling import create_new_observation
 from network.base.stats import transmitter_stats_by_uuid
 from network.base.validators import ObservationOverlapError, OutOfRangeError, check_end_datetime, \
     check_overlaps, check_start_datetime, check_start_end_datetimes, \
-    check_transmitter_station_pairs
+    check_transmitter_station_pairs, check_violators_scheduling_limit
 
 
 class CreateDemodDataSerializer(serializers.ModelSerializer):
@@ -302,11 +302,15 @@ class NewObservationListSerializer(serializers.ListSerializer):
     def create(self, validated_data):
         """Creates new observations from a list of new observations validated data"""
         new_observations = []
+        observations_per_norad_id = defaultdict(list)
         for observation_data in validated_data:
-
             transmitter_uuid = observation_data['transmitter_uuid']
             transmitter = self.transmitters[transmitter_uuid]
             tle_set = self.tle_sets[transmitter['norad_cat_id']]
+
+            observations_per_norad_id[transmitter['norad_cat_id']].append(
+                observation_data['start']
+            )
 
             observation = create_new_observation(
                 station=observation_data['ground_station'],
@@ -317,6 +321,10 @@ class NewObservationListSerializer(serializers.ListSerializer):
                 tle_set=tle_set,
             )
             new_observations.append(observation)
+
+        if self.violators and not self.context['request'].user.groups.filter(name='Operators'
+                                                                             ).exists():
+            check_violators_scheduling_limit(self.violators, observations_per_norad_id)
 
         for observation in new_observations:
             observation.save()

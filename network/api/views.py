@@ -16,7 +16,7 @@ from network.base.models import Observation, Station
 from network.base.rating_tasks import rate_observation
 from network.base.tasks import delay_task_with_lock, process_audio, sync_to_db
 from network.base.validators import NegativeElevationError, NoTleSetError, \
-    ObservationOverlapError, SinglePassError
+    ObservationOverlapError, SchedulingLimitError, SinglePassError
 
 
 class ObservationView(  # pylint: disable=R0901
@@ -63,7 +63,7 @@ class ObservationView(  # pylint: disable=R0901
             response = Response(str(error), status=status.HTTP_400_BAD_REQUEST)
         except NoTleSetError as error:
             response = Response(str(error), status=status.HTTP_501_NOT_IMPLEMENTED)
-        except ObservationOverlapError as error:
+        except (ObservationOverlapError, SchedulingLimitError) as error:
             response = Response(str(error), status=status.HTTP_409_CONFLICT)
         return response
 
