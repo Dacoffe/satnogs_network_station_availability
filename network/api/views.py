@@ -4,13 +4,15 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Count
 from django.db.models.query import QuerySet
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
 from rest_framework import mixins, status, viewsets
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
-from network.api import filters, pagination, serializers
+from network.api import authentication, filters, pagination, serializers
 from network.api.perms import StationOwnerPermission
 from network.base.models import Observation, Station
 from network.base.rating_tasks import rate_observation
@@ -140,6 +142,18 @@ class StationView(  # pylint: disable=R0901
     serializer_class = serializers.StationSerializer
     filterset_class = filters.StationViewFilter
     pagination_class = pagination.LinkedHeaderPageNumberPagination
+
+
+class StationConfigurationView(viewsets.ReadOnlyModelViewSet):  # pylint: disable=R0901
+    """SatNOGS Network Station Configuration API view class"""
+    queryset = Station.objects.all()
+    serializer_class = serializers.StationConfigurationSerializer
+    authentication_classes = [authentication.ClientIDAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        station = get_object_or_404(Station, client_id=request.auth)
+        return HttpResponseRedirect(redirect_to='/api/configuration/' + str(station.id) + '/')
 
 
 class TransmitterView(  # pylint: disable=R0901

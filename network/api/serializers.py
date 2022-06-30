@@ -511,6 +511,31 @@ class StationSerializer(serializers.ModelSerializer):
             return None
 
 
+class StationConfigurationSerializer(serializers.ModelSerializer):
+    """SatNOGS Network Station Configuration API Serializer"""
+    satnogs_api_token = serializers.SerializerMethodField()
+    satnogs_station_elev = serializers.IntegerField(source='alt')
+    satnogs_station_id = serializers.SerializerMethodField()
+    satnogs_station_lat = serializers.FloatField(source='lat')
+    satnogs_station_lon = serializers.FloatField(source='lng')
+
+    class Meta:
+        model = Station
+        fields = [
+            'satnogs_station_id', 'satnogs_api_token', 'satnogs_station_elev',
+            'satnogs_station_lat', 'satnogs_station_lon', 'satnogs_soapy_rx_device',
+            'satnogs_antenna', 'satnogs_rx_samp_rate', 'satnogs_rf_gain'
+        ]
+
+    def get_satnogs_api_token(self, obj):
+        """Returns API key of station owner"""
+        return obj.owner.auth_token.key
+
+    def get_satnogs_station_id(self, obj):
+        """Returns API key of station owner"""
+        return obj.pk
+
+
 class JobSerializer(serializers.ModelSerializer):
     """SatNOGS Network Job API Serializer"""
     frequency = serializers.SerializerMethodField()
