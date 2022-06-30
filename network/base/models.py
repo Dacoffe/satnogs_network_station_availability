@@ -137,6 +137,7 @@ class Station(models.Model):
         null=True,
         blank=True
     )
+    client_id = models.CharField(max_length=128, blank=True)
     # Basic client configuration
     satnogs_soapy_rx_device = models.CharField(max_length=40, blank=True)
     satnogs_antenna = models.CharField(max_length=40, blank=True)
