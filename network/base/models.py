@@ -137,6 +137,11 @@ class Station(models.Model):
         null=True,
         blank=True
     )
+    # Basic client configuration
+    satnogs_soapy_rx_device = models.CharField(max_length=40, blank=True)
+    satnogs_antenna = models.CharField(max_length=40, blank=True)
+    satnogs_rx_samp_rate = models.PositiveIntegerField(null=True, blank=True)
+    satnogs_rf_gain = models.FloatField(null=True, blank=True)
 
     class Meta:
         ordering = ['-status']

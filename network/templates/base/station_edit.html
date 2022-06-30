@@ -23,8 +23,8 @@
     </div>
   </div>
 
-  <div class="row">
-    <form role="form" enctype="multipart/form-data" method="post">{% csrf_token %}
+  <form role="form" enctype="multipart/form-data" method="post">{% csrf_token %}
+    <div class="row">
       <div class="col-md-6">
         <div class="panel panel-default">
           <div class="panel-heading">
@@ -42,58 +42,7 @@
             </div>
           </div>
         </div>
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            <h3 class="panel-title">Location</h3>
-          </div>
-          <div class="panel-body">
-            <div class="row">
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label for="lat" class="control-label">Latitude</label>
-                  <input value="{{ station_form.lat.value|default_if_none:"" }}" id="lat" type="number" class="form-control" name="lat" step="0.000001" max="{{ station_form.lat.field.max_value }}" min="{{ station_form.lat.field.min_value }}" placeholder="{{ station_form.lat.help_text }}" required>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label for="lng" class="control-label">Longtitude</label>
-                  <input value="{{ station_form.lng.value|default_if_none:"" }}" id="lng" type="number" class="form-control" name="lng" step="0.000001" max="{{ station_form.lng.field.max_value }}" min="{{ station_form.lng.field.min_value }}" placeholder="{{ station_form.lng.help_text }}" required>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label for="alt" class="control-label">Altitude (ASL)</label>
-                  <input value="{{ station_form.alt.value|default_if_none:"" }}" id="alt" type="number" class="form-control" name="alt" placeholder="{{ station_form.alt.help_text }}" required>
-                </div>
-              </div>
-            </div>
 
-            <div class="form-group">
-              <label for="qthlocator" class="control-label">QTH Locator</label>
-              <input class="form-control"
-                     id="qthlocator"
-                     type="text"
-                     name="qthlocator"
-                     value="{{ station_form.qthlocator.value|default_if_none:"" }}"
-                     readonly>
-            </div>
-          </div>
-        </div>
-
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            <h3 class="panel-title">Image</h3>
-          </div>
-          <div class="panel-body">
-            <div class="form-group">
-              <input id="station-image" type="file" name="image" accept="image/*"
-                 {% if station_form.image.value and not image_changed %} data-existing="{{ MEDIA_URL }}{{ station_form.image.value }}" {% endif %}>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-6">
         <div class="panel panel-default">
           <div class="panel-heading">
             <h3 class="panel-title">Settings</h3>
@@ -148,6 +97,88 @@
                             title="Make sure you station is performing well for a period of time before you remove the Testing flag"></span>
                 </label>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">Configuration</h3>
+          </div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label for="satnogs_soapy_rx_device" class="control-label">Soapy RX Device</label>
+              <input value="{{ station_form.satnogs_soapy_rx_device.value|default_if_none:"" }}" id="soapy-rx-device" type="text" class="form-control" maxlength="{{ station_form.satnogs_soapy_rx_device.field.max_length }}" name="satnogs_soapy_rx_device">
+            </div>
+            <div class="form-group">
+              <label for="satnogs_antenna" class="control-label">Soapy Antenna</label>
+              <input value="{{ station_form.satnogs_antenna.value|default_if_none:"" }}" id="satnogs-antenna" type="text" class="form-control" maxlength="{{ station_form.satnogs_antenna.field.max_length }}" name="satnogs_antenna">
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="satnogs_rx_samp_rate" class="control-label">RX Sample Rate</label>
+                  <input value="{{ station_form.satnogs_rx_samp_rate.value|default_if_none:"" }}" id="satnogs-rx-samp-rate" type="number" class="form-control" name="satnogs_rx_samp_rate" step="1" min="0">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="satnogs_rf_gain" class="control-label">RF Gain</label>
+                  <input value="{{ station_form.satnogs_rf_gain.value|default_if_none:"" }}" id="satnogs-rf-gain" type="number" class="form-control" name="satnogs_rf_gain" step="0.01" min="0">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">Location</h3>
+          </div>
+          <div class="panel-body">
+            <div class="row">
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label for="lat" class="control-label">Latitude</label>
+                  <input value="{{ station_form.lat.value|default_if_none:"" }}" id="lat" type="number" class="form-control" name="lat" step="0.000001" max="{{ station_form.lat.field.max_value }}" min="{{ station_form.lat.field.min_value }}" placeholder="{{ station_form.lat.help_text }}" required>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label for="lng" class="control-label">Longtitude</label>
+                  <input value="{{ station_form.lng.value|default_if_none:"" }}" id="lng" type="number" class="form-control" name="lng" step="0.000001" max="{{ station_form.lng.field.max_value }}" min="{{ station_form.lng.field.min_value }}" placeholder="{{ station_form.lng.help_text }}" required>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label for="alt" class="control-label">Altitude (ASL)</label>
+                  <input value="{{ station_form.alt.value|default_if_none:"" }}" id="alt" type="number" class="form-control" name="alt" placeholder="{{ station_form.alt.help_text }}" required>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="qthlocator" class="control-label">QTH Locator</label>
+              <input class="form-control"
+                     id="qthlocator"
+                     type="text"
+                     name="qthlocator"
+                     value="{{ station_form.qthlocator.value|default_if_none:"" }}"
+                     readonly>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">Image</h3>
+          </div>
+          <div class="panel-body">
+            <div class="form-group">
+              <input id="station-image" type="file" name="image" accept="image/*"
+                 {% if station_form.image.value and not image_changed %} data-existing="{{ MEDIA_URL }}{{ station_form.image.value }}" {% endif %}>
             </div>
           </div>
         </div>
@@ -288,26 +319,26 @@
           </div>
           <!-- End of Edit/New Antenna Modal-->
         </div>
+      </div>
+    </div>
 
-        <div class='row'>
-          <div class='col-md-4'>
-            <div class="btn-group btn-group-justified" role="group">
-              <div class="btn-group" role="group">
-                <button id="cancel" type="button" class="btn btn-default">{% if station_form.instance.id %}Back to Station{% else %}Back to Dashboard{% endif %}</button>
-              </div>
-            </div>
-          </div>
-          <div class='col-md-8'>
-            <div class="btn-group btn-group-justified" role="group">
-              <div class="btn-group" role="group">
-                <button id="submit" type="submit" class="btn btn-primary" disabled="True">{% if station_form.instance.id %}Save Changes{% else %}Submit{% endif %}</button>
-              </div>
-            </div>
+    <div class='row'>
+      <div class='col-md-4'>
+        <div class="btn-group btn-group-justified" role="group">
+          <div class="btn-group" role="group">
+            <button id="cancel" type="button" class="btn btn-default">{% if station_form.instance.id %}Back to Station{% else %}Back to Dashboard{% endif %}</button>
           </div>
         </div>
       </div>
-    </form>
-  </div>
+      <div class='col-md-8'>
+        <div class="btn-group btn-group-justified" role="group">
+          <div class="btn-group" role="group">
+            <button id="submit" type="submit" class="btn btn-primary" disabled="True">{% if station_form.instance.id %}Save Changes{% else %}Submit{% endif %}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
 {% endblock %}
 
 {% block javascript %}

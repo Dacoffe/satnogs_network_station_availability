@@ -176,7 +176,8 @@ class StationForm(ModelForm):
         model = Station
         fields = [
             'name', 'image', 'alt', 'lat', 'lng', 'qthlocator', 'horizon', 'testing',
-            'description', 'target_utilization', 'violator_scheduling'
+            'description', 'target_utilization', 'violator_scheduling', 'satnogs_soapy_rx_device',
+            'satnogs_antenna', 'satnogs_rx_samp_rate', 'satnogs_rf_gain'
         ]
         image = ImageField(required=False)
 

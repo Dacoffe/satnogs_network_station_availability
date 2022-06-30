@@ -70,7 +70,8 @@ class StationAdmin(admin.ModelAdmin):
     """Define Station view in django admin UI"""
     list_display = (
         'id', 'name', 'owner', 'get_email', 'lat', 'lng', 'qthlocator', 'client_version',
-        'created_date', 'state', 'target_utilization', 'violator_scheduling'
+        'created_date', 'state', 'target_utilization', 'violator_scheduling',
+        'satnogs_soapy_rx_device', 'satnogs_antenna', 'satnogs_rx_samp_rate', 'satnogs_rf_gain'
     )
     list_filter = ('status', 'created', 'client_version', 'violator_scheduling')
     search_fields = ('id', 'name', 'owner__username')

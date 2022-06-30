@@ -469,6 +469,11 @@ $(document).ready(function() {
         }
     });
 
+    $('#satnogs-rx-samp-rate').on('change', function(){
+        this.value = Number(this.value);
+    });
+    
+
     $('form').on('submit', function(){
         $('#antenna-type').remove();
         let antennas_total = 0;
