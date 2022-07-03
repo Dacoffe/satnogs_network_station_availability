@@ -198,7 +198,9 @@ def prediction_windows(request):
         return JsonResponse(data, safe=False)
 
     # Fetch all available ground stations
-    stations = Station.objects.filter(status__gt=0).prefetch_related(
+    stations = Station.objects.filter(
+        status__gt=0, alt__isnull=False, lat__isnull=False, lng__isnull=False
+    ).prefetch_related(
         Prefetch(
             'observations',
             queryset=Observation.objects.filter(end__gt=now()),
@@ -211,9 +213,23 @@ def prediction_windows(request):
         stations = stations.filter(id__in=params['station_ids'])
         if not stations:
             if len(params['station_ids']) == 1:
-                data = [{'error': 'Station is offline or it doesn\'t exist.'}]
+                data = [
+                    {
+                        'error': (
+                            'Station is offline, it doesn\'t exist or'
+                            ' it hasn\'t defined location.'
+                        )
+                    }
+                ]
             else:
-                data = [{'error': 'Stations are offline or they don\'t exist.'}]
+                data = [
+                    {
+                        'error': (
+                            'Stations are offline, they don\'t exist or'
+                            ' they haven\'t defined location.'
+                        )
+                    }
+                ]
             return JsonResponse(data, safe=False)
 
     available_stations = get_available_stations(stations, downlink, request.user, satellite)
@@ -271,7 +287,10 @@ def pass_predictions(request, station_id):
                 to_attr='scheduled_obs'
             ), 'antennas', 'antennas__frequency_ranges'
         ),
-        id=station_id
+        id=station_id,
+        alt__isnull=False,
+        lat__isnull=False,
+        lng__isnull=False
     )
 
     satellites = Satellite.objects.filter(status='alive')
@@ -381,8 +400,9 @@ def scheduling_stations(request):
         data = {'error': 'Unable to find satellite for the selected transmitter.'}
         return JsonResponse(data, safe=False)
 
-    stations = Station.objects.filter(status__gt=0
-                                      ).prefetch_related('antennas', 'antennas__frequency_ranges')
+    stations = Station.objects.filter(
+        status__gt=0, alt__isnull=False, lat__isnull=False, lng__isnull=False
+    ).prefetch_related('antennas', 'antennas__frequency_ranges')
     available_stations = get_available_stations(stations, downlink, request.user, satellite)
     data = {
         'stations': StationSerializer(available_stations, many=True).data,

@@ -109,12 +109,18 @@ class Station(models.Model):
     )
     name = models.CharField(max_length=45)
     image = models.ImageField(upload_to='ground_stations', blank=True, validators=[validate_image])
-    alt = models.PositiveIntegerField(help_text='In meters above sea level')
+    alt = models.PositiveIntegerField(null=True, blank=True, help_text='In meters above sea level')
     lat = models.FloatField(
-        validators=[MaxValueValidator(90), MinValueValidator(-90)], help_text='eg. 38.01697'
+        null=True,
+        blank=True,
+        validators=[MaxValueValidator(90), MinValueValidator(-90)],
+        help_text='eg. 38.01697'
     )
     lng = models.FloatField(
-        validators=[MaxValueValidator(180), MinValueValidator(-180)], help_text='eg. 23.7314'
+        null=True,
+        blank=True,
+        validators=[MaxValueValidator(180), MinValueValidator(-180)],
+        help_text='eg. 23.7314'
     )
     # https://en.wikipedia.org/wiki/Maidenhead_Locator_System
     qthlocator = models.CharField(max_length=8, blank=True)
@@ -166,6 +172,13 @@ class Station(models.Model):
     def is_offline(self):
         """Return true if station is offline"""
         return not self.is_online
+
+    @property
+    def has_location(self):
+        """Return true if station location is defined"""
+        if self.alt is None or self.lat is None or self.lng is None:
+            return False
+        return True
 
     @property
     def is_testing(self):

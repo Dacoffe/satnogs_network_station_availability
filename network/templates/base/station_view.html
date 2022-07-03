@@ -55,26 +55,28 @@
           </a>
         </span>
       </div>
-      {% if station.qthlocator %}
+      {% if station.has_location %}
+        {% if station.qthlocator %}
+          <div class="front-line">
+            <span class="label label-default">QTH Locator</span>
+            <span class="front-data">
+              {{ station.qthlocator }}
+            </span>
+          </div>
+        {% endif %}
         <div class="front-line">
-          <span class="label label-default">QTH Locator</span>
+          <span class="label label-default">Coordinates</span>
           <span class="front-data">
-            {{ station.qthlocator }}
+            {{ station.lat|floatformat:-3 }}°, {{ station.lng|floatformat:-3 }}°
+          </span>
+        </div>
+        <div class="front-line">
+          <span class="label label-default">Altitude</span>
+          <span class="front-data">
+            {{ station.alt }} m
           </span>
         </div>
       {% endif %}
-      <div class="front-line">
-        <span class="label label-default">Coordinates</span>
-        <span class="front-data">
-          {{ station.lat|floatformat:-3 }}°, {{ station.lng|floatformat:-3 }}°
-        </span>
-      </div>
-      <div class="front-line">
-        <span class="label label-default">Altitude</span>
-        <span class="front-data">
-          {{ station.alt }} m
-        </span>
-      </div>
       <div class="front-line">
         <span class="label label-default">Min Horizon</span>
         <span class="front-data">

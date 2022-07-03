@@ -360,10 +360,12 @@ class NewObservationSerializer(serializers.Serializer):
         }
     )
     ground_station = serializers.PrimaryKeyRelatedField(
-        queryset=Station.objects.filter(status__gt=0),
+        queryset=Station.objects.filter(
+            status__gt=0, alt__isnull=False, lat__isnull=False, lng__isnull=False
+        ),
         allow_null=False,
         error_messages={
-            'does_not_exist': 'Station should exist and be online.',
+            'does_not_exist': 'Station should exist, be online and have a defined location.',
             'required': 'Station(\'ground_station\' key) is required.'
         }
     )

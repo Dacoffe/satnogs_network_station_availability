@@ -26,61 +26,67 @@ $(document).ready(function() {
     }
 
     // Init the map
-    if (!mapboxgl.supported()) {
+    if (isNaN(parseFloat(station_info.lat)) || isNaN(parseFloat(station_info.lng))){
         $('#map-station').addClass('error');
         $('#map-station').addClass('alert-error');
-        $('#map-station').html('Map can\'t be rendered:<br/> Your browser does not support MapboxGL (WebGL required).');
+        $('#map-station').html('Map can\'t be rendered:<br/> Station location is not defined.');
     } else {
-        var mapboxtoken = $('div#map-station').data('mapboxtoken');
-        if (!mapboxtoken) {
+        if (!mapboxgl.supported()) {
             $('#map-station').addClass('error');
             $('#map-station').addClass('alert-error');
-            $('#map-station').html('Map can\'t be rendered:<br/> Mapbox Token is not available.');
+            $('#map-station').html('Map can\'t be rendered:<br/> Your browser does not support MapboxGL (WebGL required).');
         } else {
-            mapboxgl.accessToken = mapboxtoken;
-            var map = new mapboxgl.Map({
-                container: 'map-station',
-                style: 'mapbox://styles/pierros/cj8kftshl4zll2slbelhkndwo',
-                zoom: 5,
-                minZoom: 2,
-                center: [parseFloat(station_info.lng),parseFloat(station_info.lat)]
-            });
-            map.addControl(new mapboxgl.NavigationControl());
-            map.on('load', function () {
-                map.loadImage('/static/img/pin.png', function(error, image) {
-                    map.addImage('pin', image);
-                    var map_points = {
-                        'id': 'points',
-                        'type': 'symbol',
-                        'source': {
-                            'type': 'geojson',
-                            'data': {
-                                'type': 'FeatureCollection',
-                                'features': [{
-                                    'type': 'Feature',
-                                    'geometry': {
-                                        'type': 'Point',
-                                        'coordinates': [
-                                            parseFloat(station_info.lng),
-                                            parseFloat(station_info.lat)]
-                                    },
-                                    'properties': {
-                                        'description': '<a href="/stations/' + station_info.id + '">' + station_info.id + ' - ' + station_info.name + '</a>',
-                                        'icon': 'circle'
-                                    }
-                                }]
-                            }
-                        },
-                        'layout': {
-                            'icon-image': 'pin',
-                            'icon-size': 0.4,
-                            'icon-allow-overlap': true
-                        }
-                    };
-                    map.addLayer(map_points);
+            var mapboxtoken = $('div#map-station').data('mapboxtoken');
+            if (!mapboxtoken) {
+                $('#map-station').addClass('error');
+                $('#map-station').addClass('alert-error');
+                $('#map-station').html('Map can\'t be rendered:<br/> Mapbox Token is not available.');
+            } else {
+                mapboxgl.accessToken = mapboxtoken;
+                var map = new mapboxgl.Map({
+                    container: 'map-station',
+                    style: 'mapbox://styles/pierros/cj8kftshl4zll2slbelhkndwo',
+                    zoom: 5,
+                    minZoom: 2,
+                    center: [parseFloat(station_info.lng),parseFloat(station_info.lat)]
                 });
-                map.repaint = true;
-            });
+                map.addControl(new mapboxgl.NavigationControl());
+                map.on('load', function () {
+                    map.loadImage('/static/img/pin.png', function(error, image) {
+                        map.addImage('pin', image);
+                        var map_points = {
+                            'id': 'points',
+                            'type': 'symbol',
+                            'source': {
+                                'type': 'geojson',
+                                'data': {
+                                    'type': 'FeatureCollection',
+                                    'features': [{
+                                        'type': 'Feature',
+                                        'geometry': {
+                                            'type': 'Point',
+                                            'coordinates': [
+                                                parseFloat(station_info.lng),
+                                                parseFloat(station_info.lat)]
+                                        },
+                                        'properties': {
+                                            'description': '<a href="/stations/' + station_info.id + '">' + station_info.id + ' - ' + station_info.name + '</a>',
+                                            'icon': 'circle'
+                                        }
+                                    }]
+                                }
+                            },
+                            'layout': {
+                                'icon-image': 'pin',
+                                'icon-size': 0.4,
+                                'icon-allow-overlap': true
+                            }
+                        };
+                        map.addLayer(map_points);
+                    });
+                    map.repaint = true;
+                });
+            }
         }
     }
 
@@ -141,6 +147,15 @@ $(document).ready(function() {
         $.ajax({
             url: '/pass_predictions/' + $('#station-info').attr('data-id') + '/',
             cache: false,
+            error: function(){
+                $('#pass_predictions').append(`
+                  <tr id="error_pass_predictions">
+                    <td colspan="7" class="danger text-center">
+                      An error occured, make sure that station exists and its location is defined! If the error persists please contact the site administator.
+                    </td>
+                  </tr>`
+                );
+            },
             success: function(data){
                 var len = data.nextpasses.length - 1;
                 var new_obs = $('#station-info').attr('data-new-obs');

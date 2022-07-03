@@ -204,9 +204,9 @@
                 data-tle2="{{ observation.tle_line_2 }}"
                 data-timeframe-start="{{ observation.start|date:"c" }}"
                 data-timeframe-end="{{ observation.end|date:"c" }}"
-                data-groundstation-lat="{{ observation.ground_station.lat }}"
-                data-groundstation-lon="{{ observation.ground_station.lng }}"
-                data-groundstation-alt="{{ observation.ground_station.alt }}"
+                data-groundstation-lat="{{ observation.station_lat }}"
+                data-groundstation-lon="{{ observation.station_lng }}"
+                data-groundstation-alt="{{ observation.station_alt }}"
                 width="120px" height="120px"
                 viewBox="-110 -110 220 220"
                 overflow="hidden">

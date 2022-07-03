@@ -38,9 +38,11 @@ class ObservationForm(ModelForm):
         }
     )
     ground_station = ModelChoiceField(
-        queryset=Station.objects.filter(status__gt=0),
+        queryset=Station.objects.filter(
+            status__gt=0, alt__isnull=False, lat__isnull=False, lng__isnull=False
+        ),
         error_messages={
-            'invalid_choice': 'Station(s) should exist and be online.',
+            'invalid_choice': 'Station(s) should exist, be online and have a defined location.',
             'required': 'Station is required.'
         }
     )

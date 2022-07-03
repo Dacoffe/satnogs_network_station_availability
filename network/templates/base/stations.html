@@ -67,14 +67,18 @@
                 {{ station.name }}
               </td>
                 <td>
-                  {% if station.qthlocator %}
-                    <span data-toggle="tooltip" data-placement="bottom"
-                          title="{{ station.lat|floatformat:-3 }}°, {{ station.lng|floatformat:-3 }}°">
-                    {{ station.qthlocator }}
+                  {% if station.has_location %}
+                    {% if station.qthlocator %}
+                      <span data-toggle="tooltip" data-placement="bottom"
+                            title="{{ station.lat|floatformat:-3 }}°, {{ station.lng|floatformat:-3 }}°">
+                      {{ station.qthlocator }}
+                    {% else %}
+                      {{ station.lat|floatformat:-1 }}°, {{ station.lng|floatformat:-1 }}°
+                    {% endif %}
+                    @{{ station.alt}}m
                   {% else %}
-                    {{ station.lat|floatformat:-1 }}°, {{ station.lng|floatformat:-1 }}°
+                    Location not defined
                   {% endif %}
-                  @{{ station.alt}}m
                 </td>
               <td>
                 <a href="{% url 'base:observations_list' %}?station={{ station.id }}" class="badge total-pill" data-placement="bottom">

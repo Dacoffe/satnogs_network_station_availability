@@ -181,8 +181,8 @@ def sync_demoddata_to_db(frame):
         'source': ground_station.name,
         'timestamp': submit_datetime,
         'locator': 'longLat',
-        'longitude': ground_station.lng,
-        'latitude': ground_station.lat,
+        'longitude': obs.station_lng,
+        'latitude': obs.station_lat,
         'frame': frame.display_payload_hex().replace(' ', ''),
         'satnogs_network': 'True',  # NOT a part of SiDS
         'observation_id': obs.id,  # NOT a part of SiDS
