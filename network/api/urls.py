@@ -1,4 +1,5 @@
 """SatNOGS Network django rest framework API url routings"""
+from django.urls import path
 from rest_framework import routers
 
 from network.api import views
@@ -11,4 +12,4 @@ ROUTER.register(r'stations', views.StationView, basename='stations')
 ROUTER.register(r'configuration', views.StationConfigurationView, basename='configuration')
 ROUTER.register(r'transmitters', views.TransmitterView, basename='transmitters')
 
-API_URLPATTERNS = ROUTER.urls
+API_URLPATTERNS = ROUTER.urls + [path('station/register', views.station_register_view)]

@@ -174,6 +174,12 @@ def station_delete_future_observations(request, station_id):
 
 
 @login_required
+def station_register(request):
+    """ Station register view """
+    return redirect(reverse('base:home'))
+
+
+@login_required
 def station_edit(request, station_id=None):
     """Edit or add a single station."""
     station = None

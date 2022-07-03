@@ -1,5 +1,9 @@
 """SatNOGS Network API django rest framework Views"""
+from random import choices
+from string import ascii_letters, digits
+
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Count
@@ -8,8 +12,10 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
 from rest_framework import mixins, status, viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.reverse import reverse
 from rest_framework.serializers import ValidationError
 
 from network.api import authentication, filters, pagination, serializers
@@ -154,6 +160,22 @@ class StationConfigurationView(viewsets.ReadOnlyModelViewSet):  # pylint: disabl
     def list(self, request, *args, **kwargs):
         station = get_object_or_404(Station, client_id=request.auth)
         return HttpResponseRedirect(redirect_to='/api/configuration/' + str(station.id) + '/')
+
+
+@api_view(['POST'])
+@permission_classes((AllowAny, ))
+def station_register_view(request):
+    """ API endpoint for receiving client_id and return url for registering new station or connect
+        client_id to existing one
+    """
+    client_id = request.POST.get('client_id', None)
+    if client_id:
+        url_hash = ''.join(choices(ascii_letters + digits, k=60))
+        cache.set(url_hash, client_id, 60 * 4)
+        path = reverse('base:station_register') + '?hash=' + url_hash
+        url = request.build_absolute_uri(path)
+        return Response(data={'url': url}, status=status.HTTP_200_OK)
+    return HttpResponseRedirect(redirect_to='/api/')
 
 
 class TransmitterView(  # pylint: disable=R0901
