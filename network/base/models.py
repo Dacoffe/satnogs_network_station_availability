@@ -17,7 +17,6 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.timezone import now
 from PIL import Image
-from rest_framework.authtoken.models import Token
 from shortuuidfield import ShortUUIDField
 from storages.backends.s3boto3 import S3Boto3Storage
 
@@ -205,15 +204,6 @@ class Station(models.Model):
             else:
                 rate = False
         return rate
-
-    @property
-    def apikey(self):
-        """Return station owner API key"""
-        try:
-            token = Token.objects.get(user=self.owner)
-        except Token.DoesNotExist:
-            token = Token.objects.create(user=self.owner)
-        return token
 
     def __str__(self):
         if self.pk:
