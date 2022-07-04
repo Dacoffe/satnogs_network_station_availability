@@ -2,6 +2,7 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.db import DatabaseError, transaction
 from django.db.models import Count, Q
 from django.http import JsonResponse
@@ -10,7 +11,8 @@ from django.urls import reverse
 from django.utils.timezone import now
 
 from network.base.decorators import ajax_required
-from network.base.forms import AntennaInlineFormSet, FrequencyRangeInlineFormSet, StationForm
+from network.base.forms import AntennaInlineFormSet, FrequencyRangeInlineFormSet, StationForm, \
+    StationRegistrationForm
 from network.base.models import AntennaType, Station, StationStatusLog
 from network.base.perms import modify_delete_station_perms, schedule_station_perms
 from network.base.serializers import StationSerializer
@@ -174,8 +176,63 @@ def station_delete_future_observations(request, station_id):
 
 
 @login_required
-def station_register(request):
+def station_register(request, step=None, station_id=None):
     """ Station register view """
+    client_hash = request.GET.get('hash', None)
+    if client_hash:
+        client_id = cache.get(client_hash)
+        if client_id is None:
+            messages.error(
+                request,
+                'Invalid or expired hash, please restart the "Station Registration" process.'
+            )
+            return redirect(reverse('base:home'))
+    else:
+        messages.error(request, 'Missing hash parameter.')
+        return redirect(reverse('base:home'))
+    if step == '1':
+        stations = Station.objects.filter(owner=request.user)
+        return render(
+            request, 'base/station_register_step1.html', {
+                'client_hash': client_hash,
+                'stations': stations
+            }
+        )
+    if step == '2':
+        station = None
+        if station_id:
+            station = get_object_or_404(Station, id=station_id, owner=request.user)
+
+        if request.method == 'POST':
+            if station:
+                station_form = StationRegistrationForm(request.POST, instance=station)
+            else:
+                station_form = StationRegistrationForm(request.POST)
+            if station_form.is_valid():
+                station = station_form.save(commit=False)
+                station.owner = request.user
+                station.save()
+                cache.delete(client_hash)
+                messages.success(
+                    request, (
+                        'Ground Station {0} is registered successfully.'
+                        ' Continue now with its configuration.'
+                    ).format(station.id)
+                )
+                return redirect(reverse('base:station_edit', kwargs={'station_id': station.id}))
+            messages.error(request, str(station_form.errors))
+            if station:
+                station_form = StationRegistrationForm(instance=station)
+            else:
+                station_form = StationRegistrationForm()
+
+        return render(
+            request, 'base/station_register_step2.html', {
+                'station_form': station_form,
+                'client_id': client_id
+            }
+        )
+
     return redirect(reverse('base:home'))
 
 

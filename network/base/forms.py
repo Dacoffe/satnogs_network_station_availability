@@ -168,6 +168,30 @@ ObservationFormSet = formset_factory(
 )
 
 
+class StationRegistrationForm(ModelForm):
+    """Model Form class for Station objects for Registration only"""
+    def clean(self):
+        """Validates Client ID"""
+        if any(self.errors):
+            # If there are errors in fields validation no need for validating the form
+            return
+        cleaned_data = super().clean()
+        client_id = cleaned_data['client_id']
+        try:
+            Station.objects.get(client_id=client_id)
+            error = (
+                'Client ID is already in use, make sure'
+                ' you haven\'t already register your station.'
+            )
+            raise ValidationError(error, code='invalid')
+        except Station.DoesNotExist:
+            pass
+
+    class Meta:
+        model = Station
+        fields = ['name', 'description', 'client_id']
+
+
 class StationForm(ModelForm):
     """Model Form class for Station objects"""
     lat = FloatField(min_value=-90.0, max_value=90.0)

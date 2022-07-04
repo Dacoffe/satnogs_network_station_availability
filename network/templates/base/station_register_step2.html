@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load tags %}
+{% load static %}
+
+{% block title %}
+Station Registration Step 2{% if station_form.instance.id %} - Station {{ station_form.instance.pk }} - {{ station_form.instance.name }}{% endif %}
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-md-12 text-center">
+      <h2>
+        Station Registration - Step 2:{% if station_form.instance.id %} Re-register Station "{{ station_form.instance.pk }} - {{ station_form.instance.name }}"{% else %} Register Station{% endif %}
+      </h2>
+    </div>
+  </div>
+  <form role="form" enctype="multipart/form-data" method="post">{% csrf_token %}
+    <div class="row">
+      <div class="col-md-12">
+        <div class="form-group">
+          <label for="name" class="control-label">Name <span class="badge">required<span></label>
+          <input value="{{ station_form.name.value|default_if_none:"" }}" id="station-name" type="text" class="form-control" maxlength="{{ station_form.name.field.max_length }}" name="name" required>
+        </div>
+        <div class="form-group">
+          <label for="description" class="control-label">Description</label>
+          <textarea class="form-control" name="description"
+                    id="description" rows="3" maxlength="{{ station_form.description.field.max_length }}">{{ station_form.description.value|default_if_none:"" }}</textarea>
+        </div>
+        <div class="form-group">
+            <input type="hidden" name="client_id" value="{{ client_id }}" maxlength="{{ station_form.client_id.field.max_length }}" required>
+        </div>
+      </div>
+    </div>
+    <div class='row'>
+      <div class='col-md-4'>
+        <div class="btn-group btn-group-justified" role="group">
+          <div class="btn-group" role="group">
+            <button id="cancel-register" type="button" class="btn btn-default">Cancel Registration</button>
+          </div>
+        </div>
+      </div>
+      <div class='col-md-8'>
+        <div class="btn-group btn-group-justified" role="group">
+          <div class="btn-group" role="group">
+            <button id="register" type="submit" class="btn btn-primary" disabled="True">
+              {% if station_form.instance.id %}
+                Re-register Station
+              {% else %}
+                Register Station
+              {% endif %}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+{% endblock %}
+
+{% block javascript %}
+  <script src="{% static 'js/station_register_step2.js' %}"></script>
+{% endblock javascript %}

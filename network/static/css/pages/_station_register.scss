@@ -1,0 +1,25 @@
+// Step 1
+
+#choices {
+    margin: 10px;
+    text-align: center;
+}
+
+.choice-button {
+    width: calc(100% - 20px);
+    margin: 10px;
+    height: 50px;
+    font-weight: bold;
+}
+
+.choice-station-button {
+    width: 300px;
+    margin: 10px;
+    height: 45px;
+}
+
+// Step 2
+
+#register, #cancel-register {
+    margin: 10px;
+}

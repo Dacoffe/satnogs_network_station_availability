@@ -170,9 +170,12 @@ def station_register_view(request):
     """
     client_id = request.POST.get('client_id', None)
     if client_id:
+        if Station.objects.filter(client_id=client_id).exists():
+            error = 'Invalid Client ID, please restart the "Station Registration" process.'
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
         url_hash = ''.join(choices(ascii_letters + digits, k=60))
-        cache.set(url_hash, client_id, 60 * 4)
-        path = reverse('base:station_register') + '?hash=' + url_hash
+        cache.set(url_hash, client_id, 60 * 10)
+        path = reverse('base:station_register', kwargs={'step': 1}) + '?hash=' + url_hash
         url = request.build_absolute_uri(path)
         return Response(data={'url': url}, status=status.HTTP_200_OK)
     return HttpResponseRedirect(redirect_to='/api/')

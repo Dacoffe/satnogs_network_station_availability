@@ -54,7 +54,21 @@ BASE_URLPATTERNS = (
             station.station_delete_future_observations,
             name='station_delete_future_observations'
         ),
-        path('stations/register/', station.station_register, name='station_register'),
+        re_path(
+            'stations/register/step(?P<step>1)/$',
+            station.station_register,
+            name='station_register'
+        ),
+        re_path(
+            'stations/register/step(?P<step>2)/$',
+            station.station_register,
+            name='station_register'
+        ),
+        re_path(
+            'stations/register/step(?P<step>2)/(?P<station_id>[0-9]+)/$',
+            station.station_register,
+            name='station_register'
+        ),
         path('stations/edit/', station.station_edit, name='station_edit'),
         re_path(
             r'^stations/edit/(?P<station_id>[0-9]+)/$', station.station_edit, name='station_edit'

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load tags %}
+{% load static %}
+
+{% block title %} Station Registration Step 1{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-md-12 text-center">
+      <h2>
+        Station Registration - Step 1: Choose Registration Type
+      </h2>
+    </div>
+  </div>
+
+  <div id="choices" class="row" data-hash="{{ client_hash }}" >
+      <h3 class="col-md-12">Choose to register a new station:</h3>
+      <div class="col-md-12">
+        <button type="button" id="new-station" class="btn btn-primary choice-button">Register A New Station</button>
+      </div>
+      {% if stations %}
+        <h3 class="col-md-12">or re-register one of your existing ones:</h3>
+        {% for station in stations %}
+            <button type="button" data-station="{{ station.id }}" class="btn choice-station-button"> {{ station.id }} - {{station.name}}</button>
+        {% endfor %}
+      {% endif %}
+  </div>
+{% endblock %}
+
+{% block javascript %}
+  <script src="{% static 'js/station_register_step1.js' %}"></script>
+{% endblock javascript %}
