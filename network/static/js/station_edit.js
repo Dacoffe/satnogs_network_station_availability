@@ -6,6 +6,14 @@ $(document).ready(function() {
     $('#antennas-loading').toggle();
     $('.selectpicker').selectpicker();
 
+    $('.panel-body.collapse').on('hide.bs.collapse', function () {
+        $(this).parent().find('.panel-heading span').addClass('glyphicon-collapse-down').removeClass('glyphicon-collapse-up');
+    });
+
+    $('.panel-body.collapse').on('show.bs.collapse', function () {
+        $(this).parent().find('.panel-heading span').addClass('glyphicon-collapse-up').removeClass('glyphicon-collapse-down');
+    });
+
     // Parse and initialize station data and remove html elements that holding them
     var station_element = $('#station-data-to-parse');
     var station_data = station_element.data();
