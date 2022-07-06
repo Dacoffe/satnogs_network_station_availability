@@ -236,14 +236,8 @@ def station_register(request, step=None, station_id=None):
     return redirect(reverse('base:home'))
 
 
-@login_required
-def station_edit(request, station_id=None):
-    """Edit or add a single station."""
-    station = None
-    antenna_types = AntennaType.objects.all()
-    frequency_range_formsets = {}
-    antenna_formset = None
-
+def initialize_station_and_registration_status(request, station_id):
+    """Return Station model and its registration status if station exists"""
     if station_id:
         station = get_object_or_404(
             Station.objects.prefetch_related(
@@ -252,6 +246,19 @@ def station_edit(request, station_id=None):
             id=station_id,
             owner=request.user
         )
+        registered = bool(station.client_id)
+        return (station, registered)
+    return (None, False)
+
+
+@login_required
+def station_edit(request, station_id=None):
+    """Edit or add a single station."""
+    antenna_types = AntennaType.objects.all()
+    frequency_range_formsets = {}
+    antenna_formset = None
+
+    (station, registered) = initialize_station_and_registration_status(request, station_id)
 
     if request.method == 'POST':
         validation_successful = False
@@ -310,6 +317,7 @@ def station_edit(request, station_id=None):
             return redirect(reverse('base:station_view', kwargs={'station_id': station.id}))
         return render(
             request, 'base/station_edit.html', {
+                'registered': registered,
                 'station_form': station_form,
                 'antenna_formset': antenna_formset,
                 'frequency_range_formsets': frequency_range_formsets,
@@ -342,6 +350,7 @@ def station_edit(request, station_id=None):
         antenna_formset = AntennaInlineFormSet(prefix='ant')
     return render(
         request, 'base/station_edit.html', {
+            'registered': registered,
             'station_form': station_form,
             'antenna_formset': antenna_formset,
             'frequency_range_formsets': frequency_range_formsets,
