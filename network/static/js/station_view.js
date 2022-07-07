@@ -4,6 +4,14 @@
 $(document).ready(function() {
     'use strict';
 
+    $('.panel-body.collapse').on('hide.bs.collapse', function () {
+        $(this).parent().find('.panel-heading span').addClass('glyphicon-collapse-down').removeClass('glyphicon-collapse-up');
+    });
+
+    $('.panel-body.collapse').on('show.bs.collapse', function () {
+        $(this).parent().find('.panel-heading span').addClass('glyphicon-collapse-up').removeClass('glyphicon-collapse-down');
+    });
+
     // Render Station success rate
     var success_rate = $('.gs.progress-bar-success').data('success-rate');
     var percentagerest = $('.gs.progress-bar-danger').data('percentagerest');

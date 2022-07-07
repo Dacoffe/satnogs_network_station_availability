@@ -31,12 +31,15 @@
     margin: 2px 0 0 10px;
 }
 
+#station-view-image-container {
+    text-align: center;
+}
+
 .station-view-image {
     object-fit: cover;
     max-width: 100%;
     height: 300px;
     border-radius: 5px;
-    float: right;
 }
 
 .station-edit-image {

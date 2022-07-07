@@ -46,233 +46,309 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-md-4">
-      <div class="front-line">
-        <span class="label label-default">Owner</span>
-        <span class="front-data">
-          <a href="{% url 'users:view_user' username=station.owner.username %}">
-            {{ station.owner.displayname }}
+    <div class="col-md-12">
+      <ul class="nav nav-tabs station-tabs" role="tablist">
+        <li role="presentation" class="active">
+          <a href="#tab-station-info"
+             aria-controls="tab-station-info"
+             role="tab"
+             data-toggle="tab">Information
+           </a>
+        </li>
+        {% if request.user == station.owner and station.client_id %}
+        <li role="presentation">
+          <a href="#tab-configuration"
+             aria-controls="tab-configuration"
+             role="tab"
+             data-toggle="tab">Configuration
+           </a>
+        </li>
+        {% endif %}
+        <li role="presentation">
+          <a href="#tab-future-passes"
+             aria-controls="tab-future-passes"
+             role="tab"
+             data-toggle="tab">
+            Future Passes
           </a>
-        </span>
-      </div>
-      {% if station.has_location %}
-        {% if station.qthlocator %}
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="tab-content" id="station-tab-content">
+    <div role="tabpanel" class="tab-pane active" id="tab-station-info">
+      <div class="row">
+        <div class="col-md-4">
           <div class="front-line">
-            <span class="label label-default">QTH Locator</span>
+            <span class="label label-default">Owner</span>
             <span class="front-data">
-              {{ station.qthlocator }}
+              <a href="{% url 'users:view_user' username=station.owner.username %}">
+                {{ station.owner.displayname }}
+              </a>
             </span>
           </div>
-        {% endif %}
-        <div class="front-line">
-          <span class="label label-default">Coordinates</span>
-          <span class="front-data">
-            {{ station.lat|floatformat:-3 }}°, {{ station.lng|floatformat:-3 }}°
-          </span>
-        </div>
-        <div class="front-line">
-          <span class="label label-default">Altitude</span>
-          <span class="front-data">
-            {{ station.alt }} m
-          </span>
-        </div>
-      {% endif %}
-      <div class="front-line">
-        <span class="label label-default">Min Horizon</span>
-        <span class="front-data">
-          {{ station.horizon }}°
-        </span>
-      </div>
-      {% if station.target_utilization %}
-        <div class="front-line">
-          <span class="label label-default">Target Utilization</span>
-          <span class="front-data">
-            {{ station.target_utilization }} %
-          </span>
-        </div>
-      {% endif %}
-      {% if station.antennas.exists %}
-        <div class="font-line antennas">
-          <span class="label label-default">Antennas</span>
-          <span class="front-data">
-            {% for antenna in station.antennas.all %}
-              <span class="antenna-pill" data-toggle="tooltip" data-placement="bottom"
-                    title="{% for range in antenna.frequency_ranges.all %} {{ range.min_frequency|frq }} - {{ range.max_frequency|frq }}&#xA{% endfor %}">
-                {{ antenna.antenna_type }} ({{ antenna.bands}})
-              </span>
-            {% endfor %}
-          </span>
-        </div>
-      {% endif %}
-      {% if station.success_rate %}
-        <div class="front-line">
-          <span class="label label-default">Success Rate</span>
-          <span class="front-data">
-            <div class="progress" title="{{ station.success_rate }}%">
-              <div class="gs progress-bar progress-bar-success" data-success-rate="{{ station.success_rate }}">
-                <span class="sr-only">{{ station.success_rate }}% Complete (success)</span>
+          {% if station.has_location %}
+            {% if station.qthlocator %}
+              <div class="front-line">
+                <span class="label label-default">QTH Locator</span>
+                <span class="front-data">
+                  {{ station.qthlocator }}
+                </span>
               </div>
-              <div class="gs progress-bar progress-bar-danger" data-percentagerest="{{ station.success_rate|percentagerest }}">
-                <span class="sr-only">{{ station.success_rate|percentagerest }}% Complete (danger)</span>
-              </div>
-            </div>
-          </span>
-        </div>
-      {% endif %}
-      {% if station.total_obs %}
-        <div class="front-line">
-          <span class="label label-default">Observations</span>
-          <span class="front-data">{{ station.total_obs }}
-            <div class="pull-right">
-              <a href="{% url 'base:observations_list' %}?station={{ station.id }}">
-                <button type="button" class="btn btn-xs btn-info">
-                  View all
-                </button>
-              </a>
-            </div>
-          </span>
-        </div>
-      {% endif %}
-      <div class="front-line">
-        <span class="label label-default">Creation Date</span>
-        <span class="front-data"
-              title="{{ station.created|date:"c" }}">
-          {{ station.created|timesince }} ago
-        </span>
-      </div>
-      {% if station.client_version %}
-        <div class="front-line">
-          <span class="label label-default">Client version</span>
-          <span class="front-data" title="on latest reported observation">
-            {{ station.client_version }}
-          </span>
-        </div>
-      {% endif %}
-      <div class="front-line">
-        <span class="label label-{{ station.get_status_display|lower }}">{{ station.get_status_display }}</span>
-        <span class="front-data" data-toggle="tooltip"
-              title="{{ station.last_seen|date:"c" }}">
-          {% if station.last_seen %}
-            Last seen {{ station.last_seen|timesince }} ago
-          {% else %}
-            Never seen
-          {% endif %}
-        </span>
-      </div>
-      <div class="front-line">
-        <span class="label label-default">Uptime</span>
-        <span class="front-data">
-          {{ uptime }}
-          <div class="pull-right">
-            <a href="{% url 'base:station_log' station_id=station.id %}">
-              <button type="button" class="btn btn-xs btn-info">
-                Log
-              </button>
-            </a>
-          </div>
-        </span>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div id="map-station" data-mapboxid="{{ mapbox_id }}" data-mapboxtoken="{{ mapbox_token }}"></div>
-    </div>
-    <div class="col-md-4">
-      <img src="{{ station.get_image }}" class="station-view-image" alt="{{ station.name }}">
-       <span class="glyphicon glyphicon-fullscreen img-expand"
-             aria-hidden="true" data-src="{{ station.get_image }}"></span>
-    </div>
-  </div>
-
-  {% if station.description %}
-    <div class="row">
-      <div class="col-md-12">
-        <span>{{ station.description }}</span>
-      </div>
-    </div>
-  {% endif %}
-
-  <hr>
-
-  <div id="calculate-button" class="row">
-    <div class="col-md-12">
-      <button type="button" id="calculate-predictions" class="btn btn-primary">
-        Calculate Future Passes
-      </button>
-    </div>
-  </div>
-
-  <div id="pass-predictions" style="display:none;">
-    <div class="row">
-      <div class="col-md-6">
-        <h3>
-          Pass predictions
-        </h3>
-      </div>
-      <div class="col-md-6">
-        <h3 class="pull-right">
-          <a class="btn btn-default" role="button" data-toggle="collapse"
-                  href="#collapseFilters" aria-expanded="false" aria-controls="collapseFilters">
-            <span class="glyphicon glyphicon-filter" aria-hidden="true"></span>
-          </a>
-        </h3>
-      </div>
-    </div>
-    <div id="collapseFilters" class="row collapse">
-      <div class="col-md-4">
-        <label for="success-filter">Success Rate</label>
-        <input id="success-filter" type="text"/>
-      </div>
-      <div class="col-md-4">
-        <label for="elevation-filter">Max Elevation</label>
-        <input id="elevation-filter" type="text"/>
-      </div>
-      <div class="col-md-4">
-        <label for="overlap-filter">Overlap</label>
-        <input id="overlap-filter" type="text"/>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-md-12">
-        <table class="table table-hover table-responsive">
-          <thead>
-            <th>Name</th>
-            <th>
-              <span aria-hidden="true"
-                data-toggle="tooltip" data-placement="bottom"
-                title="Satellite raises from horizon">AOS</span>
-            </th>
-            <th>
-              <span aria-hidden="true"
-                data-toggle="tooltip" data-placement="bottom"
-                title="Satellite sets to horizon">LOS</span>
-            </th>
-            <th>⤉ ⇴ ⤈</th>
-            <th>Polar plot</th>
-            {% if can_schedule %}
-              <th></th>
             {% endif %}
-          </thead>
-          <tbody id="pass_predictions" can_schedule="{{ can_schedule }}">
-            <tr id="loading">
-              <td colspan=7>
-                <div class="spinner">
-                  <div class="bounce1"></div>
-                  <div class="bounce2"></div>
-                  <div class="bounce3"></div>
+            <div class="front-line">
+              <span class="label label-default">Coordinates(lat, lon)</span>
+              <span class="front-data">
+                {{ station.lat|floatformat:-3 }}°, {{ station.lng|floatformat:-3 }}°
+              </span>
+            </div>
+            <div class="front-line">
+              <span class="label label-default">Altitude</span>
+              <span class="front-data">
+                {{ station.alt }} m
+              </span>
+            </div>
+          {% endif %}
+          <div class="front-line">
+            <span class="label label-default">Min Horizon</span>
+            <span class="front-data">
+              {{ station.horizon }}°
+            </span>
+          </div>
+          {% if station.target_utilization %}
+            <div class="front-line">
+              <span class="label label-default">Target Utilization</span>
+              <span class="front-data">
+                {{ station.target_utilization }} %
+              </span>
+            </div>
+          {% endif %}
+          {% if station.antennas.exists %}
+            <div class="font-line antennas">
+              <span class="label label-default">Antennas</span>
+              <span class="front-data">
+                {% for antenna in station.antennas.all %}
+                  <span class="antenna-pill" data-toggle="tooltip" data-placement="bottom"
+                        title="{% for range in antenna.frequency_ranges.all %} {{ range.min_frequency|frq }} - {{ range.max_frequency|frq }}&#xA{% endfor %}">
+                    {{ antenna.antenna_type }} ({{ antenna.bands}})
+                  </span>
+                {% endfor %}
+              </span>
+            </div>
+          {% endif %}
+          {% if station.success_rate %}
+            <div class="front-line">
+              <span class="label label-default">Success Rate</span>
+              <span class="front-data">
+                <div class="progress" title="{{ station.success_rate }}%">
+                  <div class="gs progress-bar progress-bar-success" data-success-rate="{{ station.success_rate }}">
+                    <span class="sr-only">{{ station.success_rate }}% Complete (success)</span>
+                  </div>
+                  <div class="gs progress-bar progress-bar-danger" data-percentagerest="{{ station.success_rate|percentagerest }}">
+                    <span class="sr-only">{{ station.success_rate|percentagerest }}% Complete (danger)</span>
+                  </div>
                 </div>
-                Loading Pass Predictions
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </span>
+            </div>
+          {% endif %}
+          {% if station.total_obs %}
+            <div class="front-line">
+              <span class="label label-default">Observations</span>
+              <span class="front-data">{{ station.total_obs }}
+                <div class="pull-right">
+                  <a href="{% url 'base:observations_list' %}?station={{ station.id }}">
+                    <button type="button" class="btn btn-xs btn-info">
+                      View all
+                    </button>
+                  </a>
+                </div>
+              </span>
+            </div>
+          {% endif %}
+          <div class="front-line">
+            <span class="label label-default">Creation Date</span>
+            <span class="front-data"
+                  title="{{ station.created|date:"c" }}">
+              {{ station.created|timesince }} ago
+            </span>
+          </div>
+          {% if station.client_version %}
+            <div class="front-line">
+              <span class="label label-default">Client version</span>
+              <span class="front-data" title="on latest reported observation">
+                {{ station.client_version }}
+              </span>
+            </div>
+          {% endif %}
+          <div class="front-line">
+            <span class="label label-{{ station.get_status_display|lower }}">{{ station.get_status_display }}</span>
+            <span class="front-data" data-toggle="tooltip"
+                  title="{{ station.last_seen|date:"c" }}">
+              {% if station.last_seen %}
+                Last seen {{ station.last_seen|timesince }} ago
+              {% else %}
+                Never seen
+              {% endif %}
+            </span>
+          </div>
+          <div class="front-line">
+            <span class="label label-default">Uptime</span>
+            <span class="front-data">
+              {{ uptime }}
+              <div class="pull-right">
+                <a href="{% url 'base:station_log' station_id=station.id %}">
+                  <button type="button" class="btn btn-xs btn-info">
+                    Log
+                  </button>
+                </a>
+              </div>
+            </span>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div id="map-station" data-mapboxid="{{ mapbox_id }}" data-mapboxtoken="{{ mapbox_token }}"></div>
+        </div>
+        <div class="col-md-4" id="station-view-image-container">
+          <img src="{{ station.get_image }}" class="station-view-image" alt="{{ station.name }}">
+           <span class="glyphicon glyphicon-fullscreen img-expand"
+                 aria-hidden="true" data-src="{{ station.get_image }}"></span>
+        </div>
       </div>
+
+      {% if station.description %}
+        <hr>
+        <div class="row">
+          <div class="col-md-12">
+            <span>{{ station.description }}</span>
+          </div>
+        </div>
+      {% endif %}
     </div>
 
-    <div class="row" id="prediction_results" hidden>
-      <div class="col-md-12 notice">
-        <span id="prediction_results_count"></span> passes found.
-        <a id="open-all" href="#">Open all for scheduling</a>.
+    {% if request.user == station.owner and station.client_id %}
+    <div role="tabpanel" class="tab-pane" id="tab-configuration">
+      <div class="row">
+        <div class="panel panel-default">
+          <div class="panel-heading" data-toggle="collapse" data-target="#basic-config-panel-body">
+            <h3 class="panel-title">
+              Basic Configuration
+              <span class="glyphicon glyphicon-collapse-up pull-right" aria-hidden="true"></span>
+            </h3>
+          </div>
+          <div class="panel-body collapse in" id="basic-config-panel-body">
+            <div class="front-line col-md-4">
+              <span class="label label-default">Soapy RX Device</span>
+              <span class="front-data">
+                {{ station.satnogs_soapy_rx_device }}
+              </span>
+            </div>
+            <div class="front-line col-md-4">
+              <span class="label label-default">Soapy Antenna</span>
+              <span class="front-data">
+                {{ station.satnogs_antenna }}
+              </span>
+            </div>
+            <div class="front-line col-md-4">
+              <span class="label label-default">RX Sample Rate</span>
+              <span class="front-data">
+                {{ station.satnogs_rx_samp_rate }}
+              </span>
+            </div>
+            <div class="front-line col-md-4">
+              <span class="label label-default">RF Gain</span>
+              <span class="front-data">
+                {{ station.satnogs_rf_gain }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div role="tabpanel" class="tab-pane" id="tab-future-passes">
+      <div id="calculate-button" class="row">
+        <div class="col-md-12">
+          <button type="button" id="calculate-predictions" class="btn btn-primary">
+            Calculate Future Passes
+          </button>
+        </div>
+      </div>
+
+      <div id="pass-predictions" style="display:none;">
+        <div class="row">
+          <div class="col-md-6">
+            <h3>
+              Pass predictions
+            </h3>
+          </div>
+          <div class="col-md-6">
+            <h3 class="pull-right">
+              <a class="btn btn-default" role="button" data-toggle="collapse"
+                      href="#collapseFilters" aria-expanded="false" aria-controls="collapseFilters">
+                <span class="glyphicon glyphicon-filter" aria-hidden="true"></span>
+              </a>
+            </h3>
+          </div>
+        </div>
+        <div id="collapseFilters" class="row collapse">
+          <div class="col-md-4">
+            <label for="success-filter">Success Rate</label>
+            <input id="success-filter" type="text"/>
+          </div>
+          <div class="col-md-4">
+            <label for="elevation-filter">Max Elevation</label>
+            <input id="elevation-filter" type="text"/>
+          </div>
+          <div class="col-md-4">
+            <label for="overlap-filter">Overlap</label>
+            <input id="overlap-filter" type="text"/>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-12">
+            <table class="table table-hover table-responsive">
+              <thead>
+                <th>Name</th>
+                <th>
+                  <span aria-hidden="true"
+                    data-toggle="tooltip" data-placement="bottom"
+                    title="Satellite raises from horizon">AOS</span>
+                </th>
+                <th>
+                  <span aria-hidden="true"
+                    data-toggle="tooltip" data-placement="bottom"
+                    title="Satellite sets to horizon">LOS</span>
+                </th>
+                <th>⤉ ⇴ ⤈</th>
+                <th>Polar plot</th>
+                {% if can_schedule %}
+                  <th></th>
+                {% endif %}
+              </thead>
+              <tbody id="pass_predictions" can_schedule="{{ can_schedule }}">
+                <tr id="loading">
+                  <td colspan=7>
+                    <div class="spinner">
+                      <div class="bounce1"></div>
+                      <div class="bounce2"></div>
+                      <div class="bounce3"></div>
+                    </div>
+                    Loading Pass Predictions
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="row" id="prediction_results" hidden>
+          <div class="col-md-12 notice">
+            <span id="prediction_results_count"></span> passes found.
+            <a id="open-all" href="#">Open all for scheduling</a>.
+          </div>
+        </div>
       </div>
     </div>
   </div>
