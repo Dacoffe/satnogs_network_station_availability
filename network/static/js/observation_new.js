@@ -15,16 +15,40 @@ $(document).ready( function(){
     });
 
     $('#custom-horizon').click(function() {
-        $('#horizon-status').append('<input type="hidden" name="min-horizon" id="min-horizon"/>');
-        $('#min-horizon').slider({
-            id: 'min-horizon-slider',
-            min: 0,
-            max: 90,
-            step: 1,
-            value: 0,
-            ticks: [0, 30, 60, 90],
-            ticks_labels: ['0', '30', '60', '90']
-        });
+        if (!$('#min-horizon').length){
+            $('#horizon-status').append('<input type="hidden" name="min-horizon" id="min-horizon"/>');
+            $('#min-horizon').slider({
+                id: 'min-horizon-slider',
+                min: 0,
+                max: 90,
+                step: 1,
+                value: 0,
+                ticks: [0, 30, 60, 90],
+                ticks_labels: ['0', '30', '60', '90']
+            });
+        }
+    });
+
+    $('#default-split-duration').click(function() {
+        $('#split-duration-custom').remove();
+    });
+
+    $('#custom-split-duration').click(function() {
+        if (!$('#split-duration-custom').length){
+            var value = $('#default-split-duration input')[0].value;
+            $('#split-duration-status').append('<input type="number" name="split_duration_custom" id="split-duration-custom" class="duration-number-input" min="0" step="1" value="' + value +'"/>');
+        }
+    });
+
+    $('#default-break-duration').click(function() {
+        $('#break-duration-custom').remove();
+    });
+
+    $('#custom-break-duration').click(function() {
+        if (!$('#break-duration-custom').length){
+            var value = $('#default-break-duration input')[0].value;
+            $('#break-duration-status').append('<input type="number" name="break_duration_custom" id="break-duration-custom" class="duration-number-input" min="0" step="1" value="' + value +'"/>');
+        }
     });
 
     function create_station_option(station){
@@ -440,6 +464,20 @@ $(document).ready( function(){
         var trancate_overlapped = $('#overlapped input[type=radio]').filter(':checked').val() == 'truncate-overlapped';
         if(trancate_overlapped) {
             data.overlapped = 1;
+        }
+        var is_split_duration = $('#split-duration-status input[type=radio]').filter(':checked').val() == 'custom';
+        if(is_split_duration) {
+            var split_duration = parseInt($('#split-duration-custom').val());
+            if (!isNaN(split_duration) && split_duration > 0) {
+                data.split_duration = split_duration;
+            }
+        }
+        var is_break_duration = $('#break-duration-status input[type=radio]').filter(':checked').val() == 'custom';
+        if(is_break_duration) {
+            var break_duration = parseInt($('#break-duration-custom').val());
+            if (!isNaN(break_duration) && break_duration > 0) {
+                data.break_duration = break_duration;
+            }
         }
 
         $.ajax({

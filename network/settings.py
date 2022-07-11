@@ -421,6 +421,10 @@ OBSERVATION_DATE_MAX_RANGE = config('OBSERVATION_DATE_MAX_RANGE', default=2890, 
 OBSERVATION_OLD_RANGE = config('OBSERVATION_OLD_RANGE', default=30, cast=int)
 # Minimum duration of observation in seconds
 OBSERVATION_DURATION_MIN = config('OBSERVATION_DURATION_MIN', default=120, cast=int)
+# Duration of observation for split long observatoin in seconds
+OBSERVATION_SPLIT_DURATION = config('OBSERVATION_SPLIT_DURATION', default=720, cast=int)
+# Duration of break between two split observations in seconds
+OBSERVATION_SPLIT_BREAK_DURATION = config('OBSERVATION_SPLIT+BREAK_DURATION', default=60, cast=int)
 # Minimum observations for showing warning on scheduling
 OBSERVATION_WARN_MIN_OBS = config('OBSERVATION_WARN_MIN_OBS', default=30, cast=int)
 # Cache expiration of the lock for "archive audio" task

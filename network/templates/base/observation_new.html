@@ -184,13 +184,53 @@
                   Show Truncated
                 </input>
               </label>
-              <label class="btn btn-default" id="custom-horizon" disabled>
+              <label class="btn btn-default" id="custom-overlapped" disabled>
                   <span data-toggle="tooltip" title="Not supported yet!">Show Overlapped</span>
               </label>
             </div>
           </div>
         </div>
       </div>
+      <hr class="col-md-12 collapse collapse-option">
+      <div class="col-md-6 collapse collapse-option">
+        <div class="form-group">
+          <label class="col-sm-3 control-label">Split Duration</label>
+          <div class="col-sm-9" id="split-duration-status">
+            <div class="btn-group btn-group-justified" data-toggle="buttons">
+              <label class="btn btn-default active" id="default-split-duration">
+                <input type="radio" name="split_duration" value="{{ split.duration }}" autocomplete="off" checked>
+                  Default({{ split.duration }}sec)
+                </input>
+              </label>
+              <label class="btn btn-default" id="custom-split-duration">
+                <input type="radio" name="split_duration" value="custom" autocomplete="off">
+                  Custom
+                </input>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 collapse collapse-option">
+        <div class="form-group">
+          <label class="col-sm-3 control-label">Break Duration</label>
+          <div class="col-sm-9" id="break-duration-status">
+            <div class="btn-group btn-group-justified" data-toggle="buttons">
+              <label class="btn btn-default active" id="default-break-duration">
+                <input type="radio" name="break_duration" value="{{ split.break }}" autocomplete="off" checked>
+                  Default({{ split.break }}sec)
+                </input>
+              </label>
+              <label class="btn btn-default" id="custom-break-duration">
+                <input type="radio" name="break_duration" value="custom" autocomplete="off">
+                  Custom
+                </input>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 collapse collapse-option">
     </div>
 
     {% if obs_filter.ground_station %}

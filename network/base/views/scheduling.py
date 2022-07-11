@@ -145,7 +145,11 @@ def observation_new(request):
             'date_min_start': settings.OBSERVATION_DATE_MIN_START,
             'date_min_end': settings.OBSERVATION_DATE_MIN_END,
             'date_max_range': settings.OBSERVATION_DATE_MAX_RANGE,
-            'warn_min_obs': settings.OBSERVATION_WARN_MIN_OBS
+            'warn_min_obs': settings.OBSERVATION_WARN_MIN_OBS,
+            'split': {
+                'duration': settings.OBSERVATION_SPLIT_DURATION,
+                'break': settings.OBSERVATION_SPLIT_BREAK_DURATION
+            }
         }
     )
 
@@ -159,6 +163,12 @@ def prediction_windows_parse_parameters(request):
         'end': make_aware(datetime.strptime(request.POST['end'], '%Y-%m-%d %H:%M'), utc),
         'station_ids': request.POST.getlist('stations[]', []),
         'min_horizon': request.POST.get('min_horizon', None),
+        'split_duration': int(
+            request.POST.get('split_duration', settings.OBSERVATION_SPLIT_DURATION)
+        ),
+        'break_duration': int(
+            request.POST.get('break_duration', settings.OBSERVATION_SPLIT_BREAK_DURATION)
+        ),
         'overlapped': int(request.POST.get('overlapped', 0)),
     }
 
@@ -167,34 +177,39 @@ def prediction_windows_parse_parameters(request):
 def prediction_windows(request):
     """Calculates and returns passes of satellites over stations"""
 
-    params = prediction_windows_parse_parameters(request)
-
-    # Check the selected satellite exists and is alive
     try:
+        error_found = True
+        # Parse parameters and validate parameters
+        params = prediction_windows_parse_parameters(request)
+        if params['split_duration'] < 0 or params['break_duration'] < 0:
+            raise ValueError('Please re-check your request parameters.')
+
+        # Check the selected satellite exists and is alive
         satellite = Satellite.objects.filter(status='alive'
                                              ).get(norad_cat_id=params['sat_norad_id'])
-    except Satellite.DoesNotExist:
-        data = [{'error': 'You should select a Satellite first.'}]
-        return JsonResponse(data, safe=False)
 
-    try:
         # Check if there is a TLE available for this satellite
         tle_set = get_tle_set_by_norad_id(satellite.norad_cat_id)
         if tle_set:
             tle = tle_set[0]
         else:
-            data = [{'error': 'No TLEs for this satellite yet.'}]
-            return JsonResponse(data, safe=False)
+            raise ValueError('No TLEs for this satellite yet.')
 
         # Check the selected transmitter exists, and if yes,
         # store this transmitter in the downlink variable
         transmitter = get_transmitter_by_uuid(params['transmitter'])
         if not transmitter:
-            data = [{'error': 'You should select a valid Transmitter.'}]
-            return JsonResponse(data, safe=False)
+            raise ValueError('You should select a valid Transmitter.')
         downlink = transmitter[0]['downlink_low']
+        error_found = False
+    except ValueError as error:
+        data = [{'error': str(error)}]
+    except Satellite.DoesNotExist:
+        data = [{'error': 'You should select a Satellite first.'}]
     except DBConnectionError as error:
         data = [{'error': str(error)}]
+
+    if error_found:
         return JsonResponse(data, safe=False)
 
     # Fetch all available ground stations
