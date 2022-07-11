@@ -104,7 +104,7 @@ Manually run a celery tasks
 
 The following procedure can be used to manually run celery tasks in the local development environment:
 
-#. :doc:`Install the docker-based development environment <installation-docker>`.
+#. :doc:`Install the docker-based development environment <installation>`.
 
 #. Start a django-admin shell:
 
@@ -134,7 +134,7 @@ Running the tests locally
 
 To test your changes to the code locally with `tox <https://tox.readthedocs.io/en/latest/>`_ in the same way the CI does you can follow these steps:
 
-#. Setup a new virtual environment (this shouldn't be the same virtual environment you might have created for the :doc:`VirtualEnv Installation <installation-virtualenv>`):
+#. Setup a new virtual environment (this shouldn't be the same virtual environment you might have created for the :doc:`VirtualEnv Installation <installation>`):
 
    .. code-block:: bash
    
