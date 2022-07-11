@@ -254,6 +254,17 @@ def predict_available_observation_windows(station, min_horizon, overlapped, tle,
     except ValueError:
         return passes_found, station_windows
 
+    attempts_for_finding_rise = 0
+    if satellite.alt > 0:
+        while satellite.alt > 0 and attempts_for_finding_rise < 1440:
+            attempts_for_finding_rise += 1
+            observer.date = ephem.Date(observer.date - ephem.minute)
+            satellite.compute(observer)
+        try:
+            pass_params = next_pass(observer, satellite)
+        except (TypeError, ValueError):
+            pass
+
     while True:
         try:
             pass_params = next_pass(observer, satellite)
@@ -262,6 +273,14 @@ def predict_available_observation_windows(station, min_horizon, overlapped, tle,
         except (TypeError, ValueError):
             break
 
+        if pass_params['rise_time'] < start:
+            time_start_new = pass_params['set_time'] + timedelta(minutes=1)
+            observer.date = time_start_new.strftime("%Y-%m-%d %H:%M:%S.%f")
+            if start < pass_params['set_time']:
+                pass_params['rise_time'] = start
+            else:
+                continue
+
         # no match if the sat will not rise above the configured min horizon
         if pass_params['rise_time'] >= end:
             # start of next pass outside of window bounds
@@ -269,7 +288,7 @@ def predict_available_observation_windows(station, min_horizon, overlapped, tle,
 
         if pass_params['set_time'] > end:
             # end of next pass outside of window bounds
-            break
+            pass_params['set_time'] = end
 
         passes_found.append(pass_params)
 
