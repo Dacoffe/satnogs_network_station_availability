@@ -11,6 +11,19 @@
     width: 100%;
 }
 
+#schedule-selection {
+    padding: 10px 0 0 0;
+
+    #schedule-observation {
+        width: 100%;
+    }
+
+    #selected-observations {
+        width: 100%;
+        text-align: center;
+    }
+}
+
 .axis {
 
     path,

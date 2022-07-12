@@ -36,7 +36,8 @@ $(document).ready( function(){
     $('#custom-split-duration').click(function() {
         if (!$('#split-duration-custom').length){
             var value = $('#default-split-duration input')[0].value;
-            $('#split-duration-status').append('<input type="number" name="split_duration_custom" id="split-duration-custom" class="duration-number-input" min="0" step="1" value="' + value +'"/>');
+            var min_value = $('#default-split-duration input')[0].dataset.min;
+            $('#split-duration-status').append('<input type="number" name="split_duration_custom" id="split-duration-custom" class="duration-number-input" min="' + min_value + '" step="1" value="' + value +'"/>');
         }
     });
 
@@ -240,10 +241,43 @@ $(document).ready( function(){
     var elevation_slider = new Slider('#scheduling-elevation-filter', { id: 'scheduling-elevation-filter', min: 0, max: 90, step: 1, range: true, value: [0, 90] });
 
     function update_schedule_button_status(){
-        if($('#timeline rect').not('.unselected-obs').length != 0){
-            $('#schedule-observation').prop('disabled', false);
-        } else {
+        var obs_counter = $('rect').not('.unselected-obs').length;
+        if (obs_counter == 0){
             $('#schedule-observation').prop('disabled', true);
+            $('#selected-observations').html(
+                'No observation selected! Please select one or more.'
+            ).addClass(
+                'text-danger bg-danger'
+            ).removeClass(
+                'text-success bg-success'
+            );
+        } else if (obs_counter == 1){
+            $('#schedule-observation').prop('disabled', false);
+            $('#selected-observations').html(
+                'One selected observation.'
+            ).removeClass(
+                'text-danger bg-danger'
+            ).addClass(
+                'text-success bg-success'
+            );
+        } else if (obs_counter > 180){
+            $('#schedule-observation').prop('disabled', true);
+            $('#selected-observations').html(
+                'Selected observations: ' + obs_counter + '! This is over the limit, please select less than 180.'
+            ).addClass(
+                'text-danger bg-danger'
+            ).removeClass(
+                'text-success bg-success'
+            );
+        } else {
+            $('#schedule-observation').prop('disabled', false);
+            $('#selected-observations').html(
+                'Selected observations: ' + obs_counter
+            ).removeClass(
+                'text-danger bg-danger'
+            ).addClass(
+                'text-success bg-success'
+            );
         }
     }
 
@@ -468,7 +502,8 @@ $(document).ready( function(){
         var is_split_duration = $('#split-duration-status input[type=radio]').filter(':checked').val() == 'custom';
         if(is_split_duration) {
             var split_duration = parseInt($('#split-duration-custom').val());
-            if (!isNaN(split_duration) && split_duration > 0) {
+            var min_value = parseInt($('#default-split-duration input')[0].dataset.min);
+            if (!isNaN(split_duration) && split_duration > min_value) {
                 data.split_duration = split_duration;
             }
         }
@@ -574,12 +609,12 @@ $(document).ready( function(){
             .beginning(start_timeline)
             .ending(end_timeline)
             .mouseout(function () {
-                $('#hover-obs').fadeOut(100);
+                $('#hover-obs').hide();
             })
             .hover(function (d, i, datum) {
                 if(!$('#' + d.id).hasClass('filtered-out')){
                     var div = $('#hover-obs');
-                    div.fadeIn(300);
+                    div.show();
                     var colors = chart.colors();
                     div.find('.coloredDiv').css('background-color', colors(i));
                     div.find('#name').text(datum.label);

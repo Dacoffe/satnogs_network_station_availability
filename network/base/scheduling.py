@@ -40,19 +40,53 @@ def over_min_duration(duration):
     return duration > settings.OBSERVATION_DURATION_MIN
 
 
-def max_altitude_in_window(observer, satellite, pass_tca, window_start, window_end):
+def recalculate_window_parameters(observer, satellite, window_start, window_end):
     """Finds the maximum altitude of a satellite during a certain observation window"""
-    # In this case this is an overlapped observation
-    # re-calculate altitude and start/end azimuth
-    if window_start > pass_tca:
-        # Observation window in the second half of the pass
-        # Thus highest altitude right at the beginning of the window
-        return get_altitude(observer, satellite, window_start)
-    if window_end < pass_tca:
-        # Observation window in the first half of the pass
-        # Thus highest altitude right at the end of the window
-        return get_altitude(observer, satellite, window_end)
-    return get_altitude(observer, satellite, pass_tca)
+    observer = observer.copy()
+    satellite = satellite.copy()
+    observer.date = window_end
+    satellite.compute(observer)
+    end_azimuth = float(format(math.degrees(satellite.az), '.0f'))
+    observer.date = window_start
+    satellite.compute(observer)
+    start_azimuth = float(format(math.degrees(satellite.az), '.0f'))
+
+    interval = 1  # in seconds
+    max_altitude = 0
+    date = window_start
+    while date < window_end:
+        observer.date = date
+        satellite.compute(observer)
+        altitude = float(format(math.degrees(satellite.alt), '.0f'))
+        max_altitude = max(altitude, max_altitude)
+        date = date + timedelta(seconds=interval)
+
+    return (start_azimuth, end_azimuth, max_altitude)
+
+
+def split_long_window(start, end, duration, split_duration, break_duration):
+    """
+    Split long passes into 'split_duration' seconds ones and let between them a period of
+    'break_duration' seconds
+    """
+    windows = []
+    split_number = (int(duration) // (split_duration + break_duration)) + 1
+    total_splits = split_number
+
+    last_split_duration = duration % (split_duration + break_duration)
+    if not over_min_duration(last_split_duration):
+        total_splits -= 1
+
+    for split in range(0, total_splits):
+        start_offset = split * (split_duration + break_duration)
+        window_start = start + timedelta(seconds=start_offset)
+        if total_splits - split == 1:  # last split
+            window_end = end
+        else:
+            window_end = window_start + timedelta(seconds=split_duration)
+        windows.append({'start': window_start, 'end': window_end})
+
+    return windows
 
 
 def resolve_overlaps(scheduled_obs, start, end):
@@ -101,6 +135,7 @@ def create_station_window(
     tle,
     valid_duration,
     overlapped,
+    split,
     overlap_ratio=0
 ):
     """Creates an observation window"""
@@ -115,11 +150,14 @@ def create_station_window(
         'tle2': tle['tle2'],
         'valid_duration': valid_duration,
         'overlapped': overlapped,
+        'split': split,
         'overlap_ratio': overlap_ratio
     }
 
 
-def create_station_windows(scheduled_obs, overlapped, pass_params, observer, satellite, tle):
+def create_station_windows(
+    scheduled_obs, overlapped, pass_params, observer, satellite, tle, duration
+):
     """
     This function takes a pre-calculated pass (described by pass_params) over a certain station
     and a list of already scheduled observations, and calculates observation windows during which
@@ -129,6 +167,11 @@ def create_station_windows(scheduled_obs, overlapped, pass_params, observer, sat
     """
     station_windows = []
 
+    if not duration:
+        duration = {
+            'split': settings.OBSERVATION_SPLIT_DURATION,
+            'break': settings.OBSERVATION_SPLIT_BREAK_DURATION
+        }
     windows, windows_changed = resolve_overlaps(
         scheduled_obs, pass_params['rise_time'], pass_params['set_time']
     )
@@ -144,49 +187,108 @@ def create_station_windows(scheduled_obs, overlapped, pass_params, observer, sat
         if overlapped == 1:
             initial_duration = (pass_params['set_time'] - pass_params['rise_time']).total_seconds()
             for window_start, window_end in windows:
-                altitude = max_altitude_in_window(
-                    observer, satellite, pass_params['tca_time'], window_start, window_end
-                )
                 window_duration = (window_end - window_start).total_seconds()
                 if not over_min_duration(window_duration):
                     continue
 
-                # Add a window for a partial pass
-                station_windows.append(
-                    create_station_window(
-                        window_start, window_end, get_azimuth(observer, satellite, window_start),
-                        get_azimuth(observer, satellite, window_end), altitude, tle, True, True,
-                        min(1, 1 - (window_duration / initial_duration))
+                if window_duration > duration['split']:
+                    split_windows = split_long_window(
+                        window_start, window_end, window_duration, duration['split'],
+                        duration['break']
                     )
-                )
+                    for split_window in split_windows:
+                        # Add windows for a partial split passes
+                        start_azimuth, end_azimuth, max_altitude = recalculate_window_parameters(
+                            observer, satellite, split_window['start'], split_window['end']
+                        )
+                        station_windows.append(
+                            create_station_window(
+                                split_window['start'], split_window['end'], start_azimuth,
+                                end_azimuth, max_altitude, tle, True, True, True,
+                                min(1, 1 - (window_duration / initial_duration))
+                            )
+                        )
+                else:
+                    # Add a window for a partial pass
+                    start_azimuth, end_azimuth, max_altitude = recalculate_window_parameters(
+                        observer, satellite, window_start, window_end
+                    )
+                    station_windows.append(
+                        create_station_window(
+                            window_start, window_end, start_azimuth, end_azimuth,
+                            max_altitude, tle, True, True, False,
+                            min(1, 1 - (window_duration / initial_duration))
+                        )
+                    )
         elif overlapped == 2:
             initial_duration = (pass_params['set_time'] - pass_params['rise_time']).total_seconds()
             total_window_duration = 0
             window_duration = 0
-            duration_validity = True
+            duration_validity = False
             for window_start, window_end in windows:
                 window_duration = (window_end - window_start).total_seconds()
-                duration_validity = duration_validity and over_min_duration(window_duration)
+                duration_validity = duration_validity or over_min_duration(window_duration)
                 total_window_duration += window_duration
 
-            # Add a window for the overlapped pass
+            # If duration is longer than 12min then satellite is probably on higher than LEO orbit
+            # and we need to recalculate pass parameters
+            if initial_duration > 720:
+                start_azimuth, end_azimuth, max_altitude = recalculate_window_parameters(
+                    observer, satellite, pass_params['rise_time'], pass_params['set_time']
+                )
+            else:
+                start_azimuth, end_azimuth, max_altitude = (
+                    pass_params['rise_az'], pass_params['set_az'], pass_params['tca_alt']
+                )
+            # Add a window for the overlapped pass, this is for station page and will not be split
+            # as we want it as one. The split will be done when user click on schedule button for
+            # this observation and it will be moved to observation/new page.
             station_windows.append(
                 create_station_window(
-                    pass_params['rise_time'], pass_params['set_time'], pass_params['rise_az'],
-                    pass_params['set_az'], pass_params['tca_alt'], tle, duration_validity, True,
-                    min(1, 1 - (window_duration / initial_duration))
+                    pass_params['rise_time'], pass_params['set_time'], start_azimuth, end_azimuth,
+                    max_altitude, tle, duration_validity, True, False,
+                    min(1, 1 - (total_window_duration / initial_duration))
                 )
             )
     else:
         window_duration = (windows[0][1] - windows[0][0]).total_seconds()
         if over_min_duration(window_duration):
-            # Add a window for a full pass
-            station_windows.append(
-                create_station_window(
-                    pass_params['rise_time'], pass_params['set_time'], pass_params['rise_az'],
-                    pass_params['set_az'], pass_params['tca_alt'], tle, True, False, 0
+            # if overlapped == 2 then the pass is presented in station page, in this case pass
+            # should be kept without splitting
+            if window_duration > duration['split'] and overlapped != 2:
+                split_windows = split_long_window(
+                    windows[0][0], windows[0][1], window_duration, duration['split'],
+                    duration['break']
                 )
-            )
+                for split_window in split_windows:
+                    # Add windows for a partial split passes
+                    start_azimuth, end_azimuth, max_altitude = recalculate_window_parameters(
+                        observer, satellite, split_window['start'], split_window['end']
+                    )
+                    station_windows.append(
+                        create_station_window(
+                            split_window['start'], split_window['end'], start_azimuth, end_azimuth,
+                            max_altitude, tle, True, False, True, 0
+                        )
+                    )
+            else:
+                # If duration is longer than 12min then satellite is probably on higher than LEO
+                # orbit and we need to recalculate pass parameters
+                if window_duration > 720:
+                    start_azimuth, end_azimuth, max_altitude = recalculate_window_parameters(
+                        observer, satellite, pass_params['rise_time'], pass_params['set_time']
+                    )
+                else:
+                    start_azimuth, end_azimuth, max_altitude = (
+                        pass_params['rise_az'], pass_params['set_az'], pass_params['tca_alt']
+                    )
+                # Add a window for a full pass
+                station_windows.append(
+                    create_station_window(
+                        pass_params['rise_time'], pass_params['set_time'], start_azimuth,
+                        end_azimuth, max_altitude, tle, True, False, False, 0
+                    )
+                )
     return station_windows
 
 
@@ -213,7 +315,9 @@ def next_pass(observer, satellite, singlepass=True):
     }
 
 
-def predict_available_observation_windows(station, min_horizon, overlapped, tle, start, end):
+def predict_available_observation_windows(
+    station, min_horizon, overlapped, tle, start, end, duration
+):
     '''Calculate available observation windows for a certain station and satellite during
     the given time period.
 
@@ -305,7 +409,7 @@ def predict_available_observation_windows(station, min_horizon, overlapped, tle,
 
         station_windows.extend(
             create_station_windows(
-                scheduled_obs, overlapped, pass_params, observer, satellite, tle
+                scheduled_obs, overlapped, pass_params, observer, satellite, tle, duration
             )
         )
     return passes_found, station_windows
@@ -356,12 +460,10 @@ def create_new_observation(station, transmitter, start, end, author, tle_set=Non
     observer.lat = str(station.lat)
     observer.elevation = station.alt
 
-    mid_pass_time = start + (end - start) / 2
-
-    rise_azimuth = get_azimuth(observer, sat_ephem, start)
+    rise_azimuth, set_azimuth, max_altitude = recalculate_window_parameters(
+        observer, sat_ephem, start, end
+    )
     rise_altitude = get_altitude(observer, sat_ephem, start)
-    max_altitude = get_altitude(observer, sat_ephem, mid_pass_time)
-    set_azimuth = get_azimuth(observer, sat_ephem, end)
     set_altitude = get_altitude(observer, sat_ephem, end)
 
     if rise_altitude < 0:

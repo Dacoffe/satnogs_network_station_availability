@@ -21,7 +21,7 @@ from network.base.forms import ObservationFormSet, SatelliteFilterForm
 from network.base.models import Observation, Satellite, Station
 from network.base.perms import schedule_perms, schedule_station_violators_perms
 from network.base.scheduling import create_new_observation, get_available_stations, \
-    predict_available_observation_windows
+    over_min_duration, predict_available_observation_windows
 from network.base.serializers import StationSerializer
 from network.base.stats import satellite_stats_by_transmitter_list, transmitters_with_stats
 from network.base.validators import NegativeElevationError, NoTleSetError, \
@@ -146,6 +146,7 @@ def observation_new(request):
             'date_min_end': settings.OBSERVATION_DATE_MIN_END,
             'date_max_range': settings.OBSERVATION_DATE_MAX_RANGE,
             'warn_min_obs': settings.OBSERVATION_WARN_MIN_OBS,
+            'obs_min_duration': settings.OBSERVATION_DURATION_MIN,
             'split': {
                 'duration': settings.OBSERVATION_SPLIT_DURATION,
                 'break': settings.OBSERVATION_SPLIT_BREAK_DURATION
@@ -156,7 +157,7 @@ def observation_new(request):
 
 def prediction_windows_parse_parameters(request):
     """ Parse HTTP parameters with defaults"""
-    return {
+    params = {
         'sat_norad_id': request.POST['satellite'],
         'transmitter': request.POST['transmitter'],
         'start': make_aware(datetime.strptime(request.POST['start'], '%Y-%m-%d %H:%M'), utc),
@@ -172,6 +173,17 @@ def prediction_windows_parse_parameters(request):
         'overlapped': int(request.POST.get('overlapped', 0)),
     }
 
+    if params['split_duration'] < 0 or params['break_duration'] < 0:
+        raise ValueError('Please re-check your request parameters.')
+    if not over_min_duration(params['split_duration']):
+        raise ValueError(
+            'Split duration should be over minimum observation duration({} seconds)'.format(
+                settings.OBSERVATION_DURATION_MIN
+            )
+        )
+
+    return params
+
 
 @ajax_required
 def prediction_windows(request):
@@ -181,8 +193,6 @@ def prediction_windows(request):
         error_found = True
         # Parse parameters and validate parameters
         params = prediction_windows_parse_parameters(request)
-        if params['split_duration'] < 0 or params['break_duration'] < 0:
-            raise ValueError('Please re-check your request parameters.')
 
         # Check the selected satellite exists and is alive
         satellite = Satellite.objects.filter(status='alive'
@@ -254,7 +264,10 @@ def prediction_windows(request):
     for station in available_stations:
         station_passes, station_windows = predict_available_observation_windows(
             station, params['min_horizon'], params['overlapped'], tle, params['start'],
-            params['end']
+            params['end'], {
+                'split': params['split_duration'],
+                'break': params['break_duration']
+            }
         )
         passes_found[station.id] = station_passes
         if station_windows:
@@ -343,7 +356,10 @@ def pass_predictions(request, station_id):
                 continue
 
             _, station_windows = predict_available_observation_windows(
-                station, None, 2, tle, start, end
+                station, None, 2, tle, start, end, {
+                    'split': settings.OBSERVATION_SPLIT_DURATION,
+                    'break': settings.OBSERVATION_SPLIT_BREAK_DURATION
+                }
             )
 
             if station_windows:

@@ -198,7 +198,7 @@
           <div class="col-sm-9" id="split-duration-status">
             <div class="btn-group btn-group-justified" data-toggle="buttons">
               <label class="btn btn-default active" id="default-split-duration">
-                <input type="radio" name="split_duration" value="{{ split.duration }}" autocomplete="off" checked>
+                <input type="radio" name="split_duration" value="{{ split.duration }}" data-min="{{ obs_min_duration }}" autocomplete="off" checked>
                   Default({{ split.duration }}sec)
                 </input>
               </label>
@@ -289,11 +289,14 @@
       </div>
     </div>
 
-    <div class="row calculation-result">
+    <div id="schedule-selection" class="row calculation-result">
       <div class="col-md-12">
-        <button type="button" id="schedule-observation" data-warn-min-obs="{{ warn_min_obs }}" class="btn btn-success pull-right" disabled="True">
+        <button type="button" id="schedule-observation" data-warn-min-obs="{{ warn_min_obs }}" class="btn btn-success" disabled="True">
           Schedule
         </button>
+      </div>
+      <div class="col-md-12">
+        <div id="selected-observations"></div>
       </div>
     </div>
 
