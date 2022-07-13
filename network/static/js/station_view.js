@@ -134,7 +134,7 @@ $(document).ready(function() {
 
         // Update count of predictions visible
         var filtered_count = $('tr.pass:visible').length;
-        $('#prediction_results_count').html(filtered_count);
+        $('#prediction-results-count').html(filtered_count);
     }
 
     elevation_slider.on('slideStop', function() {
@@ -151,13 +151,17 @@ $(document).ready(function() {
 
     function calculate_predictions(){
         // Pass predictions loading
+        $('#calculate-button').prop('disabled', true);
         $('#loading').show();
+        $('.pass').remove();
+        $('#error-pass-predictions').remove();
+        $('#prediction-results').hide();
         $.ajax({
             url: '/pass_predictions/' + $('#station-info').attr('data-id') + '/',
             cache: false,
             error: function(){
-                $('#pass_predictions').append(`
-                  <tr id="error_pass_predictions">
+                $('#pass-predictions-results').append(`
+                  <tr id="error-pass-predictions">
                     <td colspan="7" class="danger text-center">
                       An error occured, make sure that station exists and its location is defined! If the error persists please contact the site administator.
                     </td>
@@ -187,7 +191,7 @@ $(document).ready(function() {
                         overlap = Math.round(data.nextpasses[i].overlap_ratio * 100);
                         overlap_style = 'overlap';
                     }
-                    $('#pass_predictions').append(`
+                    $('#pass-predictions-results').append(`
                       <tr class="pass ${overlap_style}" data-overlap="${overlap}">
                         <td class="success-rate" data-suc="${data.nextpasses[i].success_rate}">
                           <a href="#" data-toggle="modal" data-target="#SatelliteModal" data-id="${data.nextpasses[i].norad_cat_id}">
@@ -333,18 +337,22 @@ $(document).ready(function() {
                 }
 
                 // Show predicion results count
-                $('#prediction_results').show();
-                $('#prediction_results_count').html(data.nextpasses.length);
+                $('#prediction-results').show();
+                $('#prediction-results-count').html(data.nextpasses.length);
             },
             complete: function(){
                 $('#loading').hide();
+                $('#calculate-button').prop('disabled', false);
             }
         });
     }
 
-    $('#calculate-predictions').click( function(){
-        $('#calculate-button').toggle();
-        $('#pass-predictions').toggle();
+    $('a[href="#tab-future-passes"]').on('shown.bs.tab', function () {
+        calculate_predictions();
+        $('a[href="#tab-future-passes"]').off('shown.bs.tab');
+    });
+
+    $('#calculate-button').click( function(){
         calculate_predictions();
     });
 
