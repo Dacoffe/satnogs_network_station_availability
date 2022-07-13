@@ -221,6 +221,7 @@ def station_register(request, step=None, station_id=None):
                 )
                 return redirect(reverse('base:station_edit', kwargs={'station_id': station.id}))
             messages.error(request, str(station_form.errors))
+        else:
             if station:
                 station_form = StationRegistrationForm(instance=station)
             else:
