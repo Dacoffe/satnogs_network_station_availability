@@ -51,38 +51,38 @@ virtualenv -p python$PYTHON_VERSION "$VIRTUALENV_DIR"
 # Install package with dependencies
 "$PIP_COMMAND" install --no-cache-dir --force-reinstall .
 
-# Create requirements file from installed dependencies
-cat << EOF > requirements.txt
+# Create file header warnings
+for filename in constraints.txt requirements.txt requirements-dev.txt; do
+	cat << EOF > "$filename"
 # This is a generated file; DO NOT EDIT!
 #
-# Please edit 'setup.cfg' to add top-level dependencies and use
+# Please edit 'setup.cfg' to modify top-level dependencies and run
 # './contrib/refresh-requirements.sh to regenerate this file
 
 EOF
+done
+
+# Create requirements file from installed dependencies
 "$PIP_COMMAND" freeze | grep -v "$EXCLUDE_REGEXP" >> requirements.txt
 
 # Install development package with dependencies
 "$PIP_COMMAND" install --no-cache-dir .[dev]
 
 # Create development requirements file from installed dependencies
-cat << EOF > requirements-dev.txt
-# This is a generated file; DO NOT EDIT!
-#
-# Please edit 'setup.cfg' to add top-level extra dependencies and use
-# './contrib/refresh-requirements.sh to regenerate this file
--r requirements.txt
-
-EOF
-
+echo "-r requirements.txt" >> requirements-dev.txt
 _tmp_requirements_dev=$(mktemp)
 "$PIP_COMMAND" freeze | grep -v "$EXCLUDE_REGEXP" | sort > "$_tmp_requirements_dev"
 sort < requirements.txt | comm -13 - "$_tmp_requirements_dev" >> requirements-dev.txt
+
+# Create constraints file from installed dependencies
+cat "$_tmp_requirements_dev" >> constraints.txt
 rm -f "$_tmp_requirements_dev"
 
 # Set compatible release packages
 if [ -n "$COMPATIBLE_REGEXP" ]; then
 	sed -i 's/'"$COMPATIBLE_REGEXP"'==\([0-9]\+\)\(\.[0-9]\+\)\+$/\1~=\2.0/' requirements.txt
 	sed -i 's/'"$COMPATIBLE_REGEXP"'==\([0-9]\+\)\(\.[0-9]\+\)\+$/\1~=\2.0/' requirements-dev.txt
+	sed -i 's/'"$COMPATIBLE_REGEXP"'==\([0-9]\+\)\(\.[0-9]\+\)\+$/\1~=\2.0/' constraints.txt
 fi
 
 # Verify dependency compatibility
