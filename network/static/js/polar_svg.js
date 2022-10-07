@@ -103,6 +103,5 @@ function calcPolarPlotSVG(timeframe, groundstation, tleLine1, tleLine2) {
     point_end.setAttribute('cy', coord_set.y);
     point_end.setAttribute('r', 7);
 
-
     return [polarOrbit, point_start, point_end];
 }

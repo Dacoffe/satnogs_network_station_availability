@@ -224,12 +224,17 @@ $(document).ready(function() {
         alt: $('svg#polar').data('groundstation-alt')
     };
 
-    const polarPlotSVG = calcPolarPlotSVG(timeframe,
-        groundstation,
-        tleLine1,
-        tleLine2);
+    const polarPlotSVGPromise = new Promise(() => {
+        calcPolarPlotSVG(timeframe,
+            groundstation,
+            tleLine1,
+            tleLine2
+        );
+    });
 
-    $('svg#polar').append(polarPlotSVG);
+    polarPlotSVGPromise.then((polarPlotSVG) => {
+        $('svg#polar').append(polarPlotSVG);
+    });
 
     // Return hex string from ArrayBuffer that contains DemodData bytes
     function buffer_to_hex(buffer){
