@@ -102,12 +102,10 @@ class StationAdmin(admin.ModelAdmin):
 @admin.register(Satellite)
 class SatelliteAdmin(admin.ModelAdmin):
     """Define Satellite view in django admin UI"""
-    list_display = (
-        'id', 'name', 'norad_cat_id', 'norad_follow_id', 'status', 'is_frequency_violator'
-    )
+    list_display = ('id', 'name', 'norad_cat_id', 'status', 'is_frequency_violator')
     list_filter = ('status', 'is_frequency_violator')
     readonly_fields = ('name', 'names', 'image')
-    search_fields = ('name', 'norad_cat_id', 'norad_follow_id')
+    search_fields = ('name', 'norad_cat_id')
 
 
 class DemodDataInline(admin.TabularInline):
