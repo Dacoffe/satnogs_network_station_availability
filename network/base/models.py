@@ -243,6 +243,26 @@ class Station(models.Model):
                 }
             )
 
+    def update_status(self, created: bool = False):
+        """
+        Update the status of the station
+
+        :param created: Whether the model is being created
+        """
+        if not created:
+            current_status = self.status
+            if self.is_offline:
+                self.status = 0
+            elif self.testing:
+                self.status = 1
+            else:
+                self.status = 2
+            self.save()
+            if self.status != current_status:
+                StationStatusLog.objects.create(station=self, status=self.status)
+        else:
+            StationStatusLog.objects.create(station=self, status=self.status)
+
 
 class AntennaType(models.Model):
     """Model for antenna types."""

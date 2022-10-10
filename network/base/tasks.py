@@ -13,6 +13,7 @@ from django.core.cache import cache
 from django.core.mail import send_mail
 from django.db import transaction
 from django.db.models import Q
+from django.db.models.signals import post_save
 from django.utils.timezone import now
 from internetarchive import upload
 from internetarchive.exceptions import AuthenticationError
@@ -23,6 +24,7 @@ from network.base.db_api import DBConnectionError, get_tle_sets_by_norad_id_set,
     get_transmitters_by_uuid_set
 from network.base.models import DemodData, Observation, Satellite, Station
 from network.base.rating_tasks import rate_observation
+from network.base.signals import _station_post_save
 from network.base.utils import sync_demoddata_to_db
 
 LOGGER = logging.getLogger('db')
@@ -413,14 +415,10 @@ def sync_to_db(frame_id=None):
 @shared_task
 def station_status_update():
     """Task to update Station status."""
+    post_save.disconnect(_station_post_save, sender=Station)
     for station in Station.objects.all():
-        if station.is_offline:
-            station.status = 0
-        elif station.testing:
-            station.status = 1
-        else:
-            station.status = 2
-        station.save()
+        station.update_status(created=False)
+    post_save.connect(_station_post_save, sender=Station)
 
 
 @shared_task

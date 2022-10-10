@@ -2,7 +2,7 @@
 from django.db.models.signals import post_save, pre_delete
 from django.utils.timezone import now
 
-from network.base.models import Station, StationStatusLog
+from network.base.models import Station
 
 
 def _station_post_save(sender, instance, created, **kwargs):  # pylint: disable=W0613
@@ -11,19 +11,7 @@ def _station_post_save(sender, instance, created, **kwargs):  # pylint: disable=
     * Store current status
     """
     post_save.disconnect(_station_post_save, sender=Station)
-    if not created:
-        current_status = instance.status
-        if instance.is_offline:
-            instance.status = 0
-        elif instance.testing:
-            instance.status = 1
-        else:
-            instance.status = 2
-        instance.save()
-        if instance.status != current_status:
-            StationStatusLog.objects.create(station=instance, status=instance.status)
-    else:
-        StationStatusLog.objects.create(station=instance, status=instance.status)
+    instance.update_status(created=created)
     post_save.connect(_station_post_save, sender=Station)
 
 
