@@ -224,12 +224,12 @@ $(document).ready(function() {
         alt: $('svg#polar').data('groundstation-alt')
     };
 
-    const polarPlotSVGPromise = new Promise(() => {
-        calcPolarPlotSVG(timeframe,
+    const polarPlotSVGPromise = new Promise(function(resolve) {
+        resolve(calcPolarPlotSVG(timeframe,
             groundstation,
             tleLine1,
             tleLine2
-        );
+        ));
     });
 
     polarPlotSVGPromise.then((polarPlotSVG) => {
