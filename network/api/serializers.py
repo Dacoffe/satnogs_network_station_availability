@@ -92,6 +92,7 @@ class ObservationSerializer(serializers.ModelSerializer):
     tle0 = serializers.SerializerMethodField()
     tle1 = serializers.SerializerMethodField()
     tle2 = serializers.SerializerMethodField()
+    observer = serializers.SerializerMethodField()
 
     class Meta:
         model = Observation
@@ -105,7 +106,7 @@ class ObservationSerializer(serializers.ModelSerializer):
             'transmitter_uplink_low', 'transmitter_uplink_high', 'transmitter_uplink_drift',
             'transmitter_downlink_low', 'transmitter_downlink_high', 'transmitter_downlink_drift',
             'transmitter_mode', 'transmitter_invert', 'transmitter_baud', 'transmitter_updated',
-            'tle0', 'tle1', 'tle2'
+            'tle0', 'tle1', 'tle2', 'observer'
         )
         read_only_fields = [
             'id', 'start', 'end', 'observation', 'ground_station', 'transmitter', 'norad_cat_id',
@@ -117,7 +118,7 @@ class ObservationSerializer(serializers.ModelSerializer):
             'transmitter_uplink_drift', 'transmitter_downlink_low', 'transmitter_downlink_high',
             'transmitter_downlink_drift', 'transmitter_mode', 'transmitter_invert',
             'transmitter_baud', 'transmitter_created', 'transmitter_updated', 'tle0', 'tle1',
-            'tle2'
+            'tle2', 'observer'
         ]
 
     def update(self, instance, validated_data):
@@ -224,6 +225,10 @@ class ObservationSerializer(serializers.ModelSerializer):
     def get_tle2(self, obj):
         """Returns tle2"""
         return obj.tle_line_2
+
+    def get_observer(self, obj):
+        """Returns the author of the observation"""
+        return obj.author.pk
 
 
 class NewObservationListSerializer(serializers.ListSerializer):
