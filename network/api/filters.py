@@ -56,6 +56,8 @@ class ObservationViewFilter(FilterSet):
         queryset=User.objects.filter(observations__isnull=False).distinct()
     )
 
+    observation_id = django_filters.BaseInFilter(field_name='id', label="Observation ID(s)")
+
     # see https://django-filter.readthedocs.io/en/master/ref/filters.html for W0613
     def filter_status(self, queryset, name, value):  # pylint: disable=W0613,R0201
         """ Returns filtered observations for a given observation status"""
