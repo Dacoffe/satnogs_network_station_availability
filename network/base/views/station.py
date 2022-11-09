@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.timezone import now
+from django.views.generic import ListView
 
 from network.base.decorators import ajax_required
 from network.base.forms import AntennaInlineFormSet, FrequencyRangeInlineFormSet, StationForm, \
@@ -27,36 +28,60 @@ def station_all_view(request):
     return JsonResponse(data, safe=False)
 
 
-def stations_list(request):
-    """View to render Stations page."""
-    stations = Station.objects.annotate(
-        total_obs=Count('observations'),
-        future_obs=Count('pk', filter=Q(observations__end__gt=now())),
-    ).prefetch_related(
-        'owner', 'antennas', 'antennas__antenna_type', 'antennas__frequency_ranges'
-    ).order_by('-status', 'id')
-    stations_by_status = {'online': 0, 'testing': 0, 'offline': 0, 'future': 0}
-    for station in stations:
-        if station.last_seen is None:
-            stations_by_status['future'] += 1
-        elif station.status == 2:
-            stations_by_status['online'] += 1
-        elif station.status == 1:
-            stations_by_status['testing'] += 1
-        else:
-            stations_by_status['offline'] += 1
+class StationListView(ListView):  # pylint: disable=R0901
+    """Displays a list of stations with pagination"""
+    model = Station
+    context_object_name = "stations"
+    paginate_by = settings.ITEMS_PER_PAGE
+    template_name = "base/stations.html"
+    flag_filters = ['online', 'testing', 'offline', 'future']
+    is_filtered = False
 
-    return render(
-        request, 'base/stations.html', {
-            'stations': stations,
-            'online': stations_by_status['online'],
-            'testing': stations_by_status['testing'],
-            'offline': stations_by_status['offline'],
-            'future': stations_by_status['future'],
-            'mapbox_id': settings.MAPBOX_MAP_ID,
-            'mapbox_token': settings.MAPBOX_TOKEN
-        }
-    )
+    def get_filter_params(self):
+        """
+        Get the parsed filter parameters from the HTTP GET parameters
+        """
+
+        filter_params = {}
+        for param_name in self.flag_filters:
+            param_val = self.request.GET.get(param_name, 1)
+            if param_val != '0':
+                filter_params[param_name] = True
+            else:
+                filter_params[param_name] = False
+                self.is_filtered = True
+
+        return filter_params
+
+    def get_queryset(self):
+        stations = Station.objects.annotate(
+            total_obs=Count('observations'),
+            future_obs=Count('pk', filter=Q(observations__end__gt=now())),
+        ).select_related('owner').prefetch_related(
+            'antennas', 'antennas__antenna_type', 'antennas__frequency_ranges'
+        ).order_by('-status', 'id')
+
+        filter_params = self.get_filter_params()
+
+        if not filter_params["online"]:
+            stations = stations.exclude(status=2)
+        if not filter_params["testing"]:
+            stations = stations.exclude(status=1)
+        if not filter_params["offline"]:
+            stations = stations.exclude(Q(status=0) & Q(last_seen__isnull=False))
+        if not filter_params["future"]:
+            stations = stations.exclude(last_seen__isnull=True)
+
+        return stations
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["is_filtered"] = self.is_filtered
+        context.update(self.get_filter_params())
+        context["mapbox_id"] = settings.MAPBOX_MAP_ID
+        context["mapbox_token"] = settings.MAPBOX_TOKEN
+
+        return context
 
 
 def station_view(request, station_id):

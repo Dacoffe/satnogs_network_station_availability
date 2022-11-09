@@ -37,7 +37,7 @@ BASE_URLPATTERNS = (
 
         # Stations
         path('stations_all/', station.station_all_view, name='stations_all'),
-        path('stations/', station.stations_list, name='stations_list'),
+        path('stations/', station.StationListView.as_view(), name='stations_list'),
         re_path(r'^stations/(?P<station_id>[0-9]+)/$', station.station_view, name='station_view'),
         re_path(
             r'^stations/(?P<station_id>[0-9]+)/log/$',

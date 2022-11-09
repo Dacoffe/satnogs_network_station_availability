@@ -9,26 +9,83 @@
 {% endblock css %}
 
 {% block content %}
-  <h2>
-    Ground Stations
-    <button type="button" class="btn btn-sm btn-default map-modal-reveal" data-toggle="modal" data-target="#MapModal">
-      <span class="glyphicon glyphicon-map-marker" aria-hidden="true"></span> Map
-    </button>
-    <div class="stations-totals">
-      <button type="button" id="stations-online" class="btn btn-sm btn-default active">
-        <span class="label label-online">{{ online }}</span> Online
-      </button>
-      <button type="button" id="stations-testing" class="btn btn-sm btn-default active">
-        <span class="label label-testing">{{ testing }}</span> Testing
-      </button>
-      <button type="button" id="stations-offline" class="btn btn-sm btn-default">
-        <span class="label label-offline">{{ offline }}</span> Offline
-      </button>
-      <button type="button" id="stations-future" class="btn btn-sm btn-default">
-        <span class="label label-future">{{ future }}</span> Future
-      </button>
+  <div class="row">
+    <div class="col-md-3 col-xs-3">
+      <h2>
+        Ground Stations
+      </h2>
     </div>
-  </h2>
+    {% if is_paginated %}
+      <div class="col-md-6 visible-md visible-lg" id="page-selector">
+        <span class="pull-right">{% load paginator %}{% paginator request 3%}</span>
+      </div>
+    {% endif %}
+    <div class="col-md-3 pull-right visible-md visible-lg">
+      <div class="observations-actions">
+        <button type="button" class="btn btn-sm btn-default map-modal-reveal" data-toggle="modal" data-target="#MapModal">
+          <span class="glyphicon glyphicon-map-marker" aria-hidden="true"></span> Map
+        </button>
+        <a class="btn btn-default" role="button" data-toggle="collapse"
+            href="#collapseFilters" aria-expanded="false" aria-controls="collapseFilters">
+          <span class="glyphicon glyphicon-filter" aria-hidden="true"></span>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="collapse" id="collapseFilters" data-filtered="{{ is_filtered }}">
+    <div class="filter-section well well-sm row">
+      <form id="station-filter" class="form" methon="get" action="{% url 'base:stations_list' %}">
+        <div class="form-group status-filter col-sm-12">
+          <label for="status-selector">Status</label>
+          <div id="status-selector" class="btn-group" data-toggle="buttons">
+            <label class="btn btn-good btn-sm {% if online is False %}active btn-inactive{% endif %}"
+                   aria-expanded="true"
+                   aria-controls="online"
+                   data-toggle="tooltip"
+                   data-placement="bottom"
+                   title="Online">
+              <input type="checkbox" name="online" value="0" {% if online is False %}checked{% endif %} autocomplete="off">
+              <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+              Online
+            </label>
+            <label class="btn btn-unknown btn-sm {% if testing is False %}active btn-inactive{% endif %}"
+                   aria-expanded="true"
+                   aria-controls="testing"
+                   data-toggle="tooltip"
+                   data-placement="bottom"
+                   title="Testing">
+              <input type="checkbox" name="testing" value="0" {% if testing is False %}checked{% endif %} autocomplete="off">
+              <span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span>
+              Testing
+            </label>
+            <label class="btn btn-bad btn-sm {% if offline is False %}active btn-inactive{% endif %}"
+                   aria-expanded="true"
+                   aria-controls="offline"
+                   data-toggle="tooltip"
+                   data-placement="bottom"
+                   title="Offline">
+              <input type="checkbox" name="offline" value="0" {% if offline is False %}checked{% endif %} autocomplete="off">
+              <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+              Offline
+            </label>
+            <label class="btn btn-future btn-sm {% if future is False %}active btn-inactive{% endif %}"
+                   aria-expanded="true"
+                   aria-controls="future"
+                   data-toggle="tooltip"
+                   data-placement="bottom"
+                   title="Future">
+              <input type="checkbox" name="future" value="0" {% if future is False %}checked{% endif %} autocomplete="off">
+              <span class="glyphicon glyphicon-time" aria-hidden="true"></span>
+              Future
+            </label>
+          </div>
+        </div>
+        <div class="form-group col-sm-12">
+          <button type="submit" class="btn btn-primary pull-right">Update filters</button>
+        </div>
+      </form>
+    </div>
+  </div>
   <div class="row">
     <div class="col-md-12">
       <table class="table table-hover">
@@ -43,7 +100,7 @@
         </thead>
         <tbody>
           {% for station in stations %}
-            <tr class="station-row clickable-row" data-href="{% url 'base:station_view' station_id=station.id %}" {% if station.status < 1 %}style="display:none;"{% endif %}>
+            <tr class="station-row clickable-row" data-href="{% url 'base:station_view' station_id=station.id %}">
               <td>
                 <a href="{% url 'base:station_view' station_id=station.id %}">
                   <span class="station
@@ -107,6 +164,12 @@
           {% endfor %}
         </tbody>
       </table>
+      <div style="text-align:center">
+        {% if is_paginated %}{% load paginator %}{% paginator request 3 %}{% endif %}
+        Query returned {{ stations|length }} station{{ stations|length|pluralize }}.
+            </div>
+          </div>
+        </div>
     </div>
   </div>
 

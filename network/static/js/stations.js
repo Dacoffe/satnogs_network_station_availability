@@ -1,26 +1,25 @@
 /* jshint esversion: 6 */
 
-$(document).ready(function() {
+$(document).ready(function () {
     'use strict';
 
-    $('#stations-online').click(function() {
-        $('.station-row:has(\'.label-online\')').toggle();
-        $(this).toggleClass('active').blur();
+    // Check if filters should be displayed
+    if (window.location.hash == '#collapseFilters') {
+        $('#collapseFilters').hide();
+    } else if ($('#collapseFilters').data('filtered') == 'True') {
+        $('#collapseFilters').show();
+    }
+
+    $('.filter-section #status-selector label').click(function () {
+        var checkbox = $(this);
+        var input = checkbox.find('input[type="checkbox"]');
+
+        if (input.prop('checked')) {
+            checkbox.removeClass('btn-inactive');
+        } else {
+            checkbox.addClass('btn-inactive');
+        }
     });
 
-    $('#stations-testing').click(function() {
-        $('.station-row:has(\'.label-testing\')').toggle();
-        $(this).toggleClass('active').blur();
-    });
-
-    $('#stations-offline').click(function() {
-        $('.station-row:has(\'.label-offline\')').toggle();
-        $(this).toggleClass('active').blur();
-    });
-
-    $('#stations-future').click(function() {
-        $('.station-row:has(\'.label-future\')').toggle();
-        $(this).toggleClass('active').blur();
-    });
 
 });
