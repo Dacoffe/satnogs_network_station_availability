@@ -284,8 +284,8 @@
                           data-toggle="tooltip" data-placement="bottom"
                           title="Audio uploaded"></span>
                   {% endif %}
-                  {% if observation.demoddata.exists %}
-                    {% with total_data=observation.demoddata.count %}
+                  {% if observation.demoddata_count > 0 %}
+                    {% with total_data=observation.demoddata_count %}
                       <span class="glyphicon glyphicon-file" aria-hidden="true"
                             data-toggle="tooltip" data-placement="bottom"
                             title="{{ total_data }} Data uploaded"></span>
