@@ -362,6 +362,7 @@ def fetch_data():
             satellite.pop('updated', None)
             satellite.pop('citation', None)
             satellite.pop('associated_satellites', None)
+            satellite.pop('norad_follow_id', None)
             try:
                 # Update Satellite
                 existing_satellite = Satellite.objects.get(norad_cat_id=norad_cat_id)
