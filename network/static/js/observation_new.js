@@ -29,15 +29,58 @@ $(document).ready( function(){
         }
     });
 
-    $('#default-split-duration').click(function() {
+    const custom_split_formgroup = $('#split-duration-formgroup');
+    function reset_split_duration() {
+        custom_split_formgroup.removeClass('has-error');
         $('#split-duration-custom').remove();
+        $('#split-duration-span').remove();
+    }
+
+    $('#default-split-duration').click(function() {
+        reset_split_duration();
     });
+
+    function get_errors(code, min_val) {
+        switch(code) {
+        case 1:
+            return 'Value is not a number.';
+        case 2:
+            return 'Enter a value greater than ' + min_val + '.';
+        default:
+            return 'Invalid input.';
+        }
+    }
 
     $('#custom-split-duration').click(function() {
         if (!$('#split-duration-custom').length){
             var value = $('#default-split-duration input')[0].value;
             var min_value = $('#default-split-duration input')[0].dataset.min;
-            $('#split-duration-status').append('<input type="number" name="split_duration_custom" id="split-duration-custom" class="duration-number-input" min="' + min_value + '" step="1" value="' + value +'"/>');
+            $('#split-duration-status').append('<input type="number" name="split_duration_custom" id="split-duration-custom" class="duration-number-input form-control" min="' + min_value + '" step="1" value="' + value +'"/>');
+            $('#split-duration-status').append('<span id="split-duration-span"></span>');
+            const custom_split = $('#split-duration-custom');
+            custom_split.on('input', function () {
+                var has_error = 0;
+                if(isNaN(custom_split.val()) || custom_split.val() == '') {
+                    has_error = 1;
+                } else 
+                if(parseInt(custom_split.val()) < min_value) {
+                    has_error = 2;
+                }
+
+                if(has_error) {
+                    custom_split_formgroup.addClass('has-error');
+                    $('#split-duration-span').addClass('alert-error');
+                    $('#calculate-observation').prop('disabled', true);
+                    $('#schedule-observation').prop('disabled', true);
+                    $('#split-duration-span').html(get_errors(has_error, min_value));
+                } else {
+                    custom_split_formgroup.removeClass('has-error');
+                    $('#split-duration-span').removeClass('alert-error');
+                    $('#calculate-observation').prop('disabled', false);
+                    $('#schedule-observation').prop('disabled', false);
+                    $('#split-duration-span').html('');
+                }
+            });
         }
     });
 
@@ -439,6 +482,7 @@ $(document).ready( function(){
     }
 
     $('#satellite-selection').on('changed.bs.select', function() {
+        reset_split_duration();
         var satellite = $(this).find(':selected').data('norad');
         var station = $('#form-obs').data('obs-filter-station');
         select_proper_transmitters({
@@ -450,6 +494,7 @@ $(document).ready( function(){
 
 
     function search_for_stations(transmitter_object) {
+        reset_split_duration();
         var transmitter = transmitter_object.val();
         var downlink_low = transmitter_object.data('downlink-low');
         var station = $('#form-obs').data('obs-filter-station');
@@ -521,6 +566,7 @@ $(document).ready( function(){
     });
 
     $('#transmitter-selection').on('changed.bs.select', function () {
+
         var transmitter_object = $(this).find(':selected');
         var transmitter_type = transmitter_object.data('transmitter-type');
         var downlink_high = transmitter_object.data('downlink-high');
