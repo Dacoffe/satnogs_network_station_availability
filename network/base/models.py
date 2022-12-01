@@ -479,6 +479,7 @@ class Observation(models.Model):
         validators=[MaxValueValidator(180), MinValueValidator(-180)], null=True, blank=True
     )
     station_antennas = models.TextField(null=True, blank=True)
+    center_frequency = models.BigIntegerField(blank=True, null=True)
 
     objects = ObservationManager.as_manager()
 

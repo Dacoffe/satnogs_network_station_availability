@@ -93,6 +93,7 @@ class ObservationSerializer(serializers.ModelSerializer):
     tle1 = serializers.SerializerMethodField()
     tle2 = serializers.SerializerMethodField()
     observer = serializers.SerializerMethodField()
+    center_frequency = serializers.SerializerMethodField()
 
     class Meta:
         model = Observation
@@ -106,7 +107,7 @@ class ObservationSerializer(serializers.ModelSerializer):
             'transmitter_uplink_low', 'transmitter_uplink_high', 'transmitter_uplink_drift',
             'transmitter_downlink_low', 'transmitter_downlink_high', 'transmitter_downlink_drift',
             'transmitter_mode', 'transmitter_invert', 'transmitter_baud', 'transmitter_updated',
-            'tle0', 'tle1', 'tle2', 'observer'
+            'tle0', 'tle1', 'tle2', 'center_frequency', 'observer'
         )
         read_only_fields = [
             'id', 'start', 'end', 'observation', 'ground_station', 'transmitter', 'norad_cat_id',
@@ -118,13 +119,17 @@ class ObservationSerializer(serializers.ModelSerializer):
             'transmitter_uplink_drift', 'transmitter_downlink_low', 'transmitter_downlink_high',
             'transmitter_downlink_drift', 'transmitter_mode', 'transmitter_invert',
             'transmitter_baud', 'transmitter_created', 'transmitter_updated', 'tle0', 'tle1',
-            'tle2', 'observer'
+            'tle2', 'observer', 'center_frequency'
         ]
 
     def update(self, instance, validated_data):
         """Updates observation object with validated data"""
         super().update(instance, validated_data)
         return instance
+
+    def get_center_frequency(self, obj):
+        """Returns observation center frequency"""
+        return obj.center_frequency or obj.transmitter_downlink_low
 
     def get_transmitter(self, obj):
         """Returns Transmitter UUID"""
@@ -246,6 +251,7 @@ class NewObservationListSerializer(serializers.ListSerializer):
         norad_id_set = set()
         uuid_to_norad_id = {}
         start_end_per_station = defaultdict(list)
+        transm_uuid_station_center_freq_set = set()
 
         for observation in attrs:
             station = observation.get('ground_station')
@@ -253,10 +259,11 @@ class NewObservationListSerializer(serializers.ListSerializer):
             station_set.add(station)
             transmitter_uuid_set.add(transmitter_uuid)
             transmitter_uuid_station_set.add((transmitter_uuid, station))
+            center_frequency = observation.get('center_frequency', None)
+            transm_uuid_station_center_freq_set.add((transmitter_uuid, station, center_frequency))
             start_end_per_station[int(station.id)].append(
                 (observation.get('start'), observation.get('end'))
             )
-
         try:
             check_overlaps(start_end_per_station)
         except ObservationOverlapError as error:
@@ -295,8 +302,8 @@ class NewObservationListSerializer(serializers.ListSerializer):
             raise serializers.ValidationError(error, code='forbidden')
 
         transmitter_station_list = [
-            (self.transmitters[transmitter_uuid], station)
-            for transmitter_uuid, station in transmitter_uuid_station_set
+            (self.transmitters[transmitter_uuid], station, center_freq)
+            for transmitter_uuid, station, center_freq in transm_uuid_station_center_freq_set
         ]
         try:
             check_transmitter_station_pairs(transmitter_station_list)
@@ -324,6 +331,7 @@ class NewObservationListSerializer(serializers.ListSerializer):
                 end=observation_data['end'],
                 author=self.context['request'].user,
                 tle_set=tle_set,
+                center_frequency=observation_data.get('center_frequency', None)
             )
             new_observations.append(observation)
 
@@ -381,6 +389,10 @@ class NewObservationSerializer(serializers.Serializer):
             'invalid': 'Transmitter UUID should be valid.',
             'required': 'Transmitter UUID(\'transmitter_uuid\' key) is required.'
         }
+    )
+
+    center_frequency = serializers.IntegerField(
+        error_messages={'negative': 'Frequency cannot be a negative value.'}
     )
 
     def validate_start(self, value):
@@ -573,10 +585,10 @@ class JobSerializer(serializers.ModelSerializer):
         return obj.tle_line_2
 
     def get_frequency(self, obj):
-        """Returns Transmitter downlink low frequency"""
-        frequency = obj.transmitter_downlink_low
+        """Returns Observation frequency"""
+        frequency = obj.center_frequency or obj.transmitter_downlink_low
         frequency_drift = obj.transmitter_downlink_drift
-        if frequency_drift is None:
+        if obj.center_frequency or (frequency_drift is None):
             return frequency
         return int(round(frequency + ((frequency * frequency_drift) / 1e9)))
 

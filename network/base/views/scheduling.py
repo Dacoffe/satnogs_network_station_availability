@@ -25,8 +25,9 @@ from network.base.scheduling import create_new_observation, get_available_statio
 from network.base.serializers import StationSerializer
 from network.base.stats import satellite_stats_by_transmitter_list, transmitters_with_stats
 from network.base.validators import NegativeElevationError, NoTleSetError, \
-    ObservationOverlapError, SchedulingLimitError, SinglePassError, \
-    check_violators_scheduling_limit, is_transmitter_in_station_range
+    ObservationOverlapError, OutOfRangeError, SchedulingLimitError, SinglePassError, \
+    check_violators_scheduling_limit, is_frequency_in_transmitter_range, \
+    is_transmitter_in_station_range
 
 
 def create_new_observations(formset, user):
@@ -47,6 +48,7 @@ def create_new_observations(formset, user):
             end=observation_data['end'],
             author=user,
             tle_set=tle_set,
+            center_frequency=observation_data.get('center_frequency', None)
         )
         new_observations.append(observation)
 
@@ -171,6 +173,7 @@ def prediction_windows_parse_parameters(request):
             request.POST.get('break_duration', settings.OBSERVATION_SPLIT_BREAK_DURATION)
         ),
         'overlapped': int(request.POST.get('overlapped', 0)),
+        'center_frequency': int(request.POST.get('center_frequency', 0)) or None
     }
 
     if params['split_duration'] < 0 or params['break_duration'] < 0:
@@ -210,14 +213,17 @@ def prediction_windows(request):
         transmitter = get_transmitter_by_uuid(params['transmitter'])
         if not transmitter:
             raise ValueError('You should select a valid Transmitter.')
-        downlink = transmitter[0]['downlink_low']
+        if params['center_frequency']:
+            if not is_frequency_in_transmitter_range(params['center_frequency'], transmitter[0]):
+                raise OutOfRangeError('The center frequency is out of the transmitter\'s range.')
+            downlink = params['center_frequency']
+        else:
+            downlink = transmitter[0]['downlink_low']
         error_found = False
-    except ValueError as error:
+    except (ValueError, DBConnectionError, OutOfRangeError) as error:
         data = [{'error': str(error)}]
     except Satellite.DoesNotExist:
         data = [{'error': 'You should select a Satellite first.'}]
-    except DBConnectionError as error:
-        data = [{'error': str(error)}]
 
     if error_found:
         return JsonResponse(data, safe=False)
@@ -408,7 +414,7 @@ def pass_predictions(request, station_id):
 
 
 @ajax_required
-def scheduling_stations(request):
+def scheduling_stations(request):  # pylint: disable=too-many-return-statements
     """Returns json with stations on which user has permissions to schedule"""
     uuid = request.POST.get('transmitter', None)
     if uuid is None:
@@ -434,7 +440,17 @@ def scheduling_stations(request):
     stations = Station.objects.filter(
         status__gt=0, alt__isnull=False, lat__isnull=False, lng__isnull=False
     ).prefetch_related('antennas', 'antennas__frequency_ranges')
-    available_stations = get_available_stations(stations, downlink, request.user, satellite)
+
+    center_frequency = request.POST.get('center_frequency', downlink)
+    try:
+        center_frequency = int(center_frequency)
+    except ValueError:
+        data = {'error': 'Center frequency value is invalid'}
+        return JsonResponse(data, safe=False)
+
+    available_stations = get_available_stations(
+        stations, center_frequency, request.user, satellite
+    )
     data = {
         'stations': StationSerializer(available_stations, many=True).data,
     }

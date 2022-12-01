@@ -13,8 +13,9 @@ from django.utils.timezone import make_aware, now, utc
 from network.base.db_api import DBConnectionError, get_tle_set_by_norad_id
 from network.base.models import Observation, Satellite
 from network.base.perms import schedule_stations_perms
+from network.base.utils import format_frequency
 from network.base.validators import NegativeElevationError, NoTleSetError, \
-    ObservationOverlapError, SinglePassError
+    ObservationOverlapError, OutOfRangeError, SinglePassError
 
 
 def get_altitude(observer, satellite, date):
@@ -415,20 +416,23 @@ def predict_available_observation_windows(
     return passes_found, station_windows
 
 
-def create_new_observation(station, transmitter, start, end, author, tle_set=None):
+def create_new_observation(
+    station, transmitter, start, end, author, center_frequency=None, tle_set=None
+):
     """
     Creates and returns a new Observation object
 
     Arguments:
-    station - network.base.models.Station
-    transmitter - network.base.models.Transmitter
-    start - datetime
-    end - datetime
-    author - network.base.models.User
-    tle_set - empty list or list of one tle set
+    :param station: network.base.models.Station
+    :param transmitter: network.base.models.Transmitter
+    :param start: datetime
+    :param end: datetime
+    :param author: network.base.models.User
+    :param tle_set: empty list or list of one tle set
+    :param center_frequency
 
-    Returns network.base.models.Observation
-    Raises NegativeElevationError, ObservationOverlapError, SinglePassError or more
+    :return network.base.models.Observation
+    :raises NegativeElevationError, ObservationOverlapError, SinglePassError or more
     """
     scheduled_obs = Observation.objects.filter(ground_station=station).filter(end__gt=now())
     window = resolve_overlaps(scheduled_obs, start, end)
@@ -495,9 +499,14 @@ def create_new_observation(station, transmitter, start, end, author, tle_set=Non
 
     # List all station antennas with their frequency ranges.
     antennas = []
+    is_center_frequency_in_station_range = False
     for antenna in station.antennas.all().prefetch_related('frequency_ranges', 'antenna_type'):
         ranges = []
         for frequency_range in antenna.frequency_ranges.all():
+            if (center_frequency and frequency_range.min_frequency <= center_frequency <=
+                    frequency_range.max_frequency):
+                is_center_frequency_in_station_range = True
+
             ranges.append(
                 {
                     "min": frequency_range.min_frequency,
@@ -505,6 +514,13 @@ def create_new_observation(station, transmitter, start, end, author, tle_set=Non
                 }
             )
         antennas.append({"type": antenna.antenna_type.name, "ranges": ranges})
+
+    if center_frequency and not is_center_frequency_in_station_range:
+        raise OutOfRangeError(
+            'Center frequency({}) is not in station {} supported frequencies'.format(
+                format_frequency(center_frequency), station.id
+            )
+        )
 
     return Observation(
         satellite=sat,
@@ -537,7 +553,8 @@ def create_new_observation(station, transmitter, start, end, author, tle_set=Non
         station_alt=station.alt,
         station_lat=station.lat,
         station_lng=station.lng,
-        station_antennas=json.dumps(antennas)
+        station_antennas=json.dumps(antennas),
+        center_frequency=center_frequency or transmitter['downlink_low'],
     )
 
 

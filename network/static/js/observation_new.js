@@ -58,10 +58,10 @@ $(document).ready( function(){
                     data-content='<div class="station-option">
                                     <span class="label label-` + station.status_display.toLowerCase() +`">
                                       ` + station.id +
-                                    `</span>
+            `</span>
                                     <span class="station-description">
                                       ` + station.name +
-                                    `</span>
+            `</span>
                                   </div>'>
             </option>
         `;
@@ -72,6 +72,9 @@ $(document).ready( function(){
         var data = {'transmitter': filters.transmitter};
         if (filters.station) {
             data.station_id = filters.station;
+        }
+        if (filters.center_frequency) {
+            data.center_frequency = filters.center_frequency;
         }
         $.ajax({
             type: 'POST',
@@ -129,15 +132,20 @@ $(document).ready( function(){
         });
     }
 
-    function create_transmitter_option(satellite, transmitter){
+    function create_transmitter_option(satellite, transmitter) {
+        const transmitter_freq = (transmitter.type === 'Transponder') ? (transmitter.downlink_low/1e6).toFixed(3) + ' - ' +  (transmitter.downlink_high/1e6).toFixed(3): (transmitter.downlink_low/1e6).toFixed(3);
         return `
             <option data-satellite="` + satellite + `"
+                    data-transmitter-type="` + transmitter.type + `"
+                    data-downlink-low="` + transmitter.downlink_low + `"
+                    data-downlink-high="` + transmitter.downlink_high + `"
+                    data-downlink-drift="` + transmitter.downlink_drift + `"
                     value="` + transmitter.uuid + `"
                     data-success-rate="` + transmitter.success_rate + `"
                     data-content='<div class="transmitter-option">
                                     <div class="transmitter-description">
-                                      ` + transmitter.description + ' - ' + (transmitter.downlink_low/1e6).toFixed(3) + ' MHz - ' + transmitter.mode +
-                                    `</div>
+                                      ` + transmitter.description + ' | ' + transmitter_freq + ' MHz | ' + transmitter.mode +
+            `</div>
                                     <div class="progress">
                                       <div class="progress-bar progress-bar-success transmitter-good"
                                         data-toggle="tooltip" data-placement="bottom"
@@ -346,6 +354,7 @@ $(document).ready( function(){
         var station_counter = 0;
         var warn_min_obs = parseInt(this.dataset.warnMinObs);
         var transmitter_uuid = $('#transmitter-selection').find(':selected').val();
+        var center_frequency = frequency_input.data('is-valid') ? frequency_input.val() : 0;
         $.each(suggested_data, function(i, station){
             let obs_counted = obs_counter;
             $.each(station.times, function(j, observation){
@@ -356,6 +365,9 @@ $(document).ready( function(){
                     $('#windows-data').append('<input type="hidden" name="obs-' + obs_counter + '-end" value="' + end + '">');
                     $('#windows-data').append('<input type="hidden" name="obs-' + obs_counter + '-ground_station" value="' + station.id + '">');
                     $('#windows-data').append('<input type="hidden" name="obs-' + obs_counter + '-transmitter_uuid" value="' + transmitter_uuid + '">');
+                    if (center_frequency) {
+                        $('#windows-data').append('<input type="hidden" name="obs-' + obs_counter + '-center_frequency" value="' + center_frequency + '">');
+                    }
                     obs_counter += 1;
                 }
             });
@@ -436,20 +448,95 @@ $(document).ready( function(){
         initiliaze_calculation(false);
     });
 
-    $('#transmitter-selection').on('changed.bs.select', function() {
-        var transmitter = $(this).find(':selected').val();
+
+    function search_for_stations(transmitter_object) {
+        var transmitter = transmitter_object.val();
+        var downlink_low = transmitter_object.data('downlink-low');
         var station = $('#form-obs').data('obs-filter-station');
+        var center_frequency = (frequency_input.data('is-valid')) ? frequency_input.val() : downlink_low;
         select_proper_stations({
             transmitter: transmitter,
-            station: station
-        }, function(){
-            if (obs_filter && obs_filter_dates && obs_filter_station && obs_filter_satellite){
+            station: station,
+            center_frequency: center_frequency
+        }, function() {
+            if (obs_filter && obs_filter_dates && obs_filter_station && obs_filter_satellite) {
                 $('#obs-selection-tools').hide();
                 $('#truncate-overlapped').click();
                 calculate_observation();
             }
         });
         initiliaze_calculation(false);
+    }
+
+    function format_frequency(val) {
+        if (!Number.isInteger(val)) {
+            return 'Error';
+        }
+
+        const unit_table = ['Hz', 'kHz', 'MHz', 'GHz'];
+        const div = Math.floor(Math.log10(val) / 3);
+        const unit = unit_table[(div > 3) ? 3 : div];
+
+        return val / (Math.pow(1000, (div > 3) ? 3 : div)) + ' ' + unit;
+    }
+
+    const frequency_input_format = $('#frequency-input-format');
+    const frequency_input = $('#center-frequency-input');
+    const frequency_formgroup = $('#center-frequency-formgroup');
+    const calculate_button = $('#calculate-observation');
+    const schedule_observation = $('#schedule-observation');
+    const transmitter_selection = $('#transmitter-selection');
+    const frequency_errors = { '1': 'Value is not a number', '2': 'Value out of range' };
+
+    frequency_input.on('input', function () {
+        var val = parseInt($(this).val());
+        const min = parseInt(frequency_input.attr('min'));
+        const max = parseInt(frequency_input.attr('max'));
+        var has_error = 0;
+
+        if (isNaN(val)) {
+            has_error = 1;
+        }
+        else if (val < min || val > max) {
+            has_error = 2;
+        }
+
+        if (!has_error) {
+            frequency_formgroup.removeClass('has-error');
+            frequency_input_format.removeClass('alert-error');
+            frequency_input.data('is-valid', true);
+            frequency_input_format.html(format_frequency(val));
+            calculate_button.prop('disabled', false);
+            schedule_observation.prop('disabled', false);
+            var transmitter_object = transmitter_selection.find(':selected');
+            search_for_stations(transmitter_object);
+        } else {
+            frequency_formgroup.addClass('has-error');
+            frequency_input_format.addClass('alert-error');
+            frequency_input_format.html(frequency_errors[has_error]);
+            calculate_button.prop('disabled', true);
+            schedule_observation.prop('disabled', true);
+            frequency_input.data('is-valid', false);
+        }
+    });
+
+    $('#transmitter-selection').on('changed.bs.select', function () {
+        var transmitter_object = $(this).find(':selected');
+        var transmitter_type = transmitter_object.data('transmitter-type');
+        var downlink_high = transmitter_object.data('downlink-high');
+        var downlink_low = transmitter_object.data('downlink-low');
+        var downlink_drift = transmitter_object.data('downlink-drift');
+        if (transmitter_type === 'Transponder') {
+            frequency_input.attr({ 'min': (downlink_drift && downlink_drift < 0) ? downlink_low + downlink_drift : downlink_low, 'max': (downlink_drift && downlink_drift > 0) ? downlink_high + downlink_drift : downlink_high});
+            frequency_input.val(downlink_low);
+            frequency_input.data('is-valid', true);
+            frequency_input_format.html(format_frequency(downlink_low));
+            $('#center-frequency-formgroup').fadeIn('fast');
+        } else {
+            frequency_input.data('is-valid', false);
+            $('#center-frequency-formgroup').fadeOut('fast');
+        }
+        search_for_stations(transmitter_object);
     });
 
     function sort_stations(a, b){
@@ -475,6 +562,10 @@ $(document).ready( function(){
         data.transmitter = $('#transmitter-selection').find(':selected').val();
         data.satellite = $('#satellite-selection').val();
         data.stations = $('#station-selection').val();
+        var center_frequency = frequency_input.data('is-valid') ? frequency_input.val() : 0;
+        if (center_frequency) {
+            data.center_frequency = center_frequency;
+        }
         if (data.satellite.length == 0) {
             $('#windows-data').html('<span class="text-danger">You should select a Satellite first.</span>');
             return;

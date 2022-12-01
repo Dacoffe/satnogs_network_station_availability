@@ -254,7 +254,13 @@
                     {{ observation.satellite.name }}
                   </a>
                 </td>
-                <td>{{ observation.transmitter_downlink_low|frq }}</td>
+                <td>
+                  {% if observation.center_frequency %}
+                    {{ observation.center_frequency|frq }}
+                  {% else %}
+                    {{ observation.transmitter_downlink_low|frq }}
+                  {% endif %}
+                </td>
                 <td>
                   <span data-toggle="tooltip" data-placement="bottom" title="{{ observation.transmitter_description }}">
                     {{ observation.transmitter_mode|default:"-" }}

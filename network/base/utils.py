@@ -12,6 +12,30 @@ from django.utils.text import slugify
 from requests.exceptions import RequestException
 
 
+def format_frequency(value):
+    """Returns Hz formatted frequency html string"""
+    try:
+        to_format = float(value)
+    except (TypeError, ValueError):
+        return '-'
+    if to_format >= 1000000000000:
+        formatted = format(to_format / 1000000000000, '.3f')
+        formatted = formatted + ' THz'
+    elif to_format >= 1000000000:
+        formatted = format(to_format / 1000000000, '.3f')
+        formatted = formatted + ' GHz'
+    elif to_format >= 1000000:
+        formatted = format(to_format / 1000000, '.3f')
+        formatted = formatted + ' MHz'
+    elif to_format >= 1000:
+        formatted = format(to_format / 1000, '.3f')
+        formatted = formatted + ' KHz'
+    else:
+        formatted = format(to_format, '.3f')
+        formatted = formatted + ' Hz'
+    return formatted
+
+
 def populate_formset_error_messages(messages, request, formset):
     """Add errors to django messages framework by extracting them from formset)"""
     non_form_errors = formset.non_form_errors()

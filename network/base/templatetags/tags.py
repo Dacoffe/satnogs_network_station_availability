@@ -4,6 +4,8 @@ from hashlib import md5
 from django import template
 from django.urls import reverse
 
+from network.base.utils import format_frequency
+
 register = template.Library()
 
 
@@ -46,26 +48,7 @@ def sort_types(types):
 @register.filter
 def frq(value):
     """Returns Hz formatted frequency html string"""
-    try:
-        to_format = float(value)
-    except (TypeError, ValueError):
-        return '-'
-    if to_format >= 1000000000000:
-        formatted = format(to_format / 1000000000000, '.3f')
-        formatted = formatted + ' THz'
-    elif to_format >= 1000000000:
-        formatted = format(to_format / 1000000000, '.3f')
-        formatted = formatted + ' GHz'
-    elif to_format >= 1000000:
-        formatted = format(to_format / 1000000, '.3f')
-        formatted = formatted + ' MHz'
-    elif to_format >= 1000:
-        formatted = format(to_format / 1000, '.3f')
-        formatted = formatted + ' KHz'
-    else:
-        formatted = format(to_format, '.3f')
-        formatted = formatted + ' Hz'
-    return formatted
+    return format_frequency(value)
 
 
 @register.filter

@@ -46,6 +46,7 @@ class ObservationForm(ModelForm):
             'required': 'Station is required.'
         }
     )
+    center_frequency = IntegerField(required=False)
 
     def clean_start(self):
         """Validates start datetime of a new observation"""
@@ -80,7 +81,7 @@ class ObservationForm(ModelForm):
 
     class Meta:
         model = Observation
-        fields = ['transmitter_uuid', 'start', 'end', 'ground_station']
+        fields = ['transmitter_uuid', 'start', 'end', 'ground_station', 'center_frequency']
         error_messages = {'transmitter_uuid': {'required': "Transmitter is required"}}
 
 
@@ -111,9 +112,10 @@ class BaseObservationFormSet(BaseFormSet):
         for form in self.forms:
             station = form.cleaned_data.get('ground_station')
             transmitter_uuid = form.cleaned_data.get('transmitter_uuid')
+            center_frequency = form.cleaned_data.get('center_frequency', None)
             station_set.add(station)
             transmitter_uuid_set.add(transmitter_uuid)
-            transmitter_uuid_station_set.add((transmitter_uuid, station))
+            transmitter_uuid_station_set.add((transmitter_uuid, station, center_frequency))
             start_end_per_station[int(station.id)].append(
                 (form.cleaned_data.get('start'), form.cleaned_data.get('end'))
             )
@@ -145,7 +147,7 @@ class BaseObservationFormSet(BaseFormSet):
         violators_norad_ids = [satellite.norad_cat_id for satellite in self.violators]
         station_with_violators_set = {
             station
-            for transmitter_uuid, station in transmitter_uuid_station_set
+            for transmitter_uuid, station, _ in transmitter_uuid_station_set
             if uuid_to_norad_id[transmitter_uuid] in violators_norad_ids
         }
         try:
@@ -154,8 +156,8 @@ class BaseObservationFormSet(BaseFormSet):
             raise ValidationError(error, code='forbidden') from error
 
         transmitter_station_list = [
-            (self.transmitters[transmitter_uuid], station)
-            for transmitter_uuid, station in transmitter_uuid_station_set
+            (self.transmitters[transmitter_uuid], station, center_frequency)
+            for transmitter_uuid, station, center_frequency in transmitter_uuid_station_set
         ]
         try:
             check_transmitter_station_pairs(transmitter_station_list)

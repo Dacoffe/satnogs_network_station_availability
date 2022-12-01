@@ -11,7 +11,7 @@ class ObservationOverlapError(Exception):
 
 
 class OutOfRangeError(Exception):
-    """Error when transmitter is our of station's antenna frequency range"""
+    """Error when a frequency is out of a transmitter's or station's antenna frequency range"""
 
 
 class NegativeElevationError(Exception):
@@ -67,40 +67,88 @@ def check_start_end_datetimes(start, end):
         )
 
 
-def downlink_low_is_in_range(antenna, transmitter):
-    """Return true if transmitter frequency is in station's antenna frequency range"""
-    if transmitter['downlink_low'] is not None:
-        downlink_low = transmitter['downlink_low']
-        for frequency_range in antenna.frequency_ranges.all():
-            if frequency_range.min_frequency <= downlink_low <= frequency_range.max_frequency:
-                return True
-    return False
-
-
-def is_transmitter_in_station_range(transmitter, station):
-    """Return true if transmitter frequency is in one of the station's antennas frequency ranges"""
-    for gs_antenna in station.antennas.all():
-        if downlink_low_is_in_range(gs_antenna, transmitter):
+def downlink_is_in_range(antenna, transmitter, center_frequency=None):
+    """Return true if center or transmitter frequency is in station's antenna range"""
+    downlink = center_frequency or transmitter['downlink_low']
+    if not downlink:
+        return False
+    for frequency_range in antenna.frequency_ranges.all():
+        if frequency_range.min_frequency <= downlink <= frequency_range.max_frequency:
             return True
     return False
 
 
+def is_transmitter_in_station_range(transmitter, station, center_frequency=None):
+    """Return true if center or transmitter frequency is in one of the station's antennas ranges"""
+    for gs_antenna in station.antennas.all():
+        if downlink_is_in_range(gs_antenna, transmitter, center_frequency):
+            return True
+    return False
+
+
+def is_frequency_in_transmitter_range(center_frequency, transmitter):
+    """Validate whether center frequency is in transmitter range"""
+    downlink_low = transmitter['downlink_low']
+    downlink_high = transmitter['downlink_high']
+    downlink_drift = transmitter['downlink_drift']
+    if not downlink_low:
+        return False
+    if not downlink_high:
+        return downlink_low == center_frequency
+    if downlink_drift:
+        if downlink_drift < 0:
+            downlink_low += downlink_drift
+        else:
+            downlink_high += downlink_drift
+    return downlink_low <= center_frequency <= downlink_high
+
+
 def check_transmitter_station_pairs(transmitter_station_list):
     """Validate the pairs of transmitter and stations"""
-    out_of_range_pairs = [
-        (str(transmitter['uuid']), int(station.id))
-        for transmitter, station in transmitter_station_list
-        if not is_transmitter_in_station_range(transmitter, station)
-    ]
-    if out_of_range_pairs:
-        if len(out_of_range_pairs) == 1:
+    out_of_range_triads = []
+    frequencies_out_of_transmitter_range_pairs = []
+
+    for transmitter, station, center_frequency in transmitter_station_list:
+        if center_frequency and not is_frequency_in_transmitter_range(center_frequency,
+                                                                      transmitter):
+            frequencies_out_of_transmitter_range_pairs.append(
+                (str(transmitter['uuid']), center_frequency)
+            )
+
+        if not is_transmitter_in_station_range(transmitter, station, center_frequency):
+            out_of_range_triads.append(
+                (
+                    str(transmitter['uuid']), int(station.id), center_frequency
+                    or transmitter['downlink_low']
+                )
+            )
+
+    if frequencies_out_of_transmitter_range_pairs:
+        if len(frequencies_out_of_transmitter_range_pairs) == 1:
+            raise OutOfRangeError(
+                'Center frequency out of transmitter range.'
+                ' Transmitter-frequency pair: {0}'.format(
+                    frequencies_out_of_transmitter_range_pairs[0]
+                )
+            )
+        raise OutOfRangeError(
+            'Center frequency out of transmitter range.'
+            ' Transmitter-frequency pairs: {0}'.format(
+                len(frequencies_out_of_transmitter_range_pairs)
+            )
+        )
+
+    if out_of_range_triads:
+        if len(out_of_range_triads) == 1:
             raise OutOfRangeError(
                 'Transmitter out of station frequency range.'
-                ' Transmitter-Station pair: {0}'.format(out_of_range_pairs[0])
+                ' Transmitter-Station-Observation Frequency triad: {0}'.format(
+                    out_of_range_triads[0]
+                )
             )
         raise OutOfRangeError(
             'Transmitter out of station frequency range. '
-            'Transmitter-Station pairs: {0}'.format(out_of_range_pairs)
+            'Transmitter-Station-Observation Frequency triads: {0}'.format(out_of_range_triads)
         )
 
 
