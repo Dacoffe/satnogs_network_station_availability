@@ -35,7 +35,9 @@ class StationListView(ListView):  # pylint: disable=R0901
     paginate_by = settings.ITEMS_PER_PAGE
     template_name = "base/stations.html"
     flag_filters = ['online', 'testing', 'offline', 'future']
+    freq_filters = ['freq']
     is_filtered = False
+    freq_filter_errors = []
 
     def get_filter_params(self):
         """
@@ -50,7 +52,18 @@ class StationListView(ListView):  # pylint: disable=R0901
             else:
                 filter_params[param_name] = False
                 self.is_filtered = True
-
+        self.freq_filter_errors = []
+        filter_freq = self.request.GET.get('freq', None)
+        if filter_freq:
+            self.is_filtered = True
+            try:
+                filter_freq = int(filter_freq)
+            except ValueError:
+                self.freq_filter_errors.append("Frequency: Invalid value")
+                return filter_params
+            if filter_freq < 0:
+                self.freq_filter_errors.append('Frequency: Value cannot be less than 0')
+            filter_params['freq'] = filter_freq
         return filter_params
 
     def get_queryset(self):
@@ -72,6 +85,11 @@ class StationListView(ListView):  # pylint: disable=R0901
         if not filter_params["future"]:
             stations = stations.exclude(last_seen__isnull=True)
 
+        freq = filter_params.get("freq", None)
+        if freq:
+            freq_filter = Q(antennas__frequency_ranges__min_frequency__lte=freq)
+            freq_filter &= Q(antennas__frequency_ranges__max_frequency__gte=freq)
+            stations = stations.filter(freq_filter)
         return stations
 
     def get_context_data(self, **kwargs):
@@ -80,6 +98,7 @@ class StationListView(ListView):  # pylint: disable=R0901
         context.update(self.get_filter_params())
         context["mapbox_id"] = settings.MAPBOX_MAP_ID
         context["mapbox_token"] = settings.MAPBOX_TOKEN
+        context["freq_filter_errors"] = self.freq_filter_errors
 
         return context
 

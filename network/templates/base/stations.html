@@ -35,7 +35,10 @@
   <div class="collapse" id="collapseFilters" data-filtered="{{ is_filtered }}">
     <div class="filter-section well well-sm row">
       <form id="station-filter" class="form" methon="get" action="{% url 'base:stations_list' %}">
-        <div class="form-group status-filter col-sm-12">
+        {% for error in freq_filter_errors %}
+        <div class="alert alert-danger" role="alert">{{error}}</div>
+        {% endfor %}
+        <div class="form-group status-filter col-sm-12 col-md-6">
           <label for="status-selector">Status</label>
           <div id="status-selector" class="btn-group" data-toggle="buttons">
             <label class="btn btn-good btn-sm {% if online is False %}active btn-inactive{% endif %}"
@@ -80,8 +83,15 @@
             </label>
           </div>
         </div>
+        <div id="frequency-filter-formgroup" class="form-group frequency-filter col-sm-12 col-md-6 {% if freq_filter_errors %}has_error{% endif %}">
+            <label class="frequency-filter-label" for="frequency-filter">Frequency</label>
+            <div class="freq-input-container">
+              <input name="freq" id="frequency-filter" min="0" type="number" step="1" value="{{freq}}" class="frequency-filter-input form-control" autocomplete="off"/>
+              <span id="freq-format"></span>
+            </div>
+        </div>
         <div class="form-group col-sm-12">
-          <button type="submit" class="btn btn-primary pull-right">Update filters</button>
+          <button id="filter-button" type="submit" class="btn btn-primary pull-right">Update filters</button>
         </div>
       </form>
     </div>
