@@ -6,8 +6,9 @@
 {% block title %} - Observations{% endblock %}
 
 {% block css %}
-  <link href="{% static 'lib/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css' %}" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'lib/@fortawesome/fontawesome-free/css/all.min.css' %}">
   <link rel="stylesheet" href="{% static 'lib/bootstrap-select/dist/css/bootstrap-select.min.css' %}">
+  <link rel="stylesheet" href="{% static 'lib/@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css' %}">
 {% endblock css %}
 
 {% block content %}
@@ -161,33 +162,41 @@
         </div>
         <div class="form-group col-sm-3 ">
           <label class="control-label">Start Time</label>
-          <div class='input-group date' id="datetimepicker-start">
-            <input type="text"
+          <div class='input-group datetimepicker' id="datetimepicker-start"
+               {% if start is not None %}
+                 data-value = "{{ start }}"
+               {% endif %}
+               data-td-target-input="nearest"
+               data-td-target-toggle="nearest">
+            <input data-td-target="#datetimepicker-start"
+                   type="text"
                    class="form-control"
                    name="start"
-                   data-date-format="YYYY-MM-DD HH:mm"
-                   {% if start is not None %}
-                     value = "{{ start }}"
-                   {% endif %}
                    autocomplete="off"/>
-            <span class="input-group-addon">
-              <span class="glyphicon glyphicon-calendar"></span>
+            <span class="input-group-addon"
+                  data-td-target="#datetimepicker-start"
+                  data-td-toggle="datetimepicker">
+                <i class="fa fa-calendar"></i>
             </span>
           </div>
         </div>
         <div class="form-group col-sm-3 ">
           <label class="control-label">End Time</label>
-          <div class='input-group date' id="datetimepicker-end">
-            <input type="text"
+          <div class='input-group datetimepicker' id="datetimepicker-end"
+               {% if end is not None %}
+                 data-value = "{{ end }}"
+               {% endif %}
+               data-td-target-input="nearest"
+               data-td-target-toggle="nearest">
+            <input data-td-target="#datetimepicker-end"
+                   type="text"
                    class="form-control"
                    name="end"
-                   data-date-format="YYYY-MM-DD HH:mm"
-                   {% if end is not None %}
-                     value = "{{ end }}"
-                   {% endif %}
                    autocomplete="off"/>
-            <span class="input-group-addon">
-              <span class="glyphicon glyphicon-calendar"></span>
+            <span class="input-group-addon"
+                  data-td-target="#datetimepicker-end"
+                  data-td-toggle="datetimepicker">
+                <i class="fa fa-calendar"></i>
             </span>
           </div>
         </div>
@@ -328,7 +337,10 @@
 
 {% block javascript %}
   <script src="{% static 'lib/moment/min/moment.min.js' %}"></script>
-  <script src="{% static 'lib/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js' %}"></script>
+  <script src="{% static 'lib/@fortawesome/fontawesome-free/js/all.min.js' %}"></script>
+  <script src="{% static 'lib/@popperjs/core/dist/umd/popper.min.js' %}"></script>
+  <script src="{% static 'lib/@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
+  <script src="{% static 'lib/@eonasdan/tempus-dominus/dist/plugins/customDateFormat.js' %}"></script>
   <script src="{% static 'lib/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
   <script src="{% static 'js/observations.js' %}"></script>
   <script src="{% static 'js/satellite.js' %}"></script>

@@ -1,4 +1,4 @@
-/* global moment, d3, Slider, calcPolarPlotSVG */
+/* global moment, d3, Slider, calcPolarPlotSVG, tempusDominus */
 
 $(document).ready( function(){
     $('#advanced-options').click(function(){
@@ -62,8 +62,7 @@ $(document).ready( function(){
                 var has_error = 0;
                 if(isNaN(custom_split.val()) || custom_split.val() == '') {
                     has_error = 1;
-                } else 
-                if(parseInt(custom_split.val()) < min_value) {
+                } else if(parseInt(custom_split.val()) < min_value) {
                     has_error = 2;
                 }
 
@@ -446,24 +445,105 @@ $(document).ready( function(){
         var maxStartDate = moment().utc().add(minStart + maxRange - minRange, 'm').format('YYYY-MM-DD HH:mm');
         var minEndDate = moment().utc().add(minEnd, 'm').format('YYYY-MM-DD HH:mm');
         var maxEndDate = moment().utc().add(minStart + maxRange, 'm').format('YYYY-MM-DD HH:mm');
-        $('#datetimepicker-start').datetimepicker({
-            useCurrent: false //https://github.com/Eonasdan/bootstrap-datetimepicker/issues/1075
-        });
-        $('#datetimepicker-start').data('DateTimePicker').date(minStartDate);
-        $('#datetimepicker-start').data('DateTimePicker').minDate(minStartDate);
-        $('#datetimepicker-start').data('DateTimePicker').maxDate(maxStartDate);
-        $('#datetimepicker-end').datetimepicker({
-            useCurrent: false //https://github.com/Eonasdan/bootstrap-datetimepicker/issues/1075
-        });
-        $('#datetimepicker-end').data('DateTimePicker').date(minEndDate);
-        $('#datetimepicker-end').data('DateTimePicker').minDate(minEndDate);
-        $('#datetimepicker-end').data('DateTimePicker').maxDate(maxEndDate);
-        $('#datetimepicker-start').on('dp.change',function (e) {
-            var newMinEndDate = e.date.clone().add(minRange, 'm');
-            if ($('#datetimepicker-end').data('DateTimePicker').date() < newMinEndDate) {
-                $('#datetimepicker-end').data('DateTimePicker').date(newMinEndDate);
+        $('#start-minmax-label').html('From: <mark>' + minStartDate.format('YYYY-MM-DD HH:mm') + '</mark> to <mark>' + maxStartDate.format('YYYY-MM-DD HH:mm') + '</mark>');
+        $('#end-minmax-label').html('From: <mark>' + minEndDate.format('YYYY-MM-DD HH:mm') + '</mark> to <mark>' + maxEndDate.format('YYYY-MM-DD HH:mm') + '</mark>');
+
+        tempusDominus.extend(window.tempusDominus.plugins.customDateFormat);
+        var start = new tempusDominus.TempusDominus(document.getElementById('datetimepicker-start'), {
+            useCurrent: false,
+            defaultDate: minStartDate,
+            restrictions:{
+                minDate: minStartDate,
+                maxDate: maxStartDate
+            },
+            display: {
+                sideBySide: true,
+                components: {
+                    useTwentyfourHour: true
+                },
+                buttons: {
+                    close: true
+                }
+            },
+            localization: {
+                format: 'yyyy-MM-dd HH:mm'
             }
-            $('#datetimepicker-end').data('DateTimePicker').minDate(newMinEndDate);
+        });
+        var end = new tempusDominus.TempusDominus(document.getElementById('datetimepicker-end'), {
+            useCurrent: false,
+            defaultDate: minEndDate,
+            restrictions:{
+                minDate: minEndDate,
+                maxDate: maxEndDate
+            },
+            display: {
+                sideBySide: true,
+                components: {
+                    useTwentyfourHour: true
+                },
+                buttons: {
+                    close: true
+                }
+            },
+            localization: {
+                format: 'yyyy-MM-dd HH:mm'
+            }
+        });
+        const otherValidFormats = [
+            'YYYY-MM-DD H:mm', 'YYYY-MM-DD HH', 'YYYY-MM-DD H', 'YYYY-MM-DD HH:m',
+            'YYYY-MM-DD H:m', 'YYYY-MM-D HH:mm', 'YYYY-MM-D H:mm', 'YYYY-MM-D HH',
+            'YYYY-MM-D H', 'YYYY-MM-D HH:m', 'YYYY-MM-D H:m', 'YYYY-M-D HH:mm', 'YYYY-M-D H:mm',
+            'YYYY-M-D HH', 'YYYY-M-D H', 'YYYY-M-D HH:m', 'YYYY-M-D H:m', 'YYYY-M-DD HH:mm',
+            'YYYY-M-DD H:mm', 'YYYY-M-DD HH', 'YYYY-M-DD H', 'YYYY-M-DD HH:m', 'YYYY-M-DD H:m'
+        ];
+        $('#datetimepicker-start input').on('blur', function () {
+            if (!moment(this.value, 'YYYY-MM-DD HH:mm', true).isValid()){
+                var date = moment(this.value, otherValidFormats, true);
+                if (date.isValid()){
+                    var newDate = date.format('YYYY-MM-DD HH:mm');
+                    start.dates.setFromInput(newDate);
+                } else {
+                    start.dates.setFromInput(minStartDate);
+                }
+            }
+        });
+        $('#datetimepicker-end input').on('blur', function () {
+            if (!moment(this.value, 'YYYY-MM-DD HH:mm', true).isValid()){
+                var date = moment(this.value, otherValidFormats, true);
+                if (date.isValid()){
+                    var newDate = date.format('YYYY-MM-DD HH:mm');
+                    end.dates.setFromInput(newDate);
+                } else {
+                    end.dates.setFromInput(maxEndDate);
+                }
+            }
+        });
+        start.subscribe(tempusDominus.Namespace.events.error, (e) => {
+            if(e.oldDate){
+                var oldDateFormatted = moment(e.oldDate).format('YYYY-MM-DD HH:mm');
+                start.dates.setFromInput(oldDateFormatted);
+            } else {
+                start.dates.setFromInput(minStartDate);
+            }
+        });
+        end.subscribe(tempusDominus.Namespace.events.error, (e) => {
+            if(e.oldDate){
+                var oldDateFormatted = moment(e.oldDate).format('YYYY-MM-DD HH:mm');
+                end.dates.setFromInput(oldDateFormatted);
+            } else {
+                end.dates.setFromInput(maxEndDate);
+            }
+        });
+        start.subscribe(tempusDominus.Namespace.events.change, (e) => {
+            var newMinEndDate = moment(e.date).add(minRange, 'm');
+            var newMinEndDateFormatted = newMinEndDate.format('YYYY-MM-DD HH:mm');
+            if (moment(end.dates.lastPicked) < newMinEndDate) {
+                end.dates.setFromInput(newMinEndDateFormatted);
+            }
+            end.updateOptions({
+                restrictions: {minDate: newMinEndDateFormatted},
+                localization: {format: 'yyyy-MM-dd HH:mm'}
+            });
         });
     }
 
@@ -861,6 +941,14 @@ $(document).ready( function(){
         $('#satellite-selection').selectpicker('refresh');
         $('#satellite-selection').selectpicker('toggle');
     }
+
+    $(document).on('keypress', '.datetimepicker input', function (e) {
+        var code = e.keyCode || e.which;
+        if (code == 13) {
+            e.preventDefault();
+            return false;
+        }
+    });
 
     // Hotkeys bindings
     $(document).bind('keyup', function(event){
