@@ -7,7 +7,6 @@
 {% block title %} - New Observation{% endblock %}
 
 {% block css %}
-  <link rel="stylesheet" href="{% static 'lib/@fortawesome/fontawesome-free/css/all.min.css' %}">
   <link rel="stylesheet" href="{% static 'lib/bootstrap-slider/dist/css/bootstrap-slider.min.css' %}">
   <link rel="stylesheet" href="{% static 'lib/bootstrap-select/dist/css/bootstrap-select.min.css' %}">
   <link rel="stylesheet" href="{% static 'lib/@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css' %}">
@@ -16,37 +15,34 @@
 {% block content %}
 
   <div class="row">
-    <div class="col-md-6 col-sm-6">
+    <div class="col col-sm-7">
       <h2>Schedule Observations</h2>
       <div class="timezone text-muted">
-        <span class="glyphicon glyphicon-time" aria-hidden="true"></span>
-        Timeframes are in <a href="#" data-toggle="modal" data-target="#UTCModal">UTC</a>
+            <span class="bi bi-clock" aria-hidden="true"></span>
+        Timeframes are in <span id="timezone-info" data-toggle="tooltip" title="">UTC</span>
       </div>
     </div>
-    <div class="col-md-6 col-sm-6 text-right hidden-xs">
-      <h2>
-        {% if user.is_authenticated %}
-          <a href="#" class="btn" data-toggle="modal" data-target="#HotkeysModal">
-            <span class="glyphicon glyphicon-fire" aria-hidden="true" title="Hotkeys"></span>
-          </a>
-        {% endif %}
-      </h2>
+
+    <div class="col d-flex justify-content-end align-items-center">
+      <a href="#" class="btn" data-toggle="modal" data-target="#HotkeysModal">
+        <span class="bi bi-fire" aria-hidden="true" title="Hotkeys"></span>
+      </a>
     </div>
   </div>
 
-  <form class="form-horizontal" role="form" action="{% url 'base:observation_new' %}"
+  <form role="form" action="{% url 'base:observation_new' %}"
         method="post" data-obs-filter="{{ obs_filter.exists|lower }}" data-obs-filter-station="{{ obs_filter.ground_station }}"
         data-obs-filter-dates="{{ obs_filter.dates|lower }}" data-obs-filter-transmitter="{{ obs_filter.transmitter }}"
         data-obs-filter-satellite="{{ obs_filter.norad }}" id="form-obs">{% csrf_token %}
     <div class="row">
       <div class="col-md-6">
-        <div class="form-group">
-          <label class="col-sm-3 control-label">Satellite</label>
+        <div class="form-group row align-items-center">
+          <label class="col-sm-3 col-form-label">Satellite</label>
           <div class="col-sm-9">
             {% if obs_filter.norad %}
               {% for satellite in satellites %}
                 {% if satellite.norad_cat_id == obs_filter.norad %}
-                  <select id="satellite-selection" class="form-control selectpicker" name="satellite" disabled>
+                  <select id="satellite-selection" class="form-control selectpicker" data-style="btn" name="satellite" disabled>
                     <option data-norad="{{ satellite.norad_cat_id }}" value="{{ satellite.norad_cat_id }}" selected>
                       {{ satellite.norad_cat_id }} - {{ satellite.name }}
                     </option>
@@ -55,7 +51,7 @@
                 {% endif %}
               {% endfor %}
             {% else %}
-              <select id="satellite-selection" class="form-control selectpicker" name="satellite"
+              <select id="satellite-selection" class="form-control selectpicker" data-style="btn" name="satellite"
                       data-live-search="true" autocomplete="off">
                 <option value="" selected>Select a satellite</option>
                 {% for satellite in satellites %}
@@ -67,8 +63,8 @@
             {% endif %}
           </div>
         </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label">Transmitter</label>
+        <div class="form-group row align-items-center">
+          <label class="col-sm-3 col-form-label">Transmitter</label>
           <div id="transmitter-field-loading" class="col-sm-9 loading-field">
             <div class="spinner">
               <div class="bounce1"></div>
@@ -77,21 +73,21 @@
             </div>
           </div>
           <div class="col-sm-9" id="transmitter-field">
-            <select id="transmitter-selection" class="form-control selectpicker"
+            <select id="transmitter-selection" class="form-control selectpicker" data-style="btn"
                     disabled name="transmitter" autocomplete="off">
               <option id="no-transmitter" value="" selected>No transmitter available</option>
             </select>
           </div>
         </div>
-        <div class="form-group" id="center-frequency-formgroup" style="display: none;">
-          <label for="center-frequency-input" class="col-sm-3 control-label">Center Frequency (Hz)</label>
+        <div class="form-group row align-items-center" id="center-frequency-formgroup" style="display: none;">
+          <label for="center-frequency-input" class="col-sm-3 col-form-label">Center Frequency (Hz)</label>
           <div class="col-sm-9">
             <input data-is-valid="false" id="center-frequency-input" step="1" class="form-control" type="number" autocomplete="off"></input>
             <span id="frequency-input-format"></span>
           </div>
         </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label">Stations</label>
+        <div class="form-group row align-items-center">
+          <label class="col-sm-3 col-form-label">Stations</label>
           <div id="station-field-loading" class="col-sm-9 loading-field">
             <div class="spinner">
               <div class="bounce1"></div>
@@ -100,7 +96,7 @@
             </div>
           </div>
           <div class="col-sm-9" id="station-field">
-            <select id="station-selection" class="form-control selectpicker" data-live-search="true" data-count-selected-text="Selected {0} of {1} stations"
+            <select id="station-selection" class="form-control selectpicker" data-style="btn" data-live-search="true" data-count-selected-text="Selected {0} of {1} stations"
                     data-dropup-auto="false" multiple data-selected-text-format="count" data-actions-box="true" disabled name="station" autocomplete="off">
               <option id="no-station" value="" selected>No station available</option>
             </select>
@@ -108,8 +104,8 @@
         </div>
       </div>
       <div class="col-md-6">
-        <div class="form-group">
-          <label class="col-sm-3 control-label">Start Time</label>
+        <div class="form-group row align-items-center">
+          <label class="col-sm-3 col-form-label">Start Time</label>
           <div class="col-sm-9">
             <div class='input-group datetimepicker' id="datetimepicker-start"
                  data-date-minstart="{{ date_min_start }}"
@@ -128,18 +124,16 @@
                        name="start"
                        autocomplete="off">
               {% endif %}
-              <span class="input-group-addon"
+              <span class="input-group-append"
                     data-td-target="#datetimepicker-start"
                     data-td-toggle="datetimepicker">
-                <i class="fa fa-calendar"></i>
+                <i class="input-group-text bi bi-calendar3"></i>
               </span>
             </div>
           </div>
-          <div id='start-minmax-label' class='col-sm-9 col-sm-push-3 text-center'>
-          </div>
         </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label">End Time</label>
+        <div class="form-group row align-items-center">
+          <label class="col-sm-3 col-form-label">End Time</label>
           <div class="col-sm-9">
             <div class='input-group datetimepicker' id="datetimepicker-end"
                  data-date-maxrange="{{ date_max_range }}"
@@ -158,34 +152,32 @@
                        name="end"
                        autocomplete="off">
               {% endif %}
-              <span class="input-group-addon"
+              <span class="input-group-append"
                     data-td-target="#datetimepicker-start"
                     data-td-toggle="datetimepicker">
-                <i class="fa fa-calendar"></i>
+                <i class="input-group-text bi bi-calendar3"></i>
               </span>
             </div>
-          </div>
-          <div id='end-minmax-label' class='col-sm-9 col-sm-push-3 text-center'>
           </div>
         </div>
       </div>
       <div class="col-md-12">
       <button type="button" id="advanced-options" class="btn btn-link" data-toggle="collapse"
               data-target=".collapse-option" aria-expanded="false" aria-controls="collapse-option">
-        <span class="glyphicon glyphicon-chevron-down"></span> Show Advanced Options
+        <span class="bi bi-chevron-down"></span> Show Advanced Options
       </button>
       </div>
       <div class="col-md-6 collapse collapse-option">
-        <div class="form-group">
-          <label class="col-sm-3 control-label">Station Horizon</label>
+        <div class="form-group row align-items-center">
+          <label class="col-sm-3 col-form-label">Station Horizon</label>
           <div class="col-sm-9" id="horizon-status">
-            <div class="btn-group btn-group-justified" data-toggle="buttons">
-              <label class="btn btn-default active" id="default-horizon">
+            <div class="btn-group btn-group-toggle d-flex" role="group" data-toggle="buttons">
+              <label class="btn btn-outline-dark active" id="default-horizon">
                 <input type="radio" name="horizon" value="default" autocomplete="off" checked>
                   Minimum of each Station
                 </input>
               </label>
-              <label class="btn btn-default" id="custom-horizon">
+              <label class="btn btn-outline-dark" id="custom-horizon">
                 <input type="radio" name="horizon" value="custom" autocomplete="off">
                   Custom
                 </input>
@@ -195,39 +187,38 @@
         </div>
       </div>
       <div class="col-md-6 collapse collapse-option">
-        <div class="form-group">
-          <label class="col-sm-3 control-label">Overlapped</label>
+        <div class="form-group row align-items-center">
+          <label class="col-sm-3 col-form-label">Overlapped</label>
           <div class="col-sm-9" id="overlapped">
-            <div class="btn-group btn-group-justified" data-toggle="buttons">
-              <label class="btn btn-default active" id="hide-overlapped">
+            <div class="btn-group btn-group-toggle d-flex" role="group" data-toggle="buttons">
+              <label class="btn btn-outline-dark active" id="hide-overlapped">
                 <input type="radio" name="overlapped" value="hide-overlapped" autocomplete="off" checked>
                   Hide
                 </input>
               </label>
-              <label class="btn btn-default" id="truncate-overlapped">
+              <label class="btn btn-outline-dark" id="truncate-overlapped">
                 <input type="radio" name="overlapped" value="truncate-overlapped" autocomplete="off">
                   Show Truncated
                 </input>
               </label>
-              <label class="btn btn-default" id="custom-overlapped" disabled>
+              <label class="btn btn-outline-dark" id="custom-overlapped" disabled>
                   <span data-toggle="tooltip" title="Not supported yet!">Show Overlapped</span>
               </label>
             </div>
           </div>
         </div>
       </div>
-      <hr class="col-md-12 collapse collapse-option">
       <div class="col-md-6 collapse collapse-option">
-        <div id="split-duration-formgroup" class="form-group">
-          <label class="col-sm-3 control-label">Split Duration</label>
+        <div id="split-duration-formgroup" class="form-group row align-items-center">
+          <label class="col-sm-3 col-form-label">Split Duration</label>
           <div class="col-sm-9" id="split-duration-status">
-            <div class="btn-group btn-group-justified" data-toggle="buttons">
-              <label class="btn btn-default active" id="default-split-duration">
+            <div class="btn-group btn-group-toggle d-flex" role="group" data-toggle="buttons">
+              <label class="btn btn-outline-dark active" id="default-split-duration">
                 <input type="radio" name="split_duration" value="{{ split.duration }}" data-min="{{ obs_min_duration }}" autocomplete="off" checked>
                   Default({{ split.duration }}sec)
                 </input>
               </label>
-              <label class="btn btn-default" id="custom-split-duration">
+              <label class="btn btn-outline-dark" id="custom-split-duration">
                 <input type="radio" name="split_duration" value="custom" autocomplete="off">
                   Custom
                 </input>
@@ -237,16 +228,16 @@
         </div>
       </div>
       <div class="col-md-6 collapse collapse-option">
-        <div class="form-group">
-          <label class="col-sm-3 control-label">Break Duration</label>
+        <div class="form-group row align-items-center">
+          <label class="col-sm-3 col-form-label">Break Duration</label>
           <div class="col-sm-9" id="break-duration-status">
-            <div class="btn-group btn-group-justified" data-toggle="buttons">
-              <label class="btn btn-default active" id="default-break-duration">
+            <div class="btn-group btn-group-toggle d-flex" role="group" data-toggle="buttons">
+              <label class="btn btn-outline-dark active" id="default-break-duration">
                 <input type="radio" name="break_duration" value="{{ split.break }}" autocomplete="off" checked>
                   Default({{ split.break }}sec)
                 </input>
               </label>
-              <label class="btn btn-default" id="custom-break-duration">
+              <label class="btn btn-outline-dark" id="custom-break-duration">
                 <input type="radio" name="break_duration" value="custom" autocomplete="off">
                   Custom
                 </input>
@@ -255,16 +246,16 @@
           </div>
         </div>
       </div>
-      <div class="col-md-6 collapse collapse-option">
     </div>
 
     {% if obs_filter.ground_station %}
       <input type="hidden" name="ground_station" value="{{ obs_filter.ground_station }}">
     {% endif %}
 
-    <div class="row">
-      <div class="col-md-12">
-        <button type="button" id="calculate-observation" class="btn btn-primary pull-right">
+    <div class="row justify-content-end">
+      <div class="col-">
+        <button type="button" id="calculate-observation" class="btn btn-primary">
+          <i class="bi bi-calculator-fill" aria-hidden="true"></i>
           Calculate
         </button>
       </div>
@@ -275,8 +266,8 @@
         <h3>Calculated Timeline</h3>
         <div id="obs-selection-tools">
           <div>
-            <button type="button" id="select-all-observations" class="btn btn-default btn-sm"><i class="glyphicon glyphicon-check">All</i></button>
-            <button type="button" id="select-none-observations" class="btn btn-default btn-sm"><i class="glyphicon glyphicon-unchecked">None</i></button>
+            <button type="button" id="select-all-observations" class="btn btn-outline-dark btn-sm"><i class="bi bi-check2-square"> All</i></button>
+            <button type="button" id="select-none-observations" class="btn btn-outline-dark btn-sm"><i class="bi bi-square"> None</i></button>
           </div>
           <div>
             <label for="scheduling-elevation-filter">Max Elevation</label>
@@ -317,6 +308,7 @@
     <div id="schedule-selection" class="row calculation-result">
       <div class="col-md-12">
         <button type="button" id="schedule-observation" data-warn-min-obs="{{ warn_min_obs }}" class="btn btn-success" disabled="True">
+          <i class="bi bi-calendar2-range" aria-hidden="true"></i>
           Schedule
         </button>
       </div>
@@ -326,12 +318,14 @@
     </div>
 
     <!-- Confirmation Modal -->
-    <div class="modal" id="confirm-modal" tabindex="-1" role="dialog" aria-labelledby="confirm-modal">
+        <div class="modal" id="confirm-modal" tabindex="-1" role="dialog" aria-labelledby="ConfirmModalTitle">
       <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title" id="myModalLabel">Do you really want to schedule <span class="counted-obs"></span> observations?</h4>
+            <h3 class="modal-title" id="ConfirmModalTitle">Do you really want to schedule <span class="counted-obs"></span> observations?</h3>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
           </div>
           <div class="modal-body">
             <p>WARNING: You are about to schedule <span class="counted-obs"></span> observations at <span class="counted-stations"/></span> different stations.</p>
@@ -340,7 +334,7 @@
             <p>Are you sure you want to continue and schedule all of them?</p>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Cancel</button>
             <button type="submit" id="modal-schedule-observation" class="btn btn-success">
               Schedule
             </button>
@@ -351,11 +345,6 @@
 
   </form>
 
-
-
-  <!-- UTC Modal -->
-  {% include 'includes/utc.html' %}
-
   <!-- Hotkeys Modal -->
   {% include 'includes/observation-new-hotkeys.html' %}
 
@@ -365,7 +354,6 @@
   <script src="{% static 'lib/d3/d3.min.js' %}"></script>
   <script src="{% static 'lib/d3-timeline/src/d3-timeline.js' %}"></script>
   <script src="{% static 'lib/moment/min/moment.min.js' %}"></script>
-  <script src="{% static 'lib/@fortawesome/fontawesome-free/js/all.min.js' %}"></script>
   <script src="{% static 'lib/@popperjs/core/dist/umd/popper.min.js' %}"></script>
   <script src="{% static 'lib/@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
   <script src="{% static 'lib/@eonasdan/tempus-dominus/dist/plugins/customDateFormat.js' %}"></script>

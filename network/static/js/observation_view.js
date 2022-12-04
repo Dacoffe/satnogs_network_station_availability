@@ -33,7 +33,6 @@ $(document).ready(function() {
                 if (percent == 100) {
                     $(loading).text('Analyzing data...');
                 }
-                progressDiv.css('display', 'block');
                 progressBar.css('width', percent + '%');
                 progressBar.text(percent + '%');
             };
@@ -117,38 +116,39 @@ $(document).ready(function() {
     function show_alert(type, msg){
         $('#alert-messages').html(
             `<div class="col-md-12">
-               <div class="alert alert-` + type + `" role="alert">
-                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                   <span class="glyphicon glyphicon-remove"></span>
-                 </button>` + msg +`
+               <div class="alert alert-` + type + ' alert-dismissible" role="alert">'
+               + msg +
+                `<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                   <span aria-hidden="true">&times;</span>
+                 </button>
                </div>
              </div>`);
     }
 
-    function change_vetting_labels(user, datetime, waterfall_status_label, waterfall_status_display,
-        status, status_label, status_display){
+    function change_vetting_badges(user, datetime, waterfall_status_badge, waterfall_status_display,
+        status, status_badge, status_display){
         $('#waterfall-status').find('button').each(function(){
-            if(this.dataset.status == waterfall_status_label){
-                $(this).addClass('hidden');
+            if(this.dataset.status == waterfall_status_badge){
+                $(this).addClass('d-none');
             } else {
-                $(this).removeClass('hidden');
+                $(this).removeClass('d-none');
             }
         });
 
-        var waterfall_label_classes = 'label-unknown label-with-signal label-without-signal';
-        $('#waterfall-status-label').removeClass(waterfall_label_classes).addClass('label-' + waterfall_status_label);
-        $('#waterfall-status-label').text(waterfall_status_display);
+        var waterfall_badge_classes = 'badge-unknown badge-with-signal badge-without-signal';
+        $('#waterfall-status-badge').removeClass(waterfall_badge_classes).addClass('badge-' + waterfall_status_badge);
+        $('#waterfall-status-badge').text(waterfall_status_display);
         var waterfall_status_title = 'Vetted ' + waterfall_status_display + ' on ' + datetime + ' by ' + user;
-        if(waterfall_status_label == 'unknown'){
+        if(waterfall_status_badge == 'unknown'){
             waterfall_status_title = 'Waterfall needs vetting';
         }
-        $('#waterfall-status-label').prop('title', waterfall_status_title).tooltip('fixTitle');
+        $('#waterfall-status-badge').prop('title', waterfall_status_title);
 
-        var rating_label_classes = 'label-unknown label-future label-good label-bad label-failed';
-        $('#rating-status span').removeClass(rating_label_classes).addClass('label-' + status_label);
+        var rating_badge_classes = 'badge-unknown badge-future badge-good badge-bad badge-failed';
+        $('#rating-status span').removeClass(rating_badge_classes).addClass('badge-' + status_badge);
         $('#rating-status span').text(status_display);
         var status_title = status;
-        $('#rating-status span').prop('title', status_title).tooltip('fixTitle');
+        $('#rating-status span').prop('title', status_title);
     }
 
     //Vetting request
@@ -163,10 +163,10 @@ $(document).ready(function() {
             dataType: 'json',
             beforeSend: function(xhr) {
                 xhr.setRequestHeader('X-CSRFToken', $('[name="csrfmiddlewaretoken"]').val());
-                $('#waterfall-status-label').hide();
+                $('#waterfall-status-badge').hide();
                 $('#waterfall-status-form').hide();
                 $('#rating-status').hide();
-                $('#vetting-spinner').show();
+                $('#vetting-spinner').addClass('d-inline-block');
                 $('#rating-spinner').show();
             }
         }).done(function(results) {
@@ -174,24 +174,24 @@ $(document).ready(function() {
                 var error_msg = results.error;
                 show_alert('danger',error_msg);
             } else {
-                show_alert('success', 'Waterfall is vetted succesfully as ' + results.waterfall_status);
-                change_vetting_labels(results.waterfall_status_user, results.waterfall_status_datetime,
-                    results.waterfall_status_label, results.waterfall_status_display,
-                    results.status, results.status_label,
+                show_alert('success', 'Waterfall is vetted succesfully as "' + results.waterfall_status_display + '" and observation status changed to "' + results.status_display + '"');
+                change_vetting_badges(results.waterfall_status_user, results.waterfall_status_datetime,
+                    results.waterfall_status_badge, results.waterfall_status_display,
+                    results.status, results.status_badge,
                     results.status_display);
             }
-            $('#vetting-spinner').hide();
+            $('#vetting-spinner').removeClass('d-inline-block');
             $('#rating-spinner').hide();
-            $('#waterfall-status-label').show();
+            $('#waterfall-status-badge').show();
             $('#waterfall-status-form').show();
             $('#rating-status').show();
             return;
         }).fail(function() {
             var error_msg = 'Something went wrong, please try again';
             show_alert('danger', error_msg);
-            $('#vetting-spinner').hide();
+            $('#vetting-spinner').removeClass('d-inline-block');
             $('#rating-spinner').hide();
-            $('#waterfall-status-label').show();
+            $('#waterfall-status-badge').show();
             $('#waterfall-status-form').show();
             $('#rating-status').show();
             return;
@@ -256,7 +256,7 @@ $(document).ready(function() {
             var content_type = demoddata_div.data('type');
             var url = demoddata_div.find('span:first > a').attr('href');
             if (content_type == 'image'){
-                demoddata_div.find('.data-well').append('<img src="' + url + '" alt="DemodData Image" class="img-responsive">');
+                demoddata_div.find('.data-card').append('<img src="' + url + '" alt="DemodData Image" class="img-fluid">');
                 demoddata_div.show();
                 divs_shown += 1;
                 if(divs_shown == number_of_divs){
@@ -276,9 +276,9 @@ $(document).ready(function() {
                 xhr.onload = function() {
                     if (this.status == 200) {
                         if (content_type == 'binary'){
-                            demoddata_div.find('.data-well').append('<span class="hex">' + buffer_to_hex(this.response) + '</span>');
+                            demoddata_div.find('.data-card').append('<span class="hex">' + buffer_to_hex(this.response) + '</span>');
                             var ascii_enc = new TextDecoder('ascii');
-                            demoddata_div.find('.data-well').append('<span class="ascii">' + ascii_enc.decode(this.response) + '</span>');
+                            demoddata_div.find('.data-card').append('<span class="ascii">' + ascii_enc.decode(this.response) + '</span>');
                             let ax25_html = '';
                             try {
                                 const parsedAx25 = new Ax25monitor(new KaitaiStream(this.response)); // eslint-disable-line no-undef
@@ -286,31 +286,83 @@ $(document).ready(function() {
                                 const dstCallsign = parsedAx25.ax25Frame.ax25Header.destCallsignRaw.callsignRor.callsign;
                                 const alphanum_with_white_spaces_regex = /^[a-z0-9-\s]+$/i;
                                 /* eslint-disable quotes*/
-                                ax25_html = "<span class='ax25'><div class='row'> <div class='col-md-7'> \
-                                <div class='front-line'><span class='label label-default'>Source Callsign</span><span class='front-data'>" + srcCallsign + "</span></div>\
-                                <div class='front-line'><span class='label label-default'>Destination Callsign</span><span class='front-data'>" + dstCallsign + "</span></div>\
-                                <div class='front-line'><span class='label label-default'>Source SSID</span><span class='front-data'>" + parsedAx25.ax25Frame.ax25Header.srcSsidRaw.ssid + "</span></div>\
-                                <div class='front-line'><span class='label label-default'>Destination SSID</span><span class='front-data'>" + parsedAx25.ax25Frame.ax25Header.destSsidRaw.ssid + "</span></div>\
-                                <div class='front-line'><span class='label label-default'>Ctl</span><span class='front-data'>" + parsedAx25.ax25Frame.ax25Header.ctl + "</span></div>\
-                                <div class='front-line'><span class='label label-default'>Pid</span><span class='front-data'>" + parsedAx25.ax25Frame.payload.pid + "</span></div>\
-                                <div class='front-line'><span class='label label-default'>Monitor</span><span class='front-data'>" + parsedAx25.ax25Frame.payload.ax25Info.dataMonitor + "</span></div>\
-                                </div></div></span>";
+                                ax25_html = `
+                                  <table class='table table-sm table-borderless table-hover ax25'>
+                                    <tbody>
+                                      <tr>
+                                        <th>
+                                          <span class='badge badge-dark'>Source Callsign</span>
+                                        </th>
+                                        <td>
+                                          <span>` + srcCallsign + `</span>
+                                        </td>
+                                      </tr>
+                                      <tr>
+                                        <th>
+                                          <span class='badge badge-dark'>Destination Callsign</span>
+                                        </th>
+                                        <td>
+                                          <span>` + dstCallsign + `</span>
+                                        </td>
+                                      </tr>
+                                      <tr>
+                                        <th>
+                                          <span class='badge badge-dark'>Source SSID</span>
+                                        </th>
+                                        <td>
+                                          <span>` + parsedAx25.ax25Frame.ax25Header.srcSsidRaw.ssid + `</span>
+                                        </td>
+                                      </tr>
+                                      <tr>
+                                        <th>
+                                          <span class='badge badge-dark'>Destination SSID</span>
+                                        </th>
+                                        <td>
+                                          <span>` + parsedAx25.ax25Frame.ax25Header.destSsidRaw.ssid + `</span>
+                                        </td>
+                                      </tr>
+                                      <tr>
+                                        <th>
+                                          <span class='badge badge-dark'>Ctl</span>
+                                        </th>
+                                        <td>
+                                          <span>` + parsedAx25.ax25Frame.ax25Header.ctl + `</span>
+                                        </td>
+                                      </tr>
+                                      <tr>
+                                        <th>
+                                          <span class='badge badge-dark'>Pid</span>
+                                        </th>
+                                        <td>
+                                          <span>` + parsedAx25.ax25Frame.payload.pid + `</span>
+                                        </td>
+                                      </tr>
+                                      <tr>
+                                        <th>
+                                          <span class='badge badge-dark'>Monitor</span>
+                                        </th>
+                                        <td>
+                                          <span>` + parsedAx25.ax25Frame.payload.ax25Info.dataMonitor + `</span>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>`;
                                 /* eslint-enable quotes*/
                                 if(alphanum_with_white_spaces_regex.test(srcCallsign) === true && alphanum_with_white_spaces_regex.test(dstCallsign) === true) {
                                     $('#ax25-button').show();
                                 }
                             }  catch (error) {
-                                ax25_html = '<span class="ax25">An error occured during decoding. This might not be an AX25 packet</span>';
+                                ax25_html = '<span class="ax25">An error occured during decoding. This might not be an AX.25 packet</span>';
                             }
 
-                            demoddata_div.find('.data-well').append(ax25_html);
+                            demoddata_div.find('.data-card').append(ax25_html);
 
                             // check if currently ASCII/HEX/AX25 button is active and display accordingly
-                            if ($('#hex-button').prop('disabled')) {
+                            if ($('#hex-button').hasClass('active')) {
                                 demoddata_div.find('.ascii').hide();
                                 demoddata_div.find('.ax25').hide();
                             }
-                            else if ($('#ascii-button').prop('disabled'))
+                            else if ($('#ascii-button').hasClass('active'))
                             {
                                 demoddata_div.find('.hex').hide();
                                 demoddata_div.find('.ax25').hide();
@@ -322,7 +374,7 @@ $(document).ready(function() {
 
                         } else if (content_type == 'text'){
                             var utf_enc = new TextDecoder('utf-8');
-                            demoddata_div.find('.data-well').append('<span class="utf-8">' + utf_enc.decode(this.response) + '</span>');
+                            demoddata_div.find('.data-card').append('<span class="utf-8">' + utf_enc.decode(this.response) + '</span>');
                         }
                         demoddata_div.show();
                         divs_shown += 1;
@@ -360,15 +412,9 @@ $(document).ready(function() {
         $('.hex').hide();
         $('.ax25').hide();
         $('.ascii').show();
-        $('#ascii-button').removeClass('btn-default');
-        $('#ascii-button').addClass('btn-primary');
-        $('#hex-button').addClass('btn-default');
-        $('#hex-button').removeClass('btn-primary');
-        $('#ax25-button').addClass('btn-default');
-        $('#ax25-button').removeClass('btn-primary');
-        $('#ascii-button').attr('disabled', 'disabled');
-        $('#hex-button').removeAttr('disabled');
-        $('#ax25-button').removeAttr('disabled');
+        $('#ascii-button').addClass('active');
+        $('#hex-button').removeClass('active');
+        $('#ax25-button').removeClass('active');
     });
 
     // retrieve saved hex data and replace the decoded blob with the original
@@ -377,29 +423,18 @@ $(document).ready(function() {
         $('.hex').show();
         $('.ascii').hide();
         $('.ax25').hide();
-        $('#ascii-button').addClass('btn-default');
-        $('#ascii-button').removeClass('btn-primary');
-        $('#ax25-button').addClass('btn-default');
-        $('#ax25-button').removeClass('btn-primary');
-        $('#hex-button').removeClass('btn-default');
-        $('#hex-button').addClass('btn-primary');
-        $('#hex-button').attr('disabled', 'disabled');
-        $('#ascii-button').removeAttr('disabled');
-        $('#ax25-button').removeAttr('disabled');
+        $('#hex-button').addClass('active');
+        $('#ascii-button').removeClass('active');
+        $('#ax25-button').removeClass('active');
     });
 
     $('#ax25-button').click(function(){
         $('.hex').hide();
         $('.ascii').hide();
         $('.ax25').show();
-        $('#ax25-button').addClass('btn-primary');
-        $('#ascii-button').removeClass('btn-primary');
-        $('#ascii-button').addClass('btn-default');
-        $('#hex-button').removeClass('btn-primary');
-        $('#hex-button').addClass('btn-default');
-        $('#ax25-button').attr('disabled', 'disabled');
-        $('#ascii-button').removeAttr('disabled');
-        $('#hex-button').removeAttr('disabled');
+        $('#ax25-button').addClass('active');
+        $('#ascii-button').removeClass('active');
+        $('#hex-button').removeClass('active');
     });
 
     // Hotkeys bindings

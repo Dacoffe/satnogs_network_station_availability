@@ -18,31 +18,34 @@
 {% block content %}
   {% if request.user.is_anonymous %}
     <div class="call2action">
-      <div class="panel panel-default">
-        <h3 class="text-center">
-          Crowd-sourced satellite operations
-          <button type="button"
-                  class="btn btn-primary"
-                  data-toggle="modal"
-                  data-target="#joinModal">
-            Join us!
-          </button>
-        </h3>
+      <div class="card">
+        <div class="card-body">
+          <h2 class="text-center">
+            Crowd-sourced satellite operations
+            <button type="button"
+                    class="btn btn-primary"
+                    data-toggle="modal"
+                    data-target="#joinModal">
+              Join us!
+            </button>
+          </h2>
+        </div>
       </div>
     </div>
   {% endif %}
 
   <!-- Join Modal -->
-  <div class="modal fade" id="joinModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal fade" id="joinModal" tabindex="-1" role="dialog" aria-labelledby="JoinModalTitle" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">
-            <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+          <h3 class="modal-title" id="JoinModalTitle">Join SatNGOS Network</h3>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
           </button>
-          <h4 class="modal-title" id="myModalLabel">Join SatNGOS Network</h4>
         </div>
         <div class="modal-body">
+          <h3>SatNOGS Network</h3>
           SatNOGS Network is a global management interface to facilitate multiple ground station
           operations remotely. An observer is able to take advantage of the full network of
           SatNOGS ground stations around the world.
@@ -66,7 +69,7 @@
           <a href="https://docs.satnogs.org/projects/satnogs-network/en/stable/" target="_blank">docs.satnogs.org</a>.
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
         </div>
       </div>
     </div>

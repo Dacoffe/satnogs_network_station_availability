@@ -1,4 +1,5 @@
 """Django users views for SatNOGS Network"""
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q
@@ -33,6 +34,12 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):  # pylint: disable=R0901
 
     def get_object(self, queryset=None):
         return User.objects.get(username=self.request.user.username)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        print(settings.AUTH0, flush=True)
+        context['auth0'] = settings.AUTH0
+        return context
 
 
 @login_required

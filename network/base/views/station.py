@@ -114,30 +114,26 @@ def station_view(request, station_id):
         ),
         id=station_id
     )
+    station_log = StationStatusLog.objects.filter(station=station)
 
     can_schedule = schedule_station_perms(request.user, station)
     can_modify_delete_station = modify_delete_station_perms(request.user, station)
 
     # Calculate uptime
-    uptime = '-'
-    try:
-        latest = StationStatusLog.objects.filter(station=station)[0]
-    except IndexError:
-        latest = None
-    if latest:
-        if latest.status:
-            try:
-                offline = StationStatusLog.objects.filter(station=station, status=0)[0]
-                uptime = latest.changed - offline.changed
-            except IndexError:
-                uptime = now() - latest.changed
-            uptime = str(uptime).split('.')[0]
+    uptime_since = None
+    if station_log:
+        latest_entry = station_log[0]
+        if latest_entry.status > 0:
+            for entry in station_log:
+                if entry.status == 0:
+                    break
+                uptime_since = entry.changed
 
     if request.user.is_authenticated:
         if request.user == station.owner:
             wiki_help = (
-                '<a href="{0}" target="_blank" class="wiki-help"><span class="glyphicon '
-                'glyphicon-question-sign" aria-hidden="true"></span>'
+                '<a href="{0}" target="_blank" class="wiki-help"><span class="bi '
+                'bi-question-circle" aria-hidden="true"></span>'
                 '</a>'.format(settings.WIKI_STATION_URL)
             )
             if station.is_offline:
@@ -164,19 +160,7 @@ def station_view(request, station_id):
             'mapbox_token': settings.MAPBOX_TOKEN,
             'can_schedule': can_schedule,
             'can_modify_delete_station': can_modify_delete_station,
-            'uptime': uptime
-        }
-    )
-
-
-def station_log_view(request, station_id):
-    """View for single station status log."""
-    station = get_object_or_404(Station, id=station_id)
-    station_log = StationStatusLog.objects.filter(station=station)
-
-    return render(
-        request, 'base/station_log.html', {
-            'station': station,
+            'uptime_since': uptime_since,
             'station_log': station_log
         }
     )
@@ -236,12 +220,7 @@ def station_register(request, step=None, station_id=None):
         return redirect(reverse('base:home'))
     if step == '1':
         stations = Station.objects.filter(owner=request.user)
-        return render(
-            request, 'base/station_register_step1.html', {
-                'client_hash': client_hash,
-                'stations': stations
-            }
-        )
+        return render(request, 'base/station_register_step1.html', {'stations': stations})
     if step == '2':
         station = None
         if station_id:

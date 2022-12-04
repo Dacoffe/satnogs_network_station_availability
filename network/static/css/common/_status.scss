@@ -1,12 +1,12 @@
-.label-good,
-.label-with-signal,
-.label-online {
+.badge-good,
+.badge-with-signal,
+.badge-online {
     background-color: #5cb85c;
     color: white;
 }
 
 .btn-good {
-    @extend .label-good;
+    @extend .badge-good;
 
     &:hover {
         background-color: #449d44;
@@ -14,15 +14,15 @@
     }
 }
 
-.label-bad,
-.label-without-signal,
-.label-offline {
+.badge-bad,
+.badge-without-signal,
+.badge-offline {
     background-color: #d9534f;
     color: white;
 }
 
 .btn-bad {
-    @extend .label-bad;
+    @extend .badge-bad;
 
     &:hover {
         background-color: #c9302c;
@@ -30,13 +30,13 @@
     }
 }
 
-.label-failed {
+.badge-failed {
     background-color: #444;
     color: white;
 }
 
 .btn-failed {
-    @extend .label-failed;
+    @extend .badge-failed;
 
     &:hover {
         background-color: #666;
@@ -44,15 +44,14 @@
     }
 }
 
-.label-unknown,
-.label-testing,
+.badge-testing,
 .badge-unknown {
     background-color: darkorange;
     color: white;
 }
 
 .btn-unknown {
-    @extend .label-unknown;
+    @extend .badge-unknown;
 
     &:hover {
         background-color: orange;
@@ -60,14 +59,14 @@
     }
 }
 
-.label-future,
+.badge-future,
 .badge-info {
     background-color: #5bc0de;
     color: white;
 }
 
 .btn-future {
-    @extend .label-future;
+    @extend .badge-future;
 
     &:hover {
         background-color: #4ba0be;

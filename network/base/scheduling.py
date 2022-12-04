@@ -37,8 +37,8 @@ def get_azimuth(observer, satellite, date):
 
 
 def over_min_duration(duration):
-    """Returns if duration is bigger than the minimum one set in settings"""
-    return duration > settings.OBSERVATION_DURATION_MIN
+    """Returns if duration is equal or greater than the minimum one set in settings"""
+    return duration >= settings.OBSERVATION_DURATION_MIN
 
 
 def recalculate_window_parameters(observer, satellite, window_start, window_end):

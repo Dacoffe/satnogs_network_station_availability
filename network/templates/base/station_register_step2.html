@@ -10,7 +10,8 @@ Station Registration Step 2{% if station_form.instance.id %} - Station {{ statio
   <div class="row">
     <div class="col-md-12 text-center">
       <h2>
-        Station Registration - Step 2:{% if station_form.instance.id %} Re-register Station "{{ station_form.instance.pk }} - {{ station_form.instance.name }}"{% else %} Register Station{% endif %}
+        Station Registration - Step 2:
+        {% if station_form.instance.id %}<br/> Re-register Station "{{ station_form.instance.pk }} - {{ station_form.instance.name }}"{% else %} Register Station{% endif %}
       </h2>
     </div>
   </div>
@@ -18,7 +19,7 @@ Station Registration Step 2{% if station_form.instance.id %} - Station {{ statio
     <div class="row">
       <div class="col-md-12">
         <div class="form-group">
-          <label for="name" class="control-label">Name <span class="badge">required<span></label>
+          <label for="name" class="control-label">Name</label>
           <input value="{{ station_form.name.value|default_if_none:"" }}" id="station-name" type="text" class="form-control" maxlength="{{ station_form.name.field.max_length }}" name="name" required>
         </div>
         <div class="form-group">
@@ -32,25 +33,17 @@ Station Registration Step 2{% if station_form.instance.id %} - Station {{ statio
       </div>
     </div>
     <div class='row'>
-      <div class='col-md-4'>
-        <div class="btn-group btn-group-justified" role="group">
-          <div class="btn-group" role="group">
-            <button id="cancel-register" type="button" class="btn btn-default">Cancel Registration</button>
-          </div>
-        </div>
+      <div class='col'>
+        <button id="cancel-register" type="button" class="btn btn-outline-dark w-100">Cancel Registration</button>
       </div>
-      <div class='col-md-8'>
-        <div class="btn-group btn-group-justified" role="group">
-          <div class="btn-group" role="group">
-            <button id="register" type="submit" class="btn btn-primary" disabled="True">
-              {% if station_form.instance.id %}
-                Re-register Station
-              {% else %}
-                Register Station
-              {% endif %}
-            </button>
-          </div>
-        </div>
+      <div class='col-8'>
+        <button id="register" type="submit" class="btn btn-primary w-100" disabled="True">
+          {% if station_form.instance.id %}
+            Re-register Station
+          {% else %}
+            Register Station
+          {% endif %}
+        </button>
       </div>
     </div>
   </form>

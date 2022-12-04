@@ -2,7 +2,7 @@
 from django.contrib import admin
 
 from network.base.models import Antenna, AntennaType, DemodData, FrequencyRange, Observation, \
-    Satellite, Station
+    Satellite, Station, StationStatusLog
 from network.base.utils import export_as_csv, export_station_status
 
 
@@ -97,6 +97,14 @@ class StationAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+
+
+@admin.register(StationStatusLog)
+class StationStatusLogAdmin(admin.ModelAdmin):
+    """Define StationStatusLog view in django admin UI"""
+    list_display = ('id', 'station', 'status', 'changed')
+    list_filter = ('station', 'status')
+    search_fields = ('id', 'station__id')
 
 
 @admin.register(Satellite)

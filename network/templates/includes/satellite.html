@@ -1,73 +1,78 @@
-<div class="modal fade" id="SatelliteModal" tabindex="-1" role="dialog" aria-labelledby="SatelliteModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+<div class="modal fade" id="SatelliteModal" tabindex="-1" role="dialog" aria-labelledby="SatelliteModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <div class="modal-header">
-        <span class="pull-left">
-          <h4 class="modal-title" id="SatelliteModalTitle"></h4>
-        </span>
-        <span class="pull-right">
+      <div class="modal-header align-items-center justify-content-between">
+        <h3 class="modal-title" id="SatelliteModalTitle"></h3>
+        <div>
           {% if can_schedule %}
             <a class="btn btn-sm btn-primary" href="/observations/new/" id="new-obs-link">
-              <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Observation
+              <span class="bi bi-plus" aria-hidden="true"></span> New Observation
             </a>
           {% endif %}
-          <a class="btn btn-sm btn-default" href="https://db.satnogs.org/" target="_blank" id="db-link">
-            <span class="glyphicon glyphicon-new-window" aria-hidden="true"></span> SatNOGS DB
+          <a class="btn btn-sm btn-outline-dark" href="https://db.satnogs.org/" target="_blank" id="db-link">
+            <span class="bi bi-box-arrow-up-right" aria-hidden="true"></span> SatNOGS DB
           </a>
-        </span>
+        </div>
       </div>
         <div class="modal-body">
-          <div class="row panel-body">
-            <div class="col-md-4 panel-satellite-img">
-              <div>
-                <img class="satellite-img-full">
+          <div class="card">
+            <div class="row no-gutters align-items-center">
+              <div class="col- mx-auto">
+                <img class="satellite-img-full" alt="satellite image">
               </div>
-            </div>
-            <div class="col-md-8 panel-satellite-info">
-              <div class="front-line satellite-title-wrap">
-                <span class="satellite-title"></span>
-                <span class="satellite-names"></span>
-              </div>
-              <div class="front-line">
-                <span class="label label-default">NORAD ID</span>
-                <span class="front-data satellite-id"></span>
-              </div>
-              <div class="front-line">
-                <span class="label label-default">Success Rate</span>
-                <span class="front-data satellite-success-rate"></span>
-              </div>
-              <div class="front-line">
-                <span class="label label-default">Observations</span>
-                <span class="front-data">
-                  <a href="/observations/" id="old-obs-link">
-                    <button type="button" class="btn btn-xs btn-default satellite-total-obs" data-toggle="tooltip" data-placement="bottom" title="View all"></button>
-                  </a>
-                  <span class="pull-right">
-                    <a href="/observations" id="good-sat-obs">
-                      <button type="button" class="btn btn-xs btn-success satellite-good" data-toggle="tooltip" data-placement="bottom" title="Successful observations"></button>
-                    </a>
-                    <a href="/observations" id="unknown-sat-obs">
-                      <button type="button" class="btn btn-xs btn-warning satellite-unknown" data-toggle="tooltip" data-placement="bottom" title="Unknown observations"></button>
-                    </a>
-                    <a href="/observations" id="bad-sat-obs">
-                      <button type="button" class="btn btn-xs btn-bad satellite-bad" data-toggle="tooltip" data-placement="bottom" title="Bad observations"></button>
-                    </a>
-                    <a href="/observations" id="future-sat-obs">
-                      <button type="button" class="btn btn-xs btn-info satellite-future" data-toggle="tooltip" data-placement="bottom" title="Future observations"></button>
-                    </a>
-                  </span>
-                </span>
+              <div class="col- mx-auto">
+                <div class="card-body">
+                  <div class="card-title satellite-title"></div>
+                  <div class="satellite-names"></div>
+                  <hr/>
+                  <table class="table table-sm table-borderless">
+                    <tbody>
+                      <tr>
+                        <td>
+                          <span class="badge badge-dark">NORAD ID</span>
+                        </td>
+                        <td>
+                          <span class="front-data satellite-id"></span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="badge badge-dark">Success Rate</span>
+                        </td>
+                        <td>
+                          <span class="front-data satellite-success-rate"></span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="badge badge-dark">Observations</span>
+                        </td>
+                        <td>
+                          <a class="btn btn-sm btn-outline-dark satellite-total-obs" href="/observations/" id="old-obs-link"
+                             role="button" data-toggle="tooltip" data-placement="bottom" title="View all"></a>
+                          <a class="btn btn-sm btn-success satellite-good" href="/observations" id="good-sat-obs"
+                               role="button" data-toggle="tooltip" data-placement="bottom" title="Successful observations"></a>
+                          <a class="btn btn-sm btn-warning satellite-unknown" href="/observations" id="unknown-sat-obs"
+                             role="button" data-toggle="tooltip" data-placement="bottom" title="Unknown observations"></a>
+                          <a class="btn btn-sm btn-bad satellite-bad" href="/observations" id="bad-sat-obs"
+                             role="button" data-toggle="tooltip" data-placement="bottom" title="Bad observations"></a>
+                          <a class="btn btn-sm btn-info satellite-future" href="/observations" id="future-sat-obs"
+                             role="button" data-toggle="tooltip" data-placement="bottom" title="Future observations"></a>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
-          <div class="row panel-body">
-            <div class="col-md-12">
-              <div id="transmitters"></div>
+          <div class="card">
+            <div class="card-body" id="transmitters">
             </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
         </div>
       </form>
     </div>

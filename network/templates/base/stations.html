@@ -10,37 +10,49 @@
 
 {% block content %}
   <div class="row">
-    <div class="col-md-3 col-xs-3">
+    <div class="col col-md-5">
       <h2>
         Ground Stations
       </h2>
     </div>
-    {% if is_paginated %}
-      <div class="col-md-6 visible-md visible-lg" id="page-selector">
-        <span class="pull-right">{% load paginator %}{% paginator request 3%}</span>
-      </div>
-    {% endif %}
-    <div class="col-md-3 pull-right visible-md visible-lg">
-      <div class="observations-actions">
-        <button type="button" class="btn btn-sm btn-default map-modal-reveal" data-toggle="modal" data-target="#MapModal">
-          <span class="glyphicon glyphicon-map-marker" aria-hidden="true"></span> Map
-        </button>
-        <a class="btn btn-default" role="button" data-toggle="collapse"
-            href="#collapseFilters" aria-expanded="false" aria-controls="collapseFilters">
-          <span class="glyphicon glyphicon-filter" aria-hidden="true"></span>
+
+    <div class="col d-none d-lg-flex justify-content-end align-items-center">
+      {% if is_paginated %}
+          {% load paginator %}{% paginator request 3%}
+      {% endif %}
+      <span class="stations-actions">
+        <a class="btn btn-outline-dark" role="button" data-toggle="collapse"
+           href="#collapseFilters" aria-expanded="false" aria-controls="collapseFilters">
+          <span class="bi bi-funnel-fill" aria-hidden="true"></span>
         </a>
-      </div>
+        <a href='#map' class="btn btn-outline-dark" role="button" data-toggle="modal" data-target="#MapModal">
+          <span class="bi bi-geo-alt-fill" aria-hidden="true"></span> Map
+        </a>
+      </span>
+    </div>
+
+    <div class="col d-flex d-lg-none justify-content-end align-items-center">
+      <span class="stations-actions">
+        <a class="btn btn-outline-dark" role="button" data-toggle="collapse"
+                href="#collapseFilters" aria-expanded="false" aria-controls="collapseFilters">
+          <span class="bi bi-funnel-fill" aria-hidden="true"></span>
+        </a>
+        <a href='#map' class="btn btn-outline-dark" role="button" data-toggle="modal" data-target="#MapModal">
+          <span class="bi bi-geo-alt-fill" aria-hidden="true"></span>
+        </a>
+      </span">
     </div>
   </div>
-  <div class="collapse" id="collapseFilters" data-filtered="{{ is_filtered }}">
-    <div class="filter-section well well-sm row">
-      <form id="station-filter" class="form" methon="get" action="{% url 'base:stations_list' %}">
+
+  <div class="collapse px-2 pt-2" id="collapseFilters" data-filtered="{{ is_filtered }}">
+    <div class="filter-section card">
+      <form id="station-filter" class="form row" method="get" action="{% url 'base:stations_list' %}">
         {% for error in freq_filter_errors %}
-        <div class="alert alert-danger" role="alert">{{error}}</div>
+          <div class="alert alert-danger" role="alert">{{error}}</div>
         {% endfor %}
-        <div class="form-group status-filter col-sm-12 col-md-6">
+        <div class="form-group status-filter col-md-4 col-lg-3">
           <label for="status-selector">Status</label>
-          <div id="status-selector" class="btn-group" data-toggle="buttons">
+          <div id="status-selector" class="btn-group-toggle" role="group" aria-label="Group of status filters" data-toggle="buttons">
             <label class="btn btn-good btn-sm {% if online is False %}active btn-inactive{% endif %}"
                    aria-expanded="true"
                    aria-controls="online"
@@ -48,8 +60,7 @@
                    data-placement="bottom"
                    title="Online">
               <input type="checkbox" name="online" value="0" {% if online is False %}checked{% endif %} autocomplete="off">
-              <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
-              Online
+              <span class="bi bi-check" aria-hidden="true"></span>
             </label>
             <label class="btn btn-unknown btn-sm {% if testing is False %}active btn-inactive{% endif %}"
                    aria-expanded="true"
@@ -58,8 +69,7 @@
                    data-placement="bottom"
                    title="Testing">
               <input type="checkbox" name="testing" value="0" {% if testing is False %}checked{% endif %} autocomplete="off">
-              <span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span>
-              Testing
+              <span class="bi bi-question-circle" aria-hidden="true"></span>
             </label>
             <label class="btn btn-bad btn-sm {% if offline is False %}active btn-inactive{% endif %}"
                    aria-expanded="true"
@@ -68,8 +78,7 @@
                    data-placement="bottom"
                    title="Offline">
               <input type="checkbox" name="offline" value="0" {% if offline is False %}checked{% endif %} autocomplete="off">
-              <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-              Offline
+              <span class="bi bi-x" aria-hidden="true"></span>
             </label>
             <label class="btn btn-future btn-sm {% if future is False %}active btn-inactive{% endif %}"
                    aria-expanded="true"
@@ -78,28 +87,28 @@
                    data-placement="bottom"
                    title="Future">
               <input type="checkbox" name="future" value="0" {% if future is False %}checked{% endif %} autocomplete="off">
-              <span class="glyphicon glyphicon-time" aria-hidden="true"></span>
-              Future
+              <span class="bi bi-clock" aria-hidden="true"></span>
             </label>
           </div>
         </div>
-        <div id="frequency-filter-formgroup" class="form-group frequency-filter col-sm-12 col-md-6 {% if freq_filter_errors %}has_error{% endif %}">
+        <div id="frequency-filter-formgroup" class="form-group frequency-filter col-md-4 col-lg-3 {% if freq_filter_errors %}has_error{% endif %}">
             <label class="frequency-filter-label" for="frequency-filter">Frequency</label>
             <div class="freq-input-container">
               <input name="freq" id="frequency-filter" min="0" type="number" step="1" value="{{freq}}" class="frequency-filter-input form-control" autocomplete="off"/>
               <span id="freq-format"></span>
             </div>
         </div>
-        <div class="form-group col-sm-12">
-          <button id="filter-button" type="submit" class="btn btn-primary pull-right">Update filters</button>
+        <div class="form-group col-md-12 text-center">
+          <button id="filter-button" type="submit" class="btn btn-primary">Update filters</button>
         </div>
       </form>
     </div>
   </div>
+
   <div class="row">
     <div class="col-md-12">
-      <table class="table table-hover">
-        <thead>
+      <table class="table table-hover my-2">
+        <thead class="bg-light">
           <th>ID</th>
           <th>Name</th>
           <th>Location</th>
@@ -115,16 +124,16 @@
                 <a href="{% url 'base:station_view' station_id=station.id %}">
                   <span class="station
                                {% if station.last_seen %}
-                                 label label-{{ station.get_status_display|lower }}
+                                 badge badge-{{ station.get_status_display|lower }}
                                {% else %}
-                                 label label-future
+                                 badge badge-future
                                {% endif %}"
                         data-toggle="tooltip"
                         data-placement="bottom"
                         title="{% if station.last_seen %}
                                  Seen {{ station.last_seen|timesince }} ago
                                {% else %}
-                                 Never seen
+                                 Never seen online
                                {% endif %}">
                     {{ station.id }}
                   </span>
@@ -148,12 +157,12 @@
                   {% endif %}
                 </td>
               <td>
-                <a href="{% url 'base:observations_list' %}?station={{ station.id }}" class="badge total-pill" data-placement="bottom">
+                <a href="{% url 'base:observations_list' %}?station={{ station.id }}" class="badge badge-success badge-pill" data-placement="bottom">
                   {{ station.total_obs }}
                 </a>
               </td>
               <td>
-                <a href="{% url 'base:observations_list' %}?future=1&good=0&bad=0&unknown=0&failed=0&station={{ station.id }}" class="badge badge-info">
+                <a href="{% url 'base:observations_list' %}?future=1&good=0&bad=0&unknown=0&failed=0&station={{ station.id }}" class="badge badge-info badge-pill">
                   {{ station.future_obs }}
                 </a>
               </td>
@@ -174,28 +183,28 @@
           {% endfor %}
         </tbody>
       </table>
-      <div style="text-align:center">
-        {% if is_paginated %}{% load paginator %}{% paginator request 3 %}{% endif %}
+      {% if is_paginated %}{% load paginator %}{% paginator request 3 %}{% endif %}
+      <div class="text-center mt-2">
         Query returned {{ stations|length }} station{{ stations|length|pluralize }}.
-            </div>
-          </div>
-        </div>
+      </div>
     </div>
   </div>
 
   <!-- Modal -->
-  <div class="modal fade map-modal" id="MapModal" tabindex="-1" role="dialog" aria-labelledby="MapModal">
-    <div class="modal-dialog modal-lg" role="document">
+  <div class="modal fade map-modal" id="MapModal" tabindex="-1" role="dialog" aria-labelledby="MapModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title" id="myModalLabel">Stations Map</h4>
+          <h3 class="modal-title" id="MapModalTitle">Stations Map</h3>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
         <div class="modal-body">
           <div id="map" data-mapboxid="{{ mapbox_id }}" data-mapboxtoken="{{ mapbox_token }}" data-stations="{% url 'base:stations_all' %}"></div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
         </div>
       </div>
     </div>

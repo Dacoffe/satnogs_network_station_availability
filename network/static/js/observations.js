@@ -7,6 +7,18 @@ $(document).ready(function() {
     var dateConfiguration = {
         useCurrent: false,
         display: {
+            icons: {
+                type: 'icons',
+                time: 'bi bi-clock',
+                date: 'bi bi-calendar3',
+                up: 'bi bi-arrow-up',
+                down: 'bi bi-arrow-down',
+                previous: 'bi bi-chevron-left',
+                next: 'bi bi-chevron-right',
+                today: 'bi bi-calendar-check',
+                clear: 'bi bi-trash',
+                close: 'bi bi-x-lg'
+            },
             sideBySide: true,
             components: {
                 useTwentyfourHour: true
@@ -110,22 +122,21 @@ $(document).ready(function() {
     $('.selectpicker').selectpicker();
 
 
-    $('.filter-section #status-selector label').click(function() {
-        var checkbox = $(this);
-        var input = checkbox.find('input[type="checkbox"]');
+    $('.filter-section #status-selector input').click(function() {
+        var input = $(this);
 
         if (input.prop('checked')) {
-            checkbox.removeClass('btn-inactive');
+            input.parent().addClass('btn-inactive');
         } else {
-            checkbox.addClass('btn-inactive');
+            input.parent().removeClass('btn-inactive');
         }
     });
 
     // Check if filters should be displayed
     if (window.location.hash == '#collapseFilters') {
-        $('#collapseFilters').hide();
+        $('#collapseFilters').collapse('hide');
     } else if ($('#collapseFilters').data('filtered') == 'True') {
-        $('#collapseFilters').show();
+        $('#collapseFilters').collapse('show');
     }
 
     // Open all observations in new tabs

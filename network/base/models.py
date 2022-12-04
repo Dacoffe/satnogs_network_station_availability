@@ -500,8 +500,8 @@ class Observation(models.Model):
 
     # The values bellow are used as returned values in the API and for css rules in templates
     @property
-    def status_label(self):
-        """Return label for status field"""
+    def status_badge(self):
+        """Return badge for status field"""
         if self.is_future:
             return "future"
         if self.status < -100:
@@ -528,8 +528,8 @@ class Observation(models.Model):
 
     # The values bellow are used as returned values in the API and for css rules in templates
     @property
-    def waterfall_status_label(self):
-        """Return label for waterfall_status field"""
+    def waterfall_status_badge(self):
+        """Return badge for waterfall_status field"""
         if self.waterfall_status is None:
             return 'unknown'
         if self.waterfall_status:

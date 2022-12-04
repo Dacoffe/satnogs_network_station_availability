@@ -33,7 +33,7 @@ def find_and_rate_failed_observations():
 def rate_observation(observation_id, action, action_value=None):
     """
     Rate observation for given observation and action and return the result in all forms (integer,
-    label name, display name).
+    badge name, display name).
 
 
     Logic of returned value of action "set_waterfall_status":
@@ -94,4 +94,4 @@ def rate_observation(observation_id, action, action_value=None):
                 status = 0
         observation.status = status
         observation.save(update_fields=['status'])
-        return (observation.status, observation.status_label, observation.status_display)
+        return (observation.status, observation.status_badge, observation.status_display)

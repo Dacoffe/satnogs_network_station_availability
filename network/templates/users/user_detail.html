@@ -10,253 +10,280 @@
 
 {% block content %}
   <div class="row">
-    <div class="col-sm-12">
+    <div class="col col-md-12">
       <h2>
-        {% cache 3600 profile-avatar user.email %}
+        {% cache 3600 observations-avatar user.email %}
           <img src="{{ user.email|gravatar_url:50 }}" class="img-avatar"/>
         {% endcache %}
         {{ user.displayname }}
+      <h2>
+    </div>
+
+    <div class="col d-none d-lg-flex justify-content-end align-items-center">
+      <span class="user-actions">
         {% if user == request.user %}
-          <div class="pull-right edit-profile-buttons">
-            <a class="btn btn-primary" href="{% url 'users:update_user' %}">Settings</a>
-            <a class="btn btn-primary" href="{% url 'account_email' %}">Email</a>
-            <a class="btn btn-info" data-toggle="modal" data-target="#APIModal" href="#">API Key</a>
-          </div>
+            <a class="btn btn-primary" role=button" href="{% url 'users:update_user' %}">
+              <span class="bi bi-gear" aria-hidden="true"></span> Settings
+           </a>
+           <a class="btn btn-primary"  role=button" href="{% url 'account_email' %}">
+              <span class="bi bi-envelope-at" aria-hidden="true"></span> Email
+           </a>
+           <a class="btn btn-info"  role=button" data-toggle="modal" data-target="#APIModal" href="#">
+              <span class="bi bi-Key" aria-hidden="true"></span> API Key
+           </a>
         {% endif %}
-      </h2>
+      </span>
+    </div>
+
+    <div class="col d-flex d-lg-none justify-content-end align-items-center">
+      <span class="user-actions">
+        {% if user == request.user %}
+            <a class="btn btn-primary" role=button" href="{% url 'users:update_user' %}">
+              <span class="bi bi-gear" aria-hidden="true"></span>
+           </a>
+           <a class="btn btn-primary"  role=button" href="{% url 'account_email' %}">
+              <span class="bi bi-envelope-at" aria-hidden="true"></span>
+           </a>
+           <a class="btn btn-info"  role=button" data-toggle="modal" data-target="#APIModal" href="#">
+              <span class="bi bi-Key" aria-hidden="true"></span>
+           </a>
+        {% endif %}
+      </span">
     </div>
   </div>
 
-  <div class="row">
-    <div class="col-md-12">
-      <h3>Ground Stations</h3>
+
+  <ul class="nav nav-tabs" id="myTab" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="stations-tab" data-toggle="tab" data-target="#stations" type="button" role="tab" aria-controls="stations" aria-selected="true">Ground Stations</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="observations-tab" data-toggle="tab" data-target="#observations" type="button" role="tab" aria-controls="observations" aria-selected="false">Recent Observations</button>
+    </li>
+  </ul>
+
+  <div class="tab-content" id="user-tab-content">
+    <div class="tab-pane fade show active" id="stations" role="tabpanel" aria-labelledby="stations-tab">
+      {% if stations %}
+        <div class="row">
+          <div class="col-md-12">
+            <table class="table table-sm table-hover my-2">
+              <thead class="bg-light">
+                <th>ID</th>
+                <th>Name</th>
+                <th>Location</th>
+                <th>Total</th>
+                <th>Future</th>
+                <th>Antennas</th>
+              </thead>
+              <tbody>
+                {% for station in stations %}
+                  <tr class="station-row clickable-row" data-href="{% url 'base:station_view' station_id=station.id %}">
+                    <td>
+                      <a href="{% url 'base:station_view' station_id=station.id %}">
+                        <span class="station
+                                     {% if station.last_seen %}
+                                       badge badge-{{ station.get_status_display|lower }}
+                                     {% else %}
+                                       badge badge-future
+                                     {% endif %}"
+                              data-toggle="tooltip"
+                              data-placement="bottom"
+                              title="{% if station.last_seen %}
+                                       Seen {{ station.last_seen|timesince }} ago
+                                     {% else %}
+                                       Never seen online
+                                     {% endif %}">
+                          {{ station.id }}
+                        </span>
+                      </a>
+                    </td>
+                    <td>
+                      {{ station.name }}
+                    </td>
+                      <td>
+                        {% if station.has_location %}
+                          {% if station.qthlocator %}
+                            <span data-toggle="tooltip" data-placement="bottom"
+                                  title="{{ station.lat|floatformat:-3 }}°, {{ station.lng|floatformat:-3 }}°">
+                            {{ station.qthlocator }}
+                          {% else %}
+                            {{ station.lat|floatformat:-1 }}°, {{ station.lng|floatformat:-1 }}°
+                          {% endif %}
+                          @{{ station.alt}}m
+                        {% else %}
+                          Location not defined
+                        {% endif %}
+                      </td>
+                    <td>
+                      <a href="{% url 'base:observations_list' %}?station={{ station.id }}" class="badge badge-success badge-pill" data-toggle="tooltip" data-placement="bottom" title={% if not station.success_rate %}"No data" {% else %}"{{ station.success_rate }}% Success" {% endif %}>
+                        {{ station.total_obs }}
+                      </a>
+                    </td>
+                    <td>
+                      <a href="{% url 'base:observations_list' %}?future=1&good=0&bad=0&unknown=0&failed=0&station={{ station.id }}" class="badge badge-info badge-pill">
+                        {{ station.future_obs }}
+                      </a>
+                    </td>
+                    <td class="antennas">
+                      {% for antenna in station.antennas.all %}
+                        <span class="antenna-pill" data-toggle="tooltip" data-placement="bottom"
+                              title="{% for range in antenna.frequency_ranges.all %} {{ range.min_frequency|frq }} - {{ range.max_frequency|frq }}&#xA{% endfor %}">
+                          {{ antenna.antenna_type }} ({{ antenna.bands}})
+                        </span>
+                      {% endfor %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% else %}
+        <div class="row">
+          <div class="col-md-12 notice">
+            <p>{{ user.displayname }} is not an owner of any ground stations.</p>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if user == request.user %}
+        <div class="row">
+          <div class="col-md-12">
+            <a class="btn btn-outline-dark" href="{% url 'base:station_edit' %}">
+              <span class="bi bi-plus" aria-hidden="true"></span> Add Ground Station
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="tab-pane fade" id="observations" role="tabpanel" aria-labelledby="observations-tab">
+      {% if observations %}
+        <div class="row">
+          <div class="col-md-12">
+            <table class="table table-sm table-hover my-2">
+              <thead class="bg-light">
+                <th>ID</th>
+                <th>Satellite</th>
+                <th>Frequency</th>
+                <th>Mode</th>
+                <th>Timeframe</th>
+                <th>Station</th>
+              </thead>
+              <tbody>
+                {% for observation in observations %}
+                  <tr class="clickable-row" data-href="{% url 'base:observation_view' observation_id=observation.id %}">
+                    <td>
+                      <a href="{% url 'base:observation_view' observation_id=observation.id %}">
+                        {% if observation.is_future %}
+                          <span class="badge badge-future">{{ observation.id }}</span>
+                        {% elif observation.status < -100 %}
+                          <span class="badge badge-failed">{{ observation.id }}</span>
+                        {% elif observation.status >= -100  and observation.status < 0 %}
+                          <span class="badge badge-bad">{{ observation.id }}</span>
+                        {% elif observation.status >= 0  and observation.status < 100 %}
+                          <span class="badge badge-unknown">{{ observation.id }}</span>
+                        {% elif observation.status >= 100 %}
+                          <span class="badge badge-good">{{ observation.id }}</span>
+                        {% endif %}
+                      </a>
+                    </td>
+                    <td>
+                      <a href="#" data-toggle="modal" data-target="#SatelliteModal" data-id="{{ observation.satellite.norad_cat_id }}">
+                        {{ observation.satellite.name }}
+                      </a>
+                    </td>
+                    <td>
+                      {% if observation.center_frequency %}
+                        {{ observation.center_frequency|frq }}
+                      {% else %}
+                        {{ observation.transmitter_downlink_low|frq }}
+                      {% endif %}
+                    </td>
+                    <td>
+                      <span data-toggle="tooltip" data-placement="bottom" title="{{ observation.transmitter_description }}">
+                        {{ observation.transmitter_mode|default:"-" }}
+                      </span>
+                      <span>
+                        {{ observation.transmitter_baud|floatformat|default:"" }}
+                      </span>
+                    </td>
+                    <td>
+                      <span data-toggle="tooltip" data-placement="bottom" title="{{ observation.start|naturaltime }}">
+                        <span class="datetime-date">{{ observation.start|date:"Y-m-d" }}</span>
+                        <span class="datetime-time">{{ observation.start|date:"H:i:s" }}</span><br>
+                      </span>
+                      <span data-toggle="tooltip" data-placement="bottom" title="{{ observation.end|naturaltime }}">
+                        <span class="datetime-date">{{ observation.end|date:"Y-m-d" }}</span>
+                        <span class="datetime-time">{{ observation.end|date:"H:i:s" }}</span>
+                      </span>
+                    </td>
+                    <td>
+                      {% if observation.ground_station %}
+                        <a href="{% url 'base:station_view' station_id=observation.ground_station.id %}">
+                          {{ observation.ground_station }}
+                        </a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% else %}
+        <div class="row">
+          <div class="col-md-12 notice">
+            <p>{{ user.displayname }} is not an author of any observation.</p>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if can_schedule and user == request.user %}
+        <div class="row">
+          <div class="col-md-12">
+            <a class="btn btn-outline-dark" href="{% url 'base:observation_new' %}">
+              <span class="bi bi-plus" aria-hidden="true"></span>
+              New Observation
+            </a>
+          </div>
+        </div>
+      {% endif %}
     </div>
   </div>
-
-  {% if stations %}
-    <div class="row">
-      <div class="col-md-12">
-        <table class="table table-hover">
-          <thead>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Location</th>
-            <th>Total</th>
-            <th>Future</th>
-            <th>Antennas</th>
-          </thead>
-          <tbody>
-            {% for station in stations %}
-              <tr class="clickable-row" data-href="{% url 'base:station_view' station_id=station.id %}">
-                <td>
-                  <a href="{% url 'base:station_view' station_id=station.id %}">
-                    <span class="label label-{{ station.get_status_display|lower }}"
-                          data-toggle="tooltip"
-                          data-placement="bottom"
-                          title="{% if station.last_seen %}
-                                   Seen {{ station.last_seen|timesince }} ago
-                                 {% else %}
-                                   Never seen
-                                 {% endif %}"
-                          data-toggle="tooltip"
-                          data-placement="bottom"
-                          title="{% if station.last_seen %}
-                                   Seen {{ station.last_seen|timesince }} ago
-                                 {% else %}
-                                   Never seen
-                                 {% endif %}">
-                      {{ station.id }}
-                    </span>
-                  </a>
-                </td>
-                <td>
-                  {{ station.name }}
-                </td>
-                  <td>
-                    {% if station.has_location %}
-                    {% if station.qthlocator %}
-                      <span data-toggle="tooltip" data-placement="bottom"
-                            title="{{ station.lat|floatformat:-3 }}°, {{ station.lng|floatformat:-3 }}°">
-                      {{ station.qthlocator }}
-                    {% else %}
-                      {{ station.lat|floatformat:-1 }}°, {{ station.lng|floatformat:-1 }}°
-                    {% endif %}
-                    @{{ station.alt}}m
-                    {% else %}
-                      Location not defined
-                    {% endif %}
-                  </td>
-                <td>
-                  <a href="{% url 'base:observations_list' %}?station={{ station.id }}" class="badge total-pill" data-toggle="tooltip" data-placement="bottom" title={% if not station.success_rate %}"No data" {% else %}"{{ station.success_rate }}% Success" {% endif %}>
-                    {{station.total_obs}}
-                  </a>
-                </td>
-                <td>
-                  <a href="{% url 'base:observations_list' %}?future=1&good=0&bad=0&unknown=0&failed=0&station={{ station.id }}" class="badge badge-info">
-                      {{ station.future_obs }}
-                  </a>
-                </td>
-                <td class="antennas">
-                  {% for antenna in station.antennas.all %}
-                    <span class="antenna-pill" data-toggle="tooltip" data-placement="bottom"
-                          title="{% for range in antenna.frequency_ranges.all %} {{ range.min_frequency|frq }} - {{ range.max_frequency|frq }}&#xA{% endfor %}">
-                      {{ antenna.antenna_type }} ({{ antenna.bands}}) 
-                    </span>
-                  {% endfor %}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  {% else %}
-    <div class="row">
-      <div class="col-md-12 notice">
-        <p>{{ user.displayname }} is not an owner of any ground stations.</p>
-      </div>
-    </div>
-  {% endif %}
-
-  {% if user == request.user %}
-    <div class="row">
-      <div class="col-md-12">
-        <a class="btn btn-default" href="{% url 'base:station_edit' %}">
-          <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add Ground Station
-        </a>
-      </div>
-    </div>
-  {% endif %}
-
-  <div class="row">
-    <div class="col-md-12">
-      <h3>Observations</h3>
-    </div>
-  </div>
-
-  {% if observations %}
-    <div class="row">
-      <div class="col-md-12">
-        <table class="table table-hover">
-          <thead>
-            <th>ID</th>
-            <th>Satellite</th>
-            <th>Frequency</th>
-            <th>Mode</th>
-            <th>Timeframe</th>
-            <th>Station</th>
-          </thead>
-          <tbody>
-            {% for observation in observations %}
-              <tr class="clickable-row" data-href="{% url 'base:observation_view' observation_id=observation.id %}">
-                <td>
-                  <a href="{% url 'base:observation_view' observation_id=observation.id %}">
-                      <span class="label label-{{observation.status_label }}">{{ observation.id }}</span>
-                  </a>
-                </td>
-                <td>
-                  <a href="#" data-toggle="modal" data-target="#SatelliteModal" data-id="{{ observation.satellite.norad_cat_id }}">
-                    {{ observation.satellite.name }}
-                  </a>
-                </td>
-                <td>{{ observation.transmitter_downlink_low|frq }}</td>
-                <td>{{ observation.transmitter_mode }}</td>
-                <td>
-                  <span data-toggle="tooltip" data-placement="bottom" title="{{ observation.start|naturaltime }}">
-                    <span class="datetime-date">{{ observation.start|date:"Y-m-d" }}</span>
-                    <span class="datetime-time">{{ observation.start|date:"H:i:s" }}</span><br>
-                  </span>
-                  <span data-toggle="tooltip" data-placement="bottom" title="{{ observation.end|naturaltime }}">
-                    <span class="datetime-date">{{ observation.end|date:"Y-m-d" }}</span>
-                    <span class="datetime-time">{{ observation.end|date:"H:i:s" }}</span>
-                  </span>
-                </td>
-                <td>
-                  {% if observation.ground_station %}
-                    <a href="{% url 'base:station_view' station_id=observation.ground_station.id %}">
-                      {{ observation.ground_station }}
-                    </a>
-                  {% endif %}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  {% else %}
-    <div class="row">
-      <div class="col-md-12 notice">
-        <p>{{ user.displayname }} is not an author of any observation.</p>
-      </div>
-    </div>
-  {% endif %}
-
-  {% if can_schedule %}
-    <div class="row">
-      <div class="col-md-12">
-        <a class="btn btn-default" href="{% url 'base:observation_new' %}">
-          <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-          New Observation
-        </a>
-      </div>
-    </div>
-  {% endif %}
 
   {% if user == request.user %}
     <!-- API Modal -->
-    <div class="modal fade" id="APIModal" tabindex="-1" role="dialog" aria-labelledby="APIModalLabel" aria-hidden="true">
+    <div class="modal fade" id="APIModal" tabindex="-1" role="dialog" aria-labelledby="APIModalTitle" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-            <h4 class="modal-title" id="APIModalLabel">API Key</h4>
+            <h3 class="modal-title" id="APIModalTitle">API Key</h3>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
           </div>
           <div class="modal-body">
-            <div>You can use this token to interact with the API.</div>
-            <div>
-              <code>{{ token }}</code>
+            <div id="api-key">
+              <div>You can use this token to interact with the API.</div>
+              <div>
+                <code>{{ token }}</code>
+              </div>
+            </div>
+            <div id="renew-api-message" hidden>
+              <p>Do you really want to renew your API Key?</p>
+              <p>If you change it, your station(s) will need a configuration update in order to use the new API Key.</p>
+              <p>Until this update is done, your station(s) will not be able to get jobs or upload any artifacts for the completed ones.</p>
             </div>
           </div>
-          <div class="modal-footer">
-            <div class="row">
-              <div class="col-md-10">
-                <button class="btn btn-danger" data-toggle="modal" data-target="#renewAPIModal" href="#">Renew API Key</button>
-              </div>
-              <div class="col-md-1">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              </div>
-              </div>           
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- Confirm renew API Modal -->
-    <div class="modal fade" id="renewAPIModal" tabindex="-1" role="dialog" aria-labelledby="renewAPIModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-            <h4 class="modal-title" id="renewAPIModalLabel">Renew API Key</h4>
-          </div>
-          <div class="modal-body">
-            <div>Do you really want to renew your API key ?</div>
-            <div>If you change it, you will need to update the configuration of your satnogs-client/station.</div>
-          </div>
-          <div class="modal-footer">
-            <div class="row">
-              <div class="col-md-10">
-                <form method="post"
-                  action="{% url 'users:update_user_token' %}">{% csrf_token %}
-                  <button type="submit" class="btn btn-primary">Renew</button>
-                </form>
-              </div>
-              <div class="col-md-1">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              </div>
-              </div>           
-            </div>
+          <div class="modal-footer justify-content-between">
+            <form id="renew-api-form" method="post" action="{% url 'users:update_user_token' %}" hidden>
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger">Yes, renew the API Key</button>
+            </form>
+            <button class="btn btn-danger" id="api-modal-button">Renew API Key</button>
+            <button type="button" class="btn btn-outline-dark" id="api-modal-close-button" data-dismiss="modal">Close</button>
           </div>
         </div>
       </div>
@@ -268,4 +295,5 @@
 
 {% block javascript %}
   <script src="{% static 'js/satellite.js' %}"></script>
+  <script src="{% static 'js/api-renew.js' %}"></script>
 {% endblock javascript %}

@@ -12,7 +12,7 @@
 
 {% block content %}
   <div class="row">
-    <div class="col-md-6">
+    <div class="col-">
       <h2>
         {% if station_form.instance.id %}
           Edit: {{ station_form.instance.id }} - {{ station_form.instance.name }}
@@ -25,14 +25,14 @@
 
   <form id="station-edit-form" role="form" enctype="multipart/form-data" method="post">{% csrf_token %}
     <div class="row">
-      <div class="panel panel-default">
-        <div class="panel-heading" data-toggle="collapse" data-target="#general-panel-body">
-          <h3 class="panel-title">
+      <div class="card w-100 my-2">
+        <div class="card-header categories" data-toggle="collapse" data-target="#general-card-body">
+          <h6 class="card-title">
             General Info
-            <span class="glyphicon glyphicon-collapse-up pull-right" aria-hidden="true"></span>
-          </h3>
+            <i class="bi bi-arrows-collapse float-right" aria-hidden="true"></i>
+          </h6>
         </div>
-        <div class="panel-body collapse in" id="general-panel-body">
+        <div class="card-body collapse in" id="general-card-body">
           <div class="form-group">
             <label for="name" class="control-label">Name</label>
             <input value="{{ station_form.name.value|default_if_none:"" }}" id="station-name" type="text" class="form-control" maxlength="{{ station_form.name.field.max_length }}" name="name" required>
@@ -45,14 +45,14 @@
         </div>
       </div>
 
-      <div class="panel panel-default">
-        <div class="panel-heading" data-toggle="collapse" data-target="#location-panel-body">
-          <h3 class="panel-title">
+      <div class="card w-100 my-2">
+        <div class="card-header categories" data-toggle="collapse" data-target="#location-card-body">
+          <h6 class="card-title">
             Location
-            <span class="glyphicon glyphicon-collapse-up pull-right" aria-hidden="true"></span>
-          </h3>
+            <i class="bi bi-arrows-collapse float-right" aria-hidden="true"></i>
+          </h6>
         </div>
-        <div class="panel-body collapse in" id="location-panel-body">
+        <div class="card-body collapse in" id="location-card-body">
           <div class="row">
             <div class="col-md-4">
               <div class="form-group">
@@ -88,33 +88,33 @@
 
 
       {% if registered %}
-      <div class="panel panel-default">
-        <div class="panel-heading" data-toggle="collapse" data-target="#configuration-panel-body">
-          <h3 class="panel-title">
+      <div class="card w-100 my-2">
+        <div class="card-header categories" data-toggle="collapse" data-target="#configuration-card-body">
+          <h6 class="card-title">
             Configuration
-            <span class="glyphicon glyphicon-collapse-up pull-right" aria-hidden="true"></span>
-          </h3>
+            <i class="bi bi-arrows-collapse float-right" aria-hidden="true"></i>
+          </h6>
         </div>
-        <div class="panel-body collapse in" id="configuration-panel-body">
+        <div class="card-body collapse in" id="configuration-card-body">
           <div class="form-group">
             <label for="satnogs_soapy_rx_device" class="control-label">Soapy RX Device</label>
-            <input value="{{ station_form.satnogs_soapy_rx_device.value|default_if_none:"" }}" id="soapy-rx-device" type="text" class="form-control" maxlength="{{ station_form.satnogs_soapy_rx_device.field.max_length }}" name="satnogs_soapy_rx_device">
+            <input value="{{ station_form.satnogs_soapy_rx_device.value|default_if_none:"" }}" id="soapy-rx-device" type="text" class="form-control" maxlength="{{ station_form.satnogs_soapy_rx_device.field.max_length }}" name="satnogs_soapy_rx_device" required>
           </div>
           <div class="form-group">
             <label for="satnogs_antenna" class="control-label">Soapy Antenna</label>
-            <input value="{{ station_form.satnogs_antenna.value|default_if_none:"" }}" id="satnogs-antenna" type="text" class="form-control" maxlength="{{ station_form.satnogs_antenna.field.max_length }}" name="satnogs_antenna">
+            <input value="{{ station_form.satnogs_antenna.value|default_if_none:"" }}" id="satnogs-antenna" type="text" class="form-control" maxlength="{{ station_form.satnogs_antenna.field.max_length }}" name="satnogs_antenna" required>
           </div>
           <div class="row">
             <div class="col-md-6">
               <div class="form-group">
                 <label for="satnogs_rx_samp_rate" class="control-label">RX Sample Rate</label>
-                <input value="{{ station_form.satnogs_rx_samp_rate.value|default_if_none:"" }}" id="satnogs-rx-samp-rate" type="number" class="form-control" name="satnogs_rx_samp_rate" step="1" min="0">
+                <input value="{{ station_form.satnogs_rx_samp_rate.value|default_if_none:"" }}" id="satnogs-rx-samp-rate" type="number" class="form-control" name="satnogs_rx_samp_rate" step="1" min="0" required>
               </div>
             </div>
             <div class="col-md-6">
               <div class="form-group">
                 <label for="satnogs_rf_gain" class="control-label">RF Gain</label>
-                <input value="{{ station_form.satnogs_rf_gain.value|default_if_none:"" }}" id="satnogs-rf-gain" type="number" class="form-control" name="satnogs_rf_gain" step="0.01" min="0">
+                <input value="{{ station_form.satnogs_rf_gain.value|default_if_none:"" }}" id="satnogs-rf-gain" type="number" class="form-control" name="satnogs_rf_gain" step="0.01" min="0" required>
               </div>
             </div>
           </div>
@@ -122,15 +122,15 @@
       </div>
       {% endif %}
 
-      <div class="panel panel-default">
-        <div class="panel-heading" data-toggle="collapse" data-target="#antennas-panel-body">
-          <h3 class="panel-title">
+      <div class="card w-100 my-2">
+        <div class="card-header categories" data-toggle="collapse" data-target="#antennas-card-body">
+          <h6 class="card-title">
             Antennas
-            <span class="glyphicon glyphicon-collapse-up pull-right" aria-hidden="true"></span>
-          </h3>
+            <i class="bi bi-arrows-collapse float-right" aria-hidden="true"></i>
+          </h6>
         </div>
         <!-- Data to parse -->
-        <div id="antennas-loading" class="panel-body loading-field">
+        <div id="antennas-loading" class="card-body loading-field">
           <div class="spinner">
             <div class="bounce1"></div>
             <div class="bounce2"></div>
@@ -138,7 +138,10 @@
           </div>
           Loading Antennas
         </div>
-        <div class="panel-body collapse in" id="antennas-panel-body" style="display:none;">
+        <div class="card-body collapse in" id="antennas-card-body">
+          <div class="row justify-content-around align-item-center"  id="antennas-card-group">
+          <!-- Here antenna cards will be added -->
+          </div>
           <div id="station-data-to-parse"
                data-max_antennas_per_station="{{ max_antennas_per_station }}"
                data-max_frequency_ranges_per_antenna="{{ max_frequency_ranges_per_antenna }}"
@@ -177,7 +180,7 @@
           <div class="row" id="new-antenna">
             <div class="col-md-12 text-right">
               <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modal" data-action="new">
-                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                <span class="bi bi-plus" aria-hidden="true"></span>
                 New Antenna
               </button>
             </div>
@@ -185,19 +188,21 @@
         </div>
 
         <!-- Edit/New Antenna Modal-->
-        <div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="antenna modal">
-          <div class="modal-dialog" role="document">
+        <div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="AntennaModalTitle">
+          <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
               <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="modal-title"></h4>
+                <h3 class="modal-title" id="AntennaModalTitle"></h3>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
               </div>
               <div class="modal-body">
                 <div class='row'>
                   <div class='col-md-12'>
                     <div class="form-group">
                       <label for="antenna-type" class="control-label">Type</label>
-                      <select id="antenna-type" class="form-control selectpicker show-tick" name="antenna-type">
+                      <select id="antenna-type" class="form-control selectpicker show-tick" data-live-search="true" name="antenna-type">
                         {% for antenna_type in antenna_types.all|sort_types %}
                           <option value="{{ antenna_type.id }}" data-content="{{ antenna_type.name }}">
                         {% endfor %}
@@ -216,44 +221,42 @@
                     Loading Frequency Ranges
                   </div>
                   <div id="frequency-ranges">Add a frequency range by choosing one of the default ranges or a custom one bellow<hr></div>
-                  <div class="row" id="new-ranges">
-                    <div class="col-md-8">
+                    <div class='row no-gutters justify-content-between align-items-end' id="new-ranges">
+                    <div class="col-">
                       <span class='default-range-label'>Add a default range:</span>
                       <button data-range="VHF" type="button" class="btn btn-info new-range">
-                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                        <span class="bi bi-plus" aria-hidden="true"></span>
                         VHF
                       </button>
                       <button data-range="UHF" type="button" class="btn btn-info new-range">
-                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                        <span class="bi bi-plus" aria-hidden="true"></span>
                         UHF
                       </button>
                       <button data-range="L" type="button" class="btn btn-info new-range">
-                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                        <span class="bi bi-plus" aria-hidden="true"></span>
                         L
                       </button>
                       <button data-range="S" type="button" class="btn btn-info new-range">
-                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                        <span class="bi bi-plus" aria-hidden="true"></span>
                         S
                       </button>
                     </div>
-                    <div class="col-md-4 text-right">
+                    <div class="col-">
                       <button data-range="custom" type="button" id="new-range" class="btn btn-success new-range">
-                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                        <span class="bi bi-plus" aria-hidden="true"></span>
                         Custom Range
                       </button>
                     </div>
                   </div>
                 </div>
               </div>
-              <div class="modal-footer">
-                <div class='row'>
-                  <div class='col-md-6 text-left'>
-                    <button id="delete-antenna" data-action="delete" type="button" class="btn btn-danger modal-action">Delete Antenna</button>
-                  </div>
-                  <div class='col-md-6'>
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button data-action="save" type="button" class="btn btn-primary modal-action">Save changes</button>
-                  </div>
+              <div class="modal-footer justify-content-between align-items-center">
+                <div class='col-'>
+                  <button id="delete-antenna" data-action="delete" type="button" class="btn btn-danger modal-action">Delete Antenna</button>
+                </div>
+                <div class='col-'>
+                  <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
+                  <button data-action="save" type="button" class="btn btn-primary modal-action">Save changes</button>
                 </div>
               </div>
             </div>
@@ -262,18 +265,18 @@
         <!-- End of Edit/New Antenna Modal-->
       </div>
 
-      <div class="panel panel-default">
-        <div class="panel-heading" data-toggle="collapse" data-target="#settings-panel-body">
-          <h3 class="panel-title">
+      <div class="card w-100 my-2">
+        <div class="card-header categories" data-toggle="collapse" data-target="#settings-card-body">
+          <h6 class="card-title">
             Settings
-            <span class="glyphicon glyphicon-collapse-up pull-right" aria-hidden="true"></span>
-          </h3>
+            <i class="bi bi-arrows-collapse float-right" aria-hidden="true"></i>
+          </h6>
         </div>
-        <div class="panel-body collapse in" id="settings-panel-body">
+        <div class="card-body collapse in" id="settings-card-body">
           <div class="form-group">
             <label for="horizon" class="control-label">Minimum Horizon</label>
             <input id="horizon" type="number" value="{{ station_form.horizon.value|default_if_none:"" }}" class="form-control" name="horizon" placeholder="{{ station_form.horizon.help_text }}">
-            <span class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip"
+            <span class="bi bi-question-circle" aria-hidden="true" data-toggle="tooltip"
                   title="Your station minimum observable elevation"></span>
           </div>
 
@@ -282,7 +285,7 @@
           <div class="form-group">
             <label for="utilization" class="control-label">Target Utilization</label>
             <input id="utilization" type="number" value="{{ station_form.target_utilization.value|default_if_none:"" }}" class="form-control" name="target_utilization" placeholder="{{ station_form.utilization.help_text }}">
-            <span class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip"
+            <span class="bi bi-question-circle" aria-hidden="true" data-toggle="tooltip"
                   title="Your station target utilization"></span>
           </div>
 
@@ -295,16 +298,16 @@
                 <option value="{{ choice.0 }}" {% if choice.0 == station_form.violator_scheduling.value %} selected {% endif %}>{{ choice.1 }}</option>
               {% endfor %}
             </select>
-            <div class="help-block">
-                <p id='violator-scheduling-0' class="violator-scheduling-option-description">
-                    Noone will be able to schedule satellites that violate frequencies. For SSA purposes and recording violations, please consider to change this option to "Only Operators".
-                </p>
-                <p id='violator-scheduling-1' class="violator-scheduling-option-description">
-                    Only operators will be able to schedule satellites that violate frequencies. Only necessary observations will be scheduled for SSA purposes and recording violations.
-                </p>
-                <p id='violator-scheduling-2' class="violator-scheduling-option-description">
-                    Everyone, who has permission to schedule, will be able to schedule satellites that violate frequencies. However scheduling will be limited to use the minimum of Network and DB resources.
-                </p>
+            <div class="form-text text-justify p-2 border border-dark">
+                <div id='violator-scheduling-0' class="violator-scheduling-option-description">
+                    <b>Noone</b> will be able to schedule satellites that violate frequencies. For SSA purposes and recording violations, please consider to change this option to "Only Operators".
+                </div>
+                <div id='violator-scheduling-1' class="violator-scheduling-option-description">
+                    <b>Only operators</b> will be able to schedule satellites that violate frequencies. Only necessary observations will be scheduled for SSA purposes and recording violations.
+                </div>
+                <div id='violator-scheduling-2' class="violator-scheduling-option-description">
+                    <b>Everyone</b> with permission to schedule will be able to schedule satellites that violate frequencies. However scheduling will be limited to use the minimum of Network and DB resources.
+                </div>
             </div>
           </div>
 
@@ -315,7 +318,7 @@
               <label>
                 <input type="checkbox" name="testing" {% if station_form.testing.value %}checked="True"{% endif %} {% if not station_form.instance.id %}disabled{% endif %}>
                 Testing?
-                    <span class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip"
+                    <span class="bi bi-question-circle" aria-hidden="true" data-toggle="tooltip"
                           title="Make sure you station is performing well for a period of time before you remove the Testing flag"></span>
               </label>
             </div>
@@ -323,14 +326,14 @@
         </div>
       </div>
 
-      <div class="panel panel-default">
-        <div class="panel-heading" data-toggle="collapse" data-target="#image-panel-body">
-          <h3 class="panel-title">
+      <div class="card w-100 my-2">
+        <div class="card-header categories" data-toggle="collapse" data-target="#image-card-body">
+          <h6 class="card-title">
             Image
-            <span class="glyphicon glyphicon-collapse-up pull-right" aria-hidden="true"></span>
-          </h3>
+            <i class="bi bi-arrows-collapse float-right" aria-hidden="true"></i>
+          </h6>
         </div>
-        <div class="panel-body collapse in" id="image-panel-body">
+        <div class="card-body collapse in" id="image-card-body">
           <div class="form-group">
             <input id="station-image" type="file" name="image" accept="image/*"
                {% if station_form.image.value and not image_changed %} data-existing="{{ MEDIA_URL }}{{ station_form.image.value }}" {% endif %}>
@@ -341,19 +344,11 @@
     </div>
 
     <div class='row'>
-      <div class='col-md-4'>
-        <div class="btn-group btn-group-justified" role="group">
-          <div class="btn-group" role="group">
-            <button id="cancel" type="button" class="btn btn-default">{% if station_form.instance.id %}Back to Station{% else %}Back to Dashboard{% endif %}</button>
-          </div>
-        </div>
+      <div class='col-4'>
+        <button id="cancel" type="button" class="btn btn-outline-dark w-100">{% if station_form.instance.id %}Back to Station{% else %}Back to Dashboard{% endif %}</button>
       </div>
-      <div class='col-md-8'>
-        <div class="btn-group btn-group-justified" role="group">
-          <div class="btn-group" role="group">
-            <button id="submit" type="submit" class="btn btn-primary" disabled="True">{% if station_form.instance.id %}Save Changes{% else %}Submit{% endif %}</button>
-          </div>
-        </div>
+      <div class='col-8'>
+        <button id="submit" type="submit" class="btn btn-primary w-100" disabled="True">{% if station_form.instance.id %}Save Changes{% else %}Submit{% endif %}</button>
       </div>
     </div>
   </form>

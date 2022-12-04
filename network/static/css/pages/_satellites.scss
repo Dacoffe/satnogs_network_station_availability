@@ -1,39 +1,28 @@
-#SatelliteModal li {
-    margin-bottom: 5px;
-}
-
-.satellite-title-wrap {
-    margin-top: 0;
-}
-
-.satellite-title {
-    font-weight: bold;
-    font-size: 1.2em;
-    margin-bottom: 5px;
-}
-
-.satellite-names {
-    margin-bottom: 5px;
-}
-
 .satellite-img-full {
     width: 100%;
     max-width: 300px;
     border-radius: 5px;
 }
 
-.panel-satellite-img {
-    padding-left: 30px;
+.satellite-title {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-bottom: 2px;
+    text-align: center;
 }
 
-.panel-satellite-info {
-    padding-right: 30px;
-    padding-left: 30px;
+.satellite-names {
+    margin-bottom: 1px;
+    text-align: center;
 }
 
 .satellite-success {
     width: 100px;
     margin-top: 20px;
+}
+
+.transmitter {
+    margin-bottom: 1.3rem;
 }
 
 .tab-content {

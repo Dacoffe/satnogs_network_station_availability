@@ -1,14 +1,8 @@
 #station-edit-form {
 
-    .panel-heading {
+    .card-header.categories {
         cursor: pointer;
     }
-}
-
-.violator-scheduling-option-description {
-    text-align: justify;
-    margin-left: 5px;
-    margin-right: 5px;
 }
 
 .antenna-label, .frequency-ranges-label {
@@ -24,16 +18,6 @@
 
 .frequency-ranges-label {
     margin-bottom: 5px;
-}
-
-.frequency-range-fields {
-
-    .btn {
-        padding: 1px 5px;
-        font-size: 12px;
-        line-height: 1.5;
-        border-radius: 3px;
-    }
 }
 
 #new-ranges {

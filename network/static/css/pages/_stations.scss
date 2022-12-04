@@ -1,3 +1,7 @@
+.stations-actions {
+    margin-left: 20px;
+}
+
 .map-modal {
 
     .modal-lg {
@@ -24,11 +28,6 @@
             height: 600px;
         }
     }
-}
-
-.map-modal-reveal {
-    float: right;
-    margin: 2px 0 0 10px;
 }
 
 #station-view-image-container {
@@ -78,18 +77,6 @@
     padding: 4px 8px;
     font-size: 12px;
     cursor: help;
-}
-
-.total-pill {
-    background-color: #072;
-}
-
-.stations-totals {
-    font-size: 2.4rem;
-
-    @include medium-and-up {
-        float: right;
-    }
 }
 
 .freq-input-container {

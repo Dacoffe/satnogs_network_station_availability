@@ -22,12 +22,12 @@
 
                 {{ emailaddress.email }}
                 {% if emailaddress.verified %}
-                  <span class="glyphicon glyphicon-ok" aria-hidden="true" title="Verified"></span>
+                  <span class="bi bi-check" aria-hidden="true" title="Verified"></span>
                 {% else %}
-                  <span class="glyphicon glyphicon-remove" aria-hidden="true" title="Unverified"></span>
+                  <span class="bi bi-x" aria-hidden="true" title="Unverified"></span>
                 {% endif %}
                 {% if emailaddress.primary %}
-                  <span class="glyphicon glyphicon-star" aria-hidden="true" title="Primary"></span>
+                  <span class="bi bi-star" aria-hidden="true" title="Primary"></span>
                 {% endif %}
               </label>
             </div>
@@ -35,7 +35,7 @@
 
           <div class="buttonHolder">
             <button class="btn btn-sm btn-primary" type="submit" name="action_primary">Make Primary</button>
-            <button class="btn btn-sm btn-default" type="submit" name="action_send">Re-send Verification</button>
+            <button class="btn btn-sm btn-outline-dark" type="submit" name="action_send">Re-send Verification</button>
             <button class="btn btn-sm btn-danger" type="submit" name="action_remove">Remove</button>
           </div>
 

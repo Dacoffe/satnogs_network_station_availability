@@ -1,31 +1,32 @@
-<div class="modal fade" id="HotkeysModal" tabindex="-1" role="dialog" aria-labelledby="HotkeysModalLabel" aria-hidden="true">
+<div class="modal fade" id="HotkeysModal" tabindex="-1" role="dialog" aria-labelledby="HotkeysModalTitle" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-        <h4 class="modal-title" id="HotkeysModalTitle"><span class="glyphicon glyphicon-fire" aria-hidden="true"></span> Hotkeys</h4>
+        <h3 class="modal-title" id="HotkeysModalTitle"> <i class="bi bi-fire" aria-hidden="true"></i> Hotkeys</h3>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
-        <div class="modal-body">
-          <p>
-            <span class="label label-info" title="Unknown">u</span>Change waterfall status to "Unknown"</span>
-          </p>
-          <p>
-            <span class="label label-info" title="With Signal">g</span>Change waterfall status to "With Signal"</span>
-          </p>
-          <p>
-            <span class="label label-info" title="Without Signal">b</span>Change waterfall status to "Without Signal"</span>
-          </p>
-          <p>
-            <span class="label label-info" title="Delete">x</span>Delete observation</span>
-          </p>
-          <p>
-            <span class="label label-info" title="Discuss">d</span>Discuss observation</span>
-          </p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        </div>
-      </form>
+      <div class="modal-body">
+        <p>
+          <span class="badge badge-info" title="Unknown">u</span> Change waterfall status to "Unknown"
+        </p>
+        <p>
+          <span class="badge badge-info" title="With Signal">g</span> Change waterfall status to "With Signal"
+        </p>
+        <p>
+          <span class="badge badge-info" title="Without Signal">b</span> Change waterfall status to "Without Signal"
+        </p>
+        <p>
+          <span class="badge badge-info" title="Delete">x</span> Delete observation
+        </p>
+        <p>
+          <span class="badge badge-info" title="Discuss">d</span> Discuss observation
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
+      </div>
     </div>
   </div>
 </div>

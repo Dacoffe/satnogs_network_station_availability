@@ -347,17 +347,17 @@ def waterfall_vet(request, observation_id):
     observation.save(
         update_fields=['waterfall_status', 'waterfall_status_user', 'waterfall_status_datetime']
     )
-    (observation_status, observation_status_label, observation_status_display
+    (observation_status, observation_status_badge, observation_status_display
      ) = rate_observation(observation.id, 'set_waterfall_status', observation.waterfall_status)
     data = {
         'waterfall_status_user': observation.waterfall_status_user.displayname,
         'waterfall_status_datetime': observation.waterfall_status_datetime.
         strftime('%Y-%m-%d %H:%M:%S'),
         'waterfall_status': observation.waterfall_status,
-        'waterfall_status_label': observation.waterfall_status_label,
+        'waterfall_status_badge': observation.waterfall_status_badge,
         'waterfall_status_display': observation.waterfall_status_display,
         'status': observation_status,
-        'status_label': observation_status_label,
+        'status_badge': observation_status_badge,
         'status_display': observation_status_display,
     }
     return JsonResponse(data, safe=False)

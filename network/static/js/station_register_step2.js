@@ -2,6 +2,13 @@
 $(document).ready(function() {
     'use strict';
 
+    var urlParameters = new URLSearchParams(window.location.search);
+    var hash = urlParameters.get('hash');
+
+    $('#cancel-register').on('click', function(){
+        window.location.href = '/stations/register/step1/?hash=' + hash;
+    });
+
     function check_validity_of_input(element){
         let input = $(element);
         /* Limit letters of description and name to ISO/IEC 8859-1 (latin1)
@@ -17,11 +24,11 @@ $(document).ready(function() {
         }
         let valid = element.checkValidity();
         $('#register').prop('disabled', !$('form')[0].checkValidity());
-        input.parent().toggleClass('has-success', valid);
-        input.parent().toggleClass('has-error', !valid);
+        input.toggleClass('is-valid', valid);
+        input.toggleClass('is-invalid', !valid);
     }
 
-    $('input').each(function(){
+    $('input, textarea').each(function(){
         if(!$(this).hasClass('frequency')){
             check_validity_of_input(this);
         }

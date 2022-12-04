@@ -18,7 +18,7 @@
  * :field ctl: ax25_frame.ax25_header.ctl
  * :field pid: ax25_frame.payload.pid
  * :field monitor: ax25_frame.payload.ax25_info.data_monitor
- * 
+ *
  * Attention: `rpt_callsign` cannot be accessed because `rpt_instance` is an
  * array of unknown size at the beginning of the parsing process! Left an
  * example in here.

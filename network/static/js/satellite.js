@@ -28,39 +28,39 @@ $(document).ready(function() {
             modal.find('.satellite-future').text(data.future_count);
             modal.find('#transmitters').empty();
             $.each(data.transmitters, function(i, transmitter){
-                var transmitter_status = '-danger';
+                var transmitter_status = 'danger';
                 if(transmitter.alive){
-                    transmitter_status = '-success';
+                    transmitter_status = 'success';
                 }
                 modal.find('#transmitters').append(`
-                    <div class="col-md-12 transmitter">
-                      <div class="panel panel` + transmitter_status + `">
-                        <div class="panel-heading">
+                    <div class="transmitter card border-` + transmitter_status + `">
+                        <div class="card-header bg-` + transmitter_status + ' text-' + transmitter_status + `">
                           <span class="transmitter-desc">` + transmitter.description + `</span>
+                          <span class="badge badge-dark float-right">Total Observations: ` + transmitter.total_count + `</span>
                         </div>
-                        <div class="panel-body">
-                          <span class="label label-default">Observations</span>
-                          <span class="front-data-big">
-                            <span class="transmitter-total-obs">` + transmitter.total_count + `</span>
-                            <div class="progress pull-right">
-                              <div class="progress-bar progress-bar-success transmitter-good"
-                                          data-toggle="tooltip" data-placement="bottom"
-                                          title="` + transmitter.success_rate  + '% (' + transmitter.good_count + `) Good"
-                                          style="width:` + transmitter.success_rate + `%"></div>
-                              <div class="progress-bar progress-bar-warning transmitter-unknown"
-                                          data-toggle="tooltip" data-placement="bottom"
-                                          title="` + transmitter.unknown_rate  + '% (' + transmitter.unknown_count + `) Unknown"
-                                          style="width:` + transmitter.unknown_rate + `%"></div>
-                              <div class="progress-bar progress-bar-danger transmitter-bad"
-                                          data-toggle="tooltip" data-placement="bottom"
-                                          title="` + transmitter.bad_rate  + '% (' + transmitter.bad_count + `) Bad"
-                                          style="width:` + transmitter.bad_rate + `%"></div>
-                              <div class="progress-bar progress-bar-info transmitter-info"
-                                          data-toggle="tooltip" data-placement="bottom"
-                                          title="` + transmitter.future_rate  + '% (' + transmitter.future_count + `) Future"
-                                          style="width:` + transmitter.future_rate + `%"></div>
-                            </div>
-                          </span>
+                        <div class="card-body">
+                          <div class="progress">
+                            <div class="progress-bar pb-success transmitter-good"
+                                        data-toggle="tooltip" data-placement="bottom"
+                                        title="` + transmitter.success_rate  + '% (' + transmitter.good_count + `) Good"
+                                        role="progressbar" style="width:` + transmitter.success_rate + `%"
+                                        aria-valuenow="` + transmitter.success_rate + `" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div class="progress-bar pb-warning transmitter-unknown"
+                                        data-toggle="tooltip" data-placement="bottom"
+                                        title="` + transmitter.unknown_rate  + '% (' + transmitter.unknown_count + `) Unknown"
+                                        role="progressbar" style="width:` + transmitter.unknown_rate + `%"
+                                        aria-valuenow="` + transmitter.unknown_rate + `" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div class="progress-bar pb-danger transmitter-bad"
+                                        data-toggle="tooltip" data-placement="bottom"
+                                        title="` + transmitter.bad_rate  + '% (' + transmitter.bad_count + `) Bad"
+                                        role="progressbar" style="width:` + transmitter.bad_rate + `%"
+                                        aria-valuenow="` + transmitter.bad_rate + `" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div class="progress-bar pb-info transmitter-info"
+                                        data-toggle="tooltip" data-placement="bottom"
+                                        title="` + transmitter.future_rate  + '% (' + transmitter.future_count + `) Future"
+                                        role="progressbar" style="width:` + transmitter.future_rate + `%"
+                                        aria-valuenow="` + transmitter.future_rate + `" aria-valuemin="0" aria-valuemax="100"></div>
+                          </div>
                         </div>
                       </div>
                     </div>`

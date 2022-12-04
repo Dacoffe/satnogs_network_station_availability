@@ -2,14 +2,9 @@
     padding: 10px 0 0 0;
 }
 
-#calculate-button {
-    text-align: center;
-    width: 100%;
-}
-
 #tab-configuration {
 
-    .panel-heading {
+    .card-header {
         cursor: pointer;
     }
 }
@@ -61,6 +56,7 @@
 .img-expand {
     color: black;
     position: absolute;
+    top: 0;
     right: 25px;
     display: block;
     margin-top: 10px;
@@ -102,6 +98,7 @@
     }
 }
 
+.future-observations-delete-warning,
 .station-delete-warning {
     font-size: 16px;
     font-style: italic;

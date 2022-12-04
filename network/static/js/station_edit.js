@@ -6,12 +6,12 @@ $(document).ready(function() {
     $('#antennas-loading').toggle();
     $('.selectpicker').selectpicker();
 
-    $('.panel-body.collapse').on('hide.bs.collapse', function () {
-        $(this).parent().find('.panel-heading span').addClass('glyphicon-collapse-down').removeClass('glyphicon-collapse-up');
+    $('.card-body.collapse').on('hide.bs.collapse', function () {
+        $(this).parent().find('.card-header i').addClass('bi-arrows-collapse').removeClass('bi-arrows-expand');
     });
 
-    $('.panel-body.collapse').on('show.bs.collapse', function () {
-        $(this).parent().find('.panel-heading span').addClass('glyphicon-collapse-up').removeClass('glyphicon-collapse-down');
+    $('.card-body.collapse').on('show.bs.collapse', function () {
+        $(this).parent().find('.card-header i').addClass('bi-arrows-expand').removeClass('bi-arrows-collapse');
     });
 
     // Parse and initialize station data and remove html elements that holding them
@@ -76,50 +76,51 @@ $(document).ready(function() {
     });
     antenna_element.remove();
 
-    // Functions to create and update antenna wells
-    function create_antenna_well(antenna, order){
+    // Functions to create and update antenna cards
+    function create_antenna_card(antenna, order){
         var frequency_ranges_elements ='';
         for(let range of antenna.frequency_ranges){
             if(!range.deleted){
                 frequency_ranges_elements += '<div>'+ range.human_min + ' - ' + range.human_max + ' (' + range.bands + ')</div>';
             }
         }
-        var add_frequency_ranges_button = '<button type="button" data-action="edit" data-order="' + order + `" class="btn btn-xs btn-primary" data-toggle="modal" data-target="#modal">
-                                             <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                                             Click here to add frequency ranges
+        var add_frequency_ranges_button = '<button type="button" data-action="edit" data-order="' + order + `" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#modal">
+                                             <span class="bi bi-plus" aria-hidden="true"></span>
+                                             Add frequency ranges
                                            </button>`;
         frequency_ranges_elements = frequency_ranges_elements || add_frequency_ranges_button;
-        return '<div class="well" id="' + order + `">
-                  <div class='row'>
-                    <div class='col-md-6'>
-                      <div class='antenna-label'>Type:</div>
-                      ` + antenna.type_name + `
-                    </div>
-                    <div class='col-md-6'>
-                      <button type="button" data-action="edit" data-order="` + order + `" class="btn btn-primary pull-right" data-toggle="modal" data-target="#modal">
-                        <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
-                        Edit
-                      </button>
+        return '<div class="card m-2" id="' + order + `">
+                  <div class="card-header">
+                    <div class="row justify-content-between align-items-center">
+                      <div class="col-">
+                        <div class="antenna-label">` + antenna.type_name + `</div>
+                      </div>
+                      <div class="col-">
+                        <button type="button" data-action="edit" data-order="` + order + `" data-toggle="modal" data-target="#modal" class="btn btn-sm btn-primary float-right">
+                          <span class="bi bi-pencil-square" aria-hidden="true"></span>
+                          Edit
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div class='row'>
-                    <div class='col-md-12'>
-                      <div class="antenna-label">Frequency Ranges:</div>
-                      <div class="frequency-ranges">` + frequency_ranges_elements + `</div>
+                  <div class="card-body text-center">
+                    <div class="antenna-label">Frequency Ranges:</div>
+                    <div class="frequency-ranges">
+                      ` + frequency_ranges_elements + `
                     </div>
                   </div>
                 </div>`;
     }
 
-    function update_antennas_wells(){
+    function update_antennas_cards(){
         $('#antennas-loading').show();
-        $('#antennas-panel-body').hide();
-        $('#antennas-panel-body .well').remove();
-        let antennas_wells = '';
+        $('#antennas-card-body').addClass('d-none');
+        $('#antennas-card-group .card').remove();
+        let antennas_cards = '';
         let deleted = 0;
         antennas.forEach(function(antenna, order){
             if(!antenna.deleted){
-                antennas_wells += create_antenna_well(antenna, order);
+                antennas_cards += create_antenna_card(antenna, order);
             } else {
                 deleted++;
             }
@@ -127,19 +128,19 @@ $(document).ready(function() {
         $('#new-antenna').toggle(
             (antennas.length - deleted) < max_antennas
         );
-        $('#antennas-panel-body').prepend(antennas_wells);
+        $('#antennas-card-group').prepend(antennas_cards);
         $('#antennas-loading').hide();
-        $('#antennas-panel-body').show();
+        $('#antennas-card-body').removeClass('d-none');
     }
 
-    // Create initial antenna bootstrap wells if antennas exist
-    update_antennas_wells();
+    // Create initial antenna bootstrap cards if antennas exist
+    update_antennas_cards();
 
     // Form fields validations
     function update_text_input_and_validation(text_input, text, valid){
         text_input.val(text);
-        text_input.parents('.frequency-range-fields').toggleClass('has-success', valid);
-        text_input.parents('.frequency-range-fields').toggleClass('has-error', !valid);
+        text_input.toggleClass('is-valid', valid);
+        text_input.toggleClass('is-invalid', !valid);
 
     }
 
@@ -227,11 +228,11 @@ $(document).ready(function() {
         }
         let valid = element.checkValidity();
         $('#submit').prop('disabled', !$('form')[0].checkValidity());
-        input.parent().toggleClass('has-success', valid);
-        input.parent().toggleClass('has-error', !valid);
+        input.toggleClass('is-valid', valid);
+        input.toggleClass('is-invalid', !valid);
     }
 
-    $('input').each(function(){
+    $('input, textarea').each(function(){
         if(!$(this).hasClass('frequency')){
             check_validity_of_input(this);
         }
@@ -267,30 +268,30 @@ $(document).ready(function() {
         }
     }
 
-    function create_frequency_range_well(range, order){
-        return `<div class="well">
+    function create_frequency_range_card(range, order){
+        return `<div class="card my-2 p-2 bg-light border border-secondary">
                   <div class="form-group">
-                    <div data-order="` + order + `" class='row frequency-range-fields'>
-                      <div class='col-md-10'>
+                    <div data-order="` + order + `" class='row no-gutters justify-content-between align-items-center frequency-range-fields'>
+                      <div class='col'>
                         <div class='row'>
-                          <div class='col-md-6'>
+                          <div class='col'>
                             <label for="` + order + `-min" class="control-label">Minimum</label>
                             <input data-order="` + order + '" data-field="min" value="' + range.min + '" id="' + order + '-min" type="number" min="' + minimum_frequency + '" max="' + maximum_frequency + `" class="form-control frequency" placeholder="Minimum Frequency">
                           </div>
-                          <div class='col-md-6'>
+                          <div class='col'>
                             <label for="` + order + `-max" class="control-label">Maximum</label>
                             <input data-order="` + order + '" data-field="max" value="' + range.max + '" id="' + order + '-max" type="number" min="' + minimum_frequency + '" max="' + maximum_frequency + `" class="form-control frequency " placeholder="Maximum Frequency">
                           </div>
                         </div>
                         <div class='row'>
-                          <div class='col-md-12'>
+                          <div class='col'>
                             <input id="` + order + '-range-text" readonly="" type="text" value="' + range.human_min + ' - ' + range.human_max + ' (' + range.bands + `)" class="form-control text-center">
                           </div>
                         </div>
                       </div>
-                      <div class='col-md-2 text-right'>
-                        <button class="btn btn-danger remove-range" type="button" data-order="` + order + `" aria-label="Remove frequency range">
-                          <span class="glyphicon glyphicon-remove"></span>
+                      <div class='col- text-center'>
+                        <button class="btn btn-danger m-4 remove-range" type="button" data-order="` + order + `" aria-label="Remove frequency range">
+                          <span class="bi bi-x"></span>
                         </button>
                       </div>
                     </div>
@@ -298,15 +299,15 @@ $(document).ready(function() {
                 </div>`;
     }
 
-    function update_frequency_ranges_wells(){
+    function update_frequency_ranges_cards(){
         $('#frequency-ranges-loading').show();
         $('#frequency-ranges').hide();
-        $('#frequency-ranges .well').remove();
-        let frequency_ranges_wells = '';
+        $('#frequency-ranges .card').remove();
+        let frequency_ranges_cards = '';
         let deleted = 0;
         current_antenna.frequency_ranges.forEach(function(frequency_range, order){
             if(!frequency_range.deleted){
-                frequency_ranges_wells += create_frequency_range_well(frequency_range, order);
+                frequency_ranges_cards += create_frequency_range_card(frequency_range, order);
             } else {
                 deleted++;
             }
@@ -315,9 +316,9 @@ $(document).ready(function() {
             (current_antenna.frequency_ranges.length - deleted) < max_frequency_ranges
         );
         if((current_antenna.frequency_ranges.length - deleted) == 0){
-            frequency_ranges_wells = 'Add a frequency range by choosing one of the default ranges or a custom one bellow<hr>';
+            frequency_ranges_cards = 'Add a frequency range by choosing one of the default ranges or a custom one bellow<hr>';
         }
-        $('#frequency-ranges').html(frequency_ranges_wells);
+        $('#frequency-ranges').html(frequency_ranges_cards);
         check_validity_of_frequencies();
         $('#frequency-ranges-loading').hide();
         $('#frequency-ranges').show();
@@ -339,13 +340,13 @@ $(document).ready(function() {
         } else {
             current_antenna.frequency_ranges.splice(order, 1);
         }
-        update_frequency_ranges_wells();
+        update_frequency_ranges_cards();
     });
 
     $('.new-range').on('click', function(){
         let range = band_ranges($(this).data('range'));
         current_antenna.frequency_ranges.push(range);
-        update_frequency_ranges_wells();
+        update_frequency_ranges_cards();
     });
 
     $('#modal').on('show.bs.modal', function (e) {
@@ -353,21 +354,21 @@ $(document).ready(function() {
         let action = $(e.relatedTarget).data('action');
         if(action == 'edit'){
             let order = $(e.relatedTarget).data('order');
-            $('#modal-title').text('Edit Antenna');
+            $('#AntennaModalTitle').text('Edit Antenna');
             current_antenna = $.extend(true, {}, antennas[order]);
             current_order = order;
             $('#antenna-type').selectpicker('val', antennas[order].type_id);
             $('#delete-antenna').show();
 
         } else if(action == 'new'){
-            $('#modal-title').text('New Antenna');
+            $('#AntennaModalTitle').text('New Antenna');
             let value = $('#antenna-type').children(':first').val();
             current_antenna = {'type_name': $('option[value=' + value + ']').data('content'), 'type_id': value, 'initial': false, 'deleted': false, 'frequency_ranges': []};
             current_order = -1;
             $('#antenna-type').selectpicker('val', value);
             $('#delete-antenna').hide();
         }
-        update_frequency_ranges_wells();
+        update_frequency_ranges_cards();
     });
 
     $('#modal').on('click', '.modal-action', function (e) {
@@ -392,7 +393,7 @@ $(document).ready(function() {
                 antennas.splice(order, 1);
             }
         }
-        update_antennas_wells();
+        update_antennas_cards();
         $(e.delegateTarget).modal('hide');
     });
 
@@ -429,8 +430,10 @@ $(document).ready(function() {
         $('#station-image').fileinput({
             showRemove: true,
             showUpload: false,
+            showClose: false,
             initialPreview: $('#station-image').data('existing'),
             initialPreviewAsData: true,
+            initialPreviewShowDelete: false,
             allowedFileTypes: ['image'],
             autoOrientImage: false,
             fileActionSettings: {
@@ -444,6 +447,7 @@ $(document).ready(function() {
         $('#station-image').fileinput({
             showRemove: true,
             showUpload: false,
+            showClose: false,
             allowedFileTypes: ['image'],
             autoOrientImage: false,
             fileActionSettings: {
@@ -454,6 +458,13 @@ $(document).ready(function() {
             }
         });
     }
+
+    $('#satnogs-rx-samp-rate').on('change', function(){
+        if (this.value) {
+            this.value = Number(this.value);
+        }
+    });
+
     $('#station-image').on('change', function() {
         send_remove_file = false;
     });
@@ -476,11 +487,6 @@ $(document).ready(function() {
             location.href = location.href.replace('edit/','');
         }
     });
-
-    $('#satnogs-rx-samp-rate').on('change', function(){
-        this.value = Number(this.value);
-    });
-    
 
     $('form').on('submit', function(){
         $('#antenna-type').remove();

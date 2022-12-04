@@ -1,11 +1,14 @@
 /* global moment, d3, Slider, calcPolarPlotSVG, tempusDominus */
 
 $(document).ready( function(){
+
+    $('.selectpicker').selectpicker();
+
     $('#advanced-options').click(function(){
-        if($('button span').hasClass('glyphicon-chevron-down')) {
-            $(this).html('<span class="glyphicon glyphicon-chevron-up"></span> Hide Advanced Options');
+        if($('button span').hasClass('bi-chevron-down')) {
+            $(this).html('<span class="bi bi-chevron-up"></span> Hide Advanced Options');
         } else {
-            $(this).html('<span class="glyphicon glyphicon-chevron-down"></span> Show Advanced Options');
+            $(this).html('<span class="bi bi-chevron-down"></span> Show Advanced Options');
         }
     });
 
@@ -45,7 +48,7 @@ $(document).ready( function(){
         case 1:
             return 'Value is not a number.';
         case 2:
-            return 'Enter a value greater than ' + min_val + '.';
+            return 'Enter a value equal or greater than ' + min_val + '.';
         default:
             return 'Invalid input.';
         }
@@ -90,7 +93,7 @@ $(document).ready( function(){
     $('#custom-break-duration').click(function() {
         if (!$('#break-duration-custom').length){
             var value = $('#default-break-duration input')[0].value;
-            $('#break-duration-status').append('<input type="number" name="break_duration_custom" id="break-duration-custom" class="duration-number-input" min="0" step="1" value="' + value +'"/>');
+            $('#break-duration-status').append('<input type="number" name="break_duration_custom" id="break-duration-custom" class="duration-number-input form-control" min="0" step="1" value="' + value +'"/>');
         }
     });
 
@@ -98,7 +101,7 @@ $(document).ready( function(){
         return `
             <option value="` + station.id + `"
                     data-content='<div class="station-option">
-                                    <span class="label label-` + station.status_display.toLowerCase() +`">
+                                    <span class="badge badge-` + station.status_display.toLowerCase() +`">
                                       ` + station.id +
             `</span>
                                     <span class="station-description">
@@ -189,19 +192,19 @@ $(document).ready( function(){
                                       ` + transmitter.description + ' | ' + transmitter_freq + ' MHz | ' + transmitter.mode +
             `</div>
                                     <div class="progress">
-                                      <div class="progress-bar progress-bar-success transmitter-good"
+                                      <div class="progress-bar pb-success transmitter-good"
                                         data-toggle="tooltip" data-placement="bottom"
                                         title="` + transmitter.success_rate + '% (' + transmitter.good_count + `) Good"
                                         style="width:` + transmitter.success_rate + `%"></div>
-                                      <div class="progress-bar progress-bar-warning transmitter-unknown"
+                                      <div class="progress-bar pb-warning transmitter-unknown"
                                         data-toggle="tooltip" data-placement="bottom"
                                         title="` + transmitter.unknown_rate + '% (' + transmitter.unknown_count + `) Unknown"
                                         style="width:` + transmitter.unknown_rate + `%"></div>
-                                      <div class="progress-bar progress-bar-danger transmitter-bad"
+                                      <div class="progress-bar pb-danger transmitter-bad"
                                         data-toggle="tooltip" data-placement="bottom"
                                         title="` + transmitter.bad_rate + '% (' + transmitter.bad_count + `) Bad"
                                         style="width:` + transmitter.bad_rate + `%"></div>
-                                      <div class="progress-bar progress-bar-info transmitter-future"
+                                      <div class="progress-bar pb-info transmitter-future"
                                         data-toggle="tooltip" data-placement="bottom"
                                         title="` + transmitter.future_rate + '% (' + transmitter.future_count + `) Future"
                                         style="width:` + transmitter.future_rate + `%"></div>
@@ -445,8 +448,6 @@ $(document).ready( function(){
         var maxStartDate = moment().utc().add(minStart + maxRange - minRange, 'm').format('YYYY-MM-DD HH:mm');
         var minEndDate = moment().utc().add(minEnd, 'm').format('YYYY-MM-DD HH:mm');
         var maxEndDate = moment().utc().add(minStart + maxRange, 'm').format('YYYY-MM-DD HH:mm');
-        $('#start-minmax-label').html('From: <mark>' + minStartDate.format('YYYY-MM-DD HH:mm') + '</mark> to <mark>' + maxStartDate.format('YYYY-MM-DD HH:mm') + '</mark>');
-        $('#end-minmax-label').html('From: <mark>' + minEndDate.format('YYYY-MM-DD HH:mm') + '</mark> to <mark>' + maxEndDate.format('YYYY-MM-DD HH:mm') + '</mark>');
 
         tempusDominus.extend(window.tempusDominus.plugins.customDateFormat);
         var start = new tempusDominus.TempusDominus(document.getElementById('datetimepicker-start'), {
@@ -457,6 +458,18 @@ $(document).ready( function(){
                 maxDate: maxStartDate
             },
             display: {
+                icons: {
+                    type: 'icons',
+                    time: 'bi bi-clock',
+                    date: 'bi bi-calendar3',
+                    up: 'bi bi-arrow-up',
+                    down: 'bi bi-arrow-down',
+                    previous: 'bi bi-chevron-left',
+                    next: 'bi bi-chevron-right',
+                    today: 'bi bi-calendar-check',
+                    clear: 'bi bi-trash',
+                    close: 'bi bi-x-lg'
+                },
                 sideBySide: true,
                 components: {
                     useTwentyfourHour: true
@@ -477,6 +490,18 @@ $(document).ready( function(){
                 maxDate: maxEndDate
             },
             display: {
+                icons: {
+                    type: 'icons',
+                    time: 'bi bi-clock',
+                    date: 'bi bi-calendar3',
+                    up: 'bi bi-arrow-up',
+                    down: 'bi bi-arrow-down',
+                    previous: 'bi bi-chevron-left',
+                    next: 'bi bi-chevron-right',
+                    today: 'bi bi-calendar-check',
+                    clear: 'bi bi-trash',
+                    close: 'bi bi-x-lg'
+                },
                 sideBySide: true,
                 components: {
                     useTwentyfourHour: true
@@ -720,7 +745,7 @@ $(document).ready( function(){
         if(is_split_duration) {
             var split_duration = parseInt($('#split-duration-custom').val());
             var min_value = parseInt($('#default-split-duration input')[0].dataset.min);
-            if (!isNaN(split_duration) && split_duration > min_value) {
+            if (!isNaN(split_duration) && split_duration >= min_value) {
                 data.split_duration = split_duration;
             }
         }

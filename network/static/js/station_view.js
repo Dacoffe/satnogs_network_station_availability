@@ -4,19 +4,19 @@
 $(document).ready(function() {
     'use strict';
 
-    $('.panel-body.collapse').on('hide.bs.collapse', function () {
-        $(this).parent().find('.panel-heading span').addClass('glyphicon-collapse-down').removeClass('glyphicon-collapse-up');
+    $('.card-body.collapse').on('hide.bs.collapse', function () {
+        $(this).parent().find('.card-header i').addClass('bi bi-arrows-expand').removeClass('bi bi-arrows-collapse');
     });
 
-    $('.panel-body.collapse').on('show.bs.collapse', function () {
-        $(this).parent().find('.panel-heading span').addClass('glyphicon-collapse-up').removeClass('glyphicon-collapse-down');
+    $('.card-body.collapse').on('show.bs.collapse', function () {
+        $(this).parent().find('.card-header i').addClass('bi bi-arrows-collapse').removeClass('bi bi-arrows-expand');
     });
 
     // Render Station success rate
-    var success_rate = $('.gs.progress-bar-success').data('success-rate');
-    var percentagerest = $('.gs.progress-bar-danger').data('percentagerest');
-    $('.gs.progress-bar-success').css('width', success_rate + '%');
-    $('.gs.progress-bar-danger').css('width', percentagerest + '%');
+    var success_rate = $('.gs.pb-success').data('success-rate');
+    var percentagerest = $('.gs.pb-danger').data('percentagerest');
+    $('.gs.pb-success').css('width', success_rate + '%');
+    $('.gs.pb-danger').css('width', percentagerest + '%');
 
     // Reading data for station
     var station_info = $('#station-info').data();
@@ -198,19 +198,19 @@ $(document).ready(function() {
                             ${data.nextpasses[i].norad_cat_id} - ${data.nextpasses[i].name}
                           </a>
                           <div class="progress satellite-success">
-                            <div class="progress-bar progress-bar-success" style="width: ${data.nextpasses[i].success_rate}%"
+                            <div class="progress-bar pb-success" style="width: ${data.nextpasses[i].success_rate}%"
                                  data-toggle="tooltip" data-placement="bottom" title="${data.nextpasses[i].success_rate}% (${data.nextpasses[i].good_count}) Good">
                               <span class="sr-only">${data.nextpasses[i].success_rate}% Good</span>
                             </div>
-                            <div class="progress-bar progress-bar-warning" style="width: ${data.nextpasses[i].unknown_rate}%"
+                            <div class="progress-bar pb-warning" style="width: ${data.nextpasses[i].unknown_rate}%"
                                  data-toggle="tooltip" data-placement="bottom" title="${data.nextpasses[i].unknown_rate}% (${data.nextpasses[i].unknown_count}) Unknown">
                               <span class="sr-only">${data.nextpasses[i].unknown_rate}% Unknown</span>
                             </div>
-                            <div class="progress-bar progress-bar-danger" style="width: ${data.nextpasses[i].bad_rate}%"
+                            <div class="progress-bar pb-danger" style="width: ${data.nextpasses[i].bad_rate}%"
                                  data-toggle="tooltip" data-placement="bottom" title="${data.nextpasses[i].bad_rate}% (${data.nextpasses[i].bad_count}) Bad">
                               <span class="sr-only">${data.nextpasses[i].bad_rate}% Bad</span>
                             </div>
-                            <div class="progress-bar progress-bar-info" style="width: ${data.nextpasses[i].future_rate}%"
+                            <div class="progress-bar pb-info" style="width: ${data.nextpasses[i].future_rate}%"
                                  data-toggle="tooltip" data-placement="bottom" title="${data.nextpasses[i].future_rate}% (${data.nextpasses[i].future_count}) Future">
                               <span class="sr-only">${data.nextpasses[i].future_rate}% Future</span>
                             </div>
@@ -228,17 +228,17 @@ $(document).ready(function() {
                           <span class="polar-deg" aria-hidden="true"
                                 data-toggle="tooltip" data-placement="left"
                                 title="AOS degrees">
-                              <span class="lightgreen">⤉</span>${data.nextpasses[i].azr}°
+                              <span class="text-success">⤉</span> ${data.nextpasses[i].azr}°
                           </span>
                           <span class="polar-deg" aria-hidden="true"
                                 data-toggle="tooltip" data-placement="left"
                                 title="TCA degrees">
-                              ⇴${data.nextpasses[i].altt}°<br>
+                              <span>⇴</span> ${data.nextpasses[i].altt}°<br>
                           </span>
                           <span class="polar-deg" aria-hidden="true"
                                 data-toggle="tooltip" data-placement="left"
                                 title="LOS degrees">
-                              <span class="red">⤈</span>${data.nextpasses[i].azs}°
+                              <span class="text-danger">⤈</span> ${data.nextpasses[i].azs}°
                           </span>
                         </td>
                         <td>
@@ -289,24 +289,35 @@ $(document).ready(function() {
                         </td>
                         ${can_schedule ? `
                           <td class="pass-schedule">
-                            ${overlap ? `<div class="overlap-ribbon" aria-hidden="true"
-                                              data-toggle="tooltip" data-placement="bottom"
-                                              title="A scheduled observation overlaps">
-                                              ${overlap}% overlap</div><br>
-                            ` : `
-                            `}
-                            ${schedulable ? `<a href="${new_obs}?norad=${data.nextpasses[i].norad_cat_id}&ground_station=${station}&start=${tr}&end=${ts}"
-                                 class="btn btn-default schedulable"
-                                 target="_blank">
-                                 schedule
-                                 <span class="glyphicon glyphicon-new-window" aria-hidden="true"></span>
-                               </a>
-                            ` : `
-                              <a class="btn btn-default" disabled>
-                                schedule
-                                <span class="glyphicon glyphicon-new-window" aria-hidden="true"></span>
-                              </a>
-                            `}
+                              ${schedulable ? `
+                                <a href="${new_obs}?norad=${data.nextpasses[i].norad_cat_id}&ground_station=${station}&start=${tr}&end=${ts}"
+                                   class="btn btn-outline-dark schedulable"
+                                   target="_blank">
+                                  Schedule
+                                  <span class="bi bi-box-arrow-up-right" aria-hidden="true"></span>
+                                  ${overlap ? `
+                                    <br>
+                                    <div  class="badge badge-danger" aria-hidden="true" data-toggle="tooltip"
+                                          title="A scheduled observation overlaps">
+                                      ${overlap}% overlap
+                                    </div>
+                                  ` : `
+                                  `}
+                                </a>
+                              ` : `
+                                <a class="btn btn-outline-dark disabled">
+                                  Schedule
+                                  <span class="bi bi-box-arrow-up-right" aria-hidden="true"></span>
+                                  ${overlap ? `
+                                    <br>
+                                    <div  class="badge badge-danger" aria-hidden="true" data-toggle="tooltip"
+                                          title="A scheduled observation overlaps">
+                                      ${overlap}% overlap
+                                    </div>
+                                  ` : `
+                                  `}
+                                </a>
+                              `}
                           </td>
                         ` : `
                         `}

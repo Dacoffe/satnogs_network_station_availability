@@ -10,14 +10,13 @@ $(document).ready(function () {
         $('#collapseFilters').show();
     }
 
-    $('.filter-section #status-selector label').click(function () {
-        var checkbox = $(this);
-        var input = checkbox.find('input[type="checkbox"]');
+    $('.filter-section #status-selector input').click(function() {
+        var input = $(this);
 
         if (input.prop('checked')) {
-            checkbox.removeClass('btn-inactive');
+            input.parent().addClass('btn-inactive');
         } else {
-            checkbox.addClass('btn-inactive');
+            input.parent().removeClass('btn-inactive');
         }
     });
 
