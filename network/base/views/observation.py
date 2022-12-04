@@ -63,7 +63,7 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         observations = Observation.objects.select_related('satellite', 'author',
                                                           'ground_station').annotate(
                                                               demoddata_count=Count('demoddata')
-                                                          )  # noqa
+                                                          ).order_by('-start', '-end')  # noqa
 
         # Mapping between the HTTP POST parameters and the fiter keys
         parameter_filter_mapping = {
