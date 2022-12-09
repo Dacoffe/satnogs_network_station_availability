@@ -197,17 +197,17 @@ class ObservationSerializer(serializers.ModelSerializer):
 
     def get_status(self, obj):
         """Returns Observation status"""
-        return obj.status_label
+        return obj.status_badge
 
     def get_waterfall_status(self, obj):
         """Returns Observation status"""
-        return obj.waterfall_status_label
+        return obj.waterfall_status_badge
 
     def get_vetted_status(self, obj):
         """DEPRECATED: Returns vetted status"""
-        if obj.status_label == 'future':
+        if obj.status_badge == 'future':
             return 'unknown'
-        return obj.status_label
+        return obj.status_badge
 
     def get_vetted_user(self, obj):
         """DEPRECATED: Returns vetted user"""
