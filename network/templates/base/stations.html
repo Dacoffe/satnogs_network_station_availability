@@ -175,9 +175,13 @@
                 {% endfor %}
               </td>
               <td>
+                {% if station.owner %}
                 <a href="{% url 'users:view_user' username=station.owner.username %}">
                   {{ station.owner.displayname }}
                 </a>
+                {% else %}
+                 - 
+                {% endif %}
               </td>
             </tr>
           {% endfor %}

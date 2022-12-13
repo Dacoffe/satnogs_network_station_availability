@@ -233,7 +233,9 @@ class ObservationSerializer(serializers.ModelSerializer):
 
     def get_observer(self, obj):
         """Returns the author of the observation"""
-        return obj.author.pk
+        if obj.author:
+            return obj.author.pk
+        return None
 
 
 class NewObservationListSerializer(serializers.ListSerializer):
@@ -548,7 +550,9 @@ class StationConfigurationSerializer(serializers.ModelSerializer):
 
     def get_satnogs_api_token(self, obj):
         """Returns API key of station owner"""
-        return obj.owner.auth_token.key
+        if obj.owner:
+            return obj.owner.auth_token.key
+        return None
 
     def get_satnogs_station_id(self, obj):
         """Returns API key of station owner"""

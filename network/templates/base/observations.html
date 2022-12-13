@@ -307,9 +307,13 @@
                 {% endif %}
               </td>
               <td>
+                {% if observation.author %}
                 <a href="{% url 'users:view_user' username=observation.author.username %}">
                   {{ observation.author.displayname }}
                 </a>
+                {% else %}
+                 - 
+                {% endif %}
               </td>
               <td>
                 {% if observation.ground_station %}

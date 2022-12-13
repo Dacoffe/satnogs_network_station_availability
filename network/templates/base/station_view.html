@@ -114,9 +114,13 @@
                   <span class="badge badge-dark">Owner</span>
                 </td>
                 <td>
+                  {% if station.owner %}
                   <a href="{% url 'users:view_user' username=station.owner.username %}">
                     {{ station.owner.displayname }}
                   </a>
+                  {% else %}
+                   - 
+                  {% endif %}
                 </td>
               </tr>
               {% if station.has_location %}

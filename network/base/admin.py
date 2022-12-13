@@ -86,7 +86,9 @@ class StationAdmin(admin.ModelAdmin):
 
     def get_email(self, obj):  # pylint: disable=no-self-use
         """Return station owner email address"""
-        return obj.owner.email
+        if obj.owner:
+            return obj.owner.email
+        return None
 
     get_email.admin_order_field = 'email'
     get_email.short_description = 'Owner Email'

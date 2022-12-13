@@ -101,9 +101,13 @@
             <span class="badge badge-dark">Observer</span>
           </td>
           <td>
+            {% if observation.author %}
             <a href="{% url 'users:view_user' username=observation.author.username %}">
               {{ observation.author.displayname }}
             </a>
+            {% else %}
+             - 
+            {% endif %}
           </td>
         </tr>
         <tr>
