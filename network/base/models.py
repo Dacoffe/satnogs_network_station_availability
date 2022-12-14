@@ -101,6 +101,68 @@ def validate_image(fieldfile_obj):
         raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
 
 
+def get_default_station_configuration_schema():
+    """Generate default value for schema field of StationConfigurationSchema model"""
+    return {}
+
+
+def get_default_station_configuration():
+    """Generate default value for schema field of StationConfiguration model"""
+    return {}
+
+
+class StationType(models.Model):
+    """Model for SatNOGS station types"""
+    name = models.CharField(max_length=10, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class StationConfigurationSchema(models.Model):
+    """Model for SatNOGS station configuration schemas"""
+    name = models.CharField(max_length=100)
+    station_type = models.ForeignKey('StationType', on_delete=models.CASCADE)
+    schema = models.JSONField(default=get_default_station_configuration_schema)
+
+    def __str__(self):
+        return self.station_type.name + ' - ' + self.name
+
+    class Meta:
+        unique_together = ['name', 'station_type']
+
+
+class StationConfiguration(models.Model):
+    """Model for SatNOGS station configuration schemas"""
+    name = models.CharField(max_length=100)
+    station = models.ForeignKey('Station', on_delete=models.CASCADE)
+    schema = models.ForeignKey('StationConfigurationSchema', on_delete=models.CASCADE)
+    configuration = models.JSONField(default=get_default_station_configuration)
+    active = models.BooleanField(default=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
+class ActiveStationConfigurationManager(models.Manager):  # pylint: disable=R0903
+    """Django Manager for ActiveStationConfiguration objects"""
+    def get_queryset(self):
+        """Returns query of StationConfigurations
+
+        :returns: the active configurations for stations
+        """
+        return super().get_queryset().filter(active=True)
+
+
+class ActiveStationConfiguration(StationConfiguration):
+    """Proxy model for StationConfiguration that contains only active ones"""
+    objects = ActiveStationConfigurationManager()
+
+    class Meta:
+        proxy = True
+
+
 class Station(models.Model):
     """Model for SatNOGS ground stations."""
     owner = models.ForeignKey(

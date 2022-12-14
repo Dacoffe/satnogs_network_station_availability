@@ -1,8 +1,9 @@
 """Define functions and settings for the django admin base interface"""
 from django.contrib import admin
 
-from network.base.models import Antenna, AntennaType, DemodData, FrequencyRange, Observation, \
-    Satellite, Station, StationStatusLog
+from network.base.models import ActiveStationConfiguration, Antenna, AntennaType, DemodData, \
+    FrequencyRange, Observation, Satellite, Station, StationConfiguration, \
+    StationConfigurationSchema, StationStatusLog, StationType
 from network.base.utils import export_as_csv, export_station_status
 
 
@@ -63,6 +64,34 @@ class AntennaAdmin(admin.ModelAdmin):
         if db_field.name == "station":
             kwargs["queryset"] = Station.objects.order_by('id')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+@admin.register(StationType)
+class StationTypeAdmin(admin.ModelAdmin):
+    """Define StationType view in django admin UI"""
+    list_display = ('id', 'name')
+
+
+@admin.register(StationConfigurationSchema)
+class StationConfigurationSchemaAdmin(admin.ModelAdmin):
+    """Define StationConfigurationSchema view in django admin UI"""
+    list_display = ('id', 'name', 'station_type', 'schema')
+
+
+@admin.register(StationConfiguration)
+class StationConfigurationAdmin(admin.ModelAdmin):
+    """Define StationConfiguration view in django admin UI"""
+    list_display = ('id', 'name', 'station', 'schema', 'active', 'created', 'configuration')
+    list_filter = ('station', 'active', 'schema', 'schema__station_type')
+    search_fields = ('id', 'name', 'station')
+
+
+@admin.register(ActiveStationConfiguration)
+class ActiveStationConfigurationAdmin(admin.ModelAdmin):
+    """Define StationConfiguration view in django admin UI"""
+    list_display = ('id', 'name', 'station', 'schema', 'created', 'configuration')
+    list_filter = ('station', 'schema', 'schema__station_type')
+    search_fields = ('id', 'name', 'station')
 
 
 @admin.register(Station)
