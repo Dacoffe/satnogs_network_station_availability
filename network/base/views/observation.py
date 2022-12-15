@@ -2,7 +2,6 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -60,10 +59,9 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         results = self.request.GET.getlist('results')
         rated = self.request.GET.getlist('rated')
 
-        observations = Observation.objects.select_related('satellite', 'author',
-                                                          'ground_station').annotate(
-                                                              demoddata_count=Count('demoddata')
-                                                          ).order_by('-start', '-end')  # noqa
+        observations = Observation.objects.prefetch_related(
+            'satellite', 'demoddata', 'author', 'ground_station'
+        )
 
         # Mapping between the HTTP POST parameters and the fiter keys
         parameter_filter_mapping = {

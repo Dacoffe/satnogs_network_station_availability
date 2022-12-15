@@ -297,8 +297,8 @@
                         data-toggle="tooltip" data-placement="bottom"
                         title="Audio uploaded"></span>
                 {% endif %}
-                {% if observation.demoddata_count > 0 %}
-                  {% with total_data=observation.demoddata_count %}
+                {% if observation.demoddata.exists %}
+                  {% with total_data=observation.demoddata.count %}
                     <span class="bi bi-file-earmark-fill" aria-hidden="true"
                           data-toggle="tooltip" data-placement="bottom"
                           title="{{ total_data }} Data uploaded"></span>
