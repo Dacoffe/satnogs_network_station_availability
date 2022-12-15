@@ -76,7 +76,7 @@
       <table class="table table-sm table-borderless table-hover">
         <tr>
           <td>
-            <span class="badge badge-dark">Satellite</span>
+            <span class="badge badge-secondary">Satellite</span>
           </td>
           <td>
             <a href="#" data-toggle="modal" data-target="#SatelliteModal" data-id="{{ observation.satellite.norad_cat_id }}">
@@ -86,7 +86,7 @@
         </tr>
         <tr>
           <td>
-            <span class="badge badge-dark">Station</span>
+            <span class="badge badge-secondary">Station</span>
           </td>
           <td>
             {% if observation.ground_station %}
@@ -101,7 +101,7 @@
         <tr>
         <tr>
           <td>
-            <span class="badge badge-dark">Station Owner</span>
+            <span class="badge badge-secondary">Station Owner</span>
           </td>
           <td>
             {% if observation.ground_station.owner %}
@@ -115,7 +115,7 @@
         </tr>
         <tr>
           <td>
-            <span class="badge badge-dark">Observer</span>
+            <span class="badge badge-secondary">Observer</span>
           </td>
           <td>
             {% if observation.author %}
@@ -129,7 +129,7 @@
         </tr>
         <tr>
           <td>
-            <span class="badge badge-dark">Status</span>
+            <span class="badge badge-secondary">Status</span>
           </td>
           <td>
             <span id="rating-spinner">
@@ -166,7 +166,7 @@
         </tr>
         <tr>
           <td>
-            <span class="badge badge-dark">Transmitter</span>
+            <span class="badge badge-secondary">Transmitter</span>
           </td>
           <td>
             {{ observation.transmitter_description }}
@@ -174,7 +174,7 @@
         </tr>
         <tr>
           <td>
-            <span class="badge badge-dark">Transmitter Status</span>
+            <span class="badge badge-secondary">Transmitter Status</span>
           </td>
           <td>
             {% if observation.transmitter_status is None %}
@@ -188,7 +188,7 @@
         </tr>
         <tr>
           <td>
-            <span class="badge badge-dark">Transmitter Frequency</span>
+            <span class="badge badge-secondary">Transmitter Frequency</span>
           </td>
           <td>
             {% if observation.transmitter_downlink_high %}
@@ -205,7 +205,7 @@
         {% if observation.transmitter_downlink_drift %}
           <tr>
             <td>
-              <span class="badge badge-dark">Transmitter Drift</span>
+              <span class="badge badge-secondary">Transmitter Drift</span>
             </td>
             <td>
               {{ observation.transmitter_downlink_drift }} ppb
@@ -214,7 +214,7 @@
         {% endif %}
         <tr>
           <td>
-            <span class="badge badge-dark">Observation Frequency</span>
+            <span class="badge badge-secondary">Observation Frequency</span>
           </td>
           <td>
             {% if observation.center_frequency %}
@@ -235,7 +235,7 @@
         </tr>
         <tr>
           <td>
-            <span class="badge badge-dark"> Transmitter Mode</span>
+            <span class="badge badge-secondary"> Transmitter Mode</span>
           </td>
           <td>
             <span>{{ observation.transmitter_mode|default:"-" }}</span>
@@ -244,7 +244,7 @@
         </tr>
         <tr>
           <td>
-            <span class="badge badge-dark">Timeframe</span>
+            <span class="badge badge-secondary">Timeframe</span>
           </td>
           <td>
             <span data-toggle="tooltip" data-placement="bottom" title="{{ observation.start|naturaltime }}">
@@ -259,7 +259,7 @@
         </tr>
         <tr>
           <td>
-            <span class="badge badge-dark">Rise</span>
+            <span class="badge badge-secondary">Rise</span>
           </td>
           <td>
             <div class="green_circle"></div>
@@ -268,7 +268,7 @@
         </tr>
         <tr>
           <td>
-            <span class="badge badge-dark">Max</span>
+            <span class="badge badge-secondary">Max</span>
           </td>
           <td>
             {{ observation.max_altitude }}°
@@ -276,7 +276,7 @@
         </tr>
         <tr>
           <td>
-            <span class="badge badge-dark">Set</span>
+            <span class="badge badge-secondary">Set</span>
           </td>
           <td>
             <div class="red_circle"></div>
@@ -286,7 +286,7 @@
         {% if observation.client_version %}
           <tr>
             <td>
-              <span class="badge badge-dark">Client Version</span>
+              <span class="badge badge-secondary">Client Version</span>
             </td>
             <td>
               {{ observation.client_version }}
@@ -295,7 +295,7 @@
         {% endif %}
         <tr>
           <td>
-            <span class="badge badge-dark">Polar Plot</span>
+            <span class="badge badge-secondary">Polar Plot</span>
           </td>
           <td>
             <div id="polar_plot">
@@ -327,7 +327,7 @@
         {% if observation.has_audio or observation.has_waterfall %}
           <tr>
             <td>
-              <span class="badge badge-dark">Downloads</span>
+              <span class="badge badge-secondary">Downloads</span>
             </td>
             <td>
               {% if observation.has_audio and observation.audio_url %}
@@ -399,18 +399,18 @@
                role="tab"
                data-toggle="tab">
             Data
-            {% if demoddata_count > 0 %}
-            <span class="badge badge-dark d-inline">{{ demoddata_count }}</span>
-            {% endif %}
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#tab-metadata"
-             aria-controls="tab-metadata"
-             role="tab"
-             data-toggle="tab">Metadata
-           </a>
-        </li>
+              {% if demoddata_count > 0 %}
+              <span class="badge badge-secondary d-inline">{{ demoddata_count }}</span>
+              {% endif %}
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#tab-metadata"
+              aria-controls="tab-metadata"
+              role="tab"
+              data-toggle="tab">Metadata
+            </a>
+          </li>
         </ul>
 
         <div class="tab-content">
@@ -418,7 +418,7 @@
             {% if observation.has_waterfall %}
               <div id="waterfall-status" class="row justify-content-between">
                 <div id="waterfall-current-status">
-                  <div class="badge badge-dark">Signal in WF</div>
+                  <div class="badge badge-secondary">Signal in WF</div>
                   <div id="vetting-spinner">
                     <div class="spinner">
                       <div class="bounce1"></div>
@@ -541,7 +541,7 @@
                 </div>
                 {% for demoddata_entry in demoddata_details %}
                   <div class="demoddata" data-type="{{ demoddata_entry.type }}">
-                    <span class="badge badge-dark data-badge">
+                    <span class="badge badge-secondary data-badge">
                       <a href="{{ demoddata_entry.url }}" class="data-link">
                         {{ demoddata_entry.name }}
                       </a>

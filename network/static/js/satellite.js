@@ -36,7 +36,7 @@ $(document).ready(function() {
                     <div class="transmitter card border-` + transmitter_status + `">
                         <div class="card-header bg-` + transmitter_status + ' text-' + transmitter_status + `">
                           <span class="transmitter-desc">` + transmitter.description + `</span>
-                          <span class="badge badge-dark float-right">Total Observations: ` + transmitter.total_count + `</span>
+                          <span class="badge badge-secondary float-right">Total Observations: ` + transmitter.total_count + `</span>
                         </div>
                         <div class="card-body">
                           <div class="progress">

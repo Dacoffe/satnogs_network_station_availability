@@ -291,7 +291,7 @@ $(document).ready(function() {
                                     <tbody>
                                       <tr>
                                         <th>
-                                          <span class='badge badge-dark'>Source Callsign</span>
+                                          <span class='badge badge-secondary'>Source Callsign</span>
                                         </th>
                                         <td>
                                           <span>` + srcCallsign + `</span>
@@ -299,7 +299,7 @@ $(document).ready(function() {
                                       </tr>
                                       <tr>
                                         <th>
-                                          <span class='badge badge-dark'>Destination Callsign</span>
+                                          <span class='badge badge-secondary'>Destination Callsign</span>
                                         </th>
                                         <td>
                                           <span>` + dstCallsign + `</span>
@@ -307,7 +307,7 @@ $(document).ready(function() {
                                       </tr>
                                       <tr>
                                         <th>
-                                          <span class='badge badge-dark'>Source SSID</span>
+                                          <span class='badge badge-secondary'>Source SSID</span>
                                         </th>
                                         <td>
                                           <span>` + parsedAx25.ax25Frame.ax25Header.srcSsidRaw.ssid + `</span>
@@ -315,7 +315,7 @@ $(document).ready(function() {
                                       </tr>
                                       <tr>
                                         <th>
-                                          <span class='badge badge-dark'>Destination SSID</span>
+                                          <span class='badge badge-secondary'>Destination SSID</span>
                                         </th>
                                         <td>
                                           <span>` + parsedAx25.ax25Frame.ax25Header.destSsidRaw.ssid + `</span>
@@ -323,7 +323,7 @@ $(document).ready(function() {
                                       </tr>
                                       <tr>
                                         <th>
-                                          <span class='badge badge-dark'>Ctl</span>
+                                          <span class='badge badge-secondary'>Ctl</span>
                                         </th>
                                         <td>
                                           <span>` + parsedAx25.ax25Frame.ax25Header.ctl + `</span>
@@ -331,7 +331,7 @@ $(document).ready(function() {
                                       </tr>
                                       <tr>
                                         <th>
-                                          <span class='badge badge-dark'>Pid</span>
+                                          <span class='badge badge-secondary'>Pid</span>
                                         </th>
                                         <td>
                                           <span>` + parsedAx25.ax25Frame.payload.pid + `</span>
@@ -339,7 +339,7 @@ $(document).ready(function() {
                                       </tr>
                                       <tr>
                                         <th>
-                                          <span class='badge badge-dark'>Monitor</span>
+                                          <span class='badge badge-secondary'>Monitor</span>
                                         </th>
                                         <td>
                                           <span>` + parsedAx25.ax25Frame.payload.ax25Info.dataMonitor + `</span>
