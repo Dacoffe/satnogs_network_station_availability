@@ -394,7 +394,7 @@ class NewObservationSerializer(serializers.Serializer):
     )
 
     center_frequency = serializers.IntegerField(
-        error_messages={'negative': 'Frequency cannot be a negative value.'}
+        error_messages={'negative': 'Frequency cannot be a negative value.'}, required=False
     )
 
     def validate_start(self, value):
