@@ -174,7 +174,7 @@
               <tbody>
                 {% for observation in observations %}
                   <tr class="clickable-row" data-href="{% url 'base:observation_view' observation_id=observation.id %}">
-                    <td>
+                    <td class="text-nowrap">
                       <a href="{% url 'base:observation_view' observation_id=observation.id %}">
                         {% if observation.is_future %}
                           <span class="badge badge-future">{{ observation.id }}</span>
@@ -189,19 +189,19 @@
                         {% endif %}
                       </a>
                     </td>
-                    <td>
+                    <td class="text-nowrap">
                       <a href="#" data-toggle="modal" data-target="#SatelliteModal" data-id="{{ observation.satellite.norad_cat_id }}">
                         {{ observation.satellite.name }}
                       </a>
                     </td>
-                    <td>
+                    <td class="text-nowrap">
                       {% if observation.center_frequency %}
                         {{ observation.center_frequency|frq }}
                       {% else %}
                         {{ observation.transmitter_downlink_low|frq }}
                       {% endif %}
                     </td>
-                    <td>
+                    <td class="text-nowrap">
                       <span data-toggle="tooltip" data-placement="bottom" title="{{ observation.transmitter_description }}">
                         {{ observation.transmitter_mode|default:"-" }}
                       </span>
@@ -209,7 +209,7 @@
                         {{ observation.transmitter_baud|floatformat|default:"" }}
                       </span>
                     </td>
-                    <td>
+                    <td class="text-nowrap">
                       <span data-toggle="tooltip" data-placement="bottom" title="{{ observation.start|naturaltime }}">
                         <span class="datetime-date">{{ observation.start|date:"Y-m-d" }}</span>
                         <span class="datetime-time">{{ observation.start|date:"H:i:s" }}</span><br>
