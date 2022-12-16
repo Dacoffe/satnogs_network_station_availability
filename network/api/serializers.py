@@ -266,13 +266,12 @@ class NewObservationListSerializer(serializers.ListSerializer):
     def validate(self, attrs):
         """Validates data from a list of new observations"""
 
-        station_set = set()
-        transmitter_uuid_set = set()
-        transmitter_uuid_station_set = set()
-        norad_id_set = set()
+        (
+            station_set, transmitter_uuid_set, transmitter_uuid_station_set, norad_id_set,
+            transm_uuid_station_center_freq_set
+        ) = (set() for _ in range(5))
         uuid_to_norad_id = {}
         start_end_per_station = defaultdict(list)
-        transm_uuid_station_center_freq_set = set()
 
         for observation in attrs:
             station = observation.get('ground_station')
@@ -280,8 +279,6 @@ class NewObservationListSerializer(serializers.ListSerializer):
             station_set.add(station)
             transmitter_uuid_set.add(transmitter_uuid)
             transmitter_uuid_station_set.add((transmitter_uuid, station))
-            center_frequency = observation.get('center_frequency', None)
-            transm_uuid_station_center_freq_set.add((transmitter_uuid, station, center_frequency))
             start_end_per_station[int(station.id)].append(
                 (observation.get('start'), observation.get('end'))
             )
@@ -321,6 +318,18 @@ class NewObservationListSerializer(serializers.ListSerializer):
             )
         except UserNoPermissionError as error:
             raise serializers.ValidationError(error, code='forbidden')
+
+        for observation in attrs:
+            transmitter_uuid = observation.get('transmitter_uuid')
+            station = observation.get('ground_station')
+            center_frequency = observation.get('center_frequency', None)
+            transmitter = self.transmitters[transmitter_uuid]
+            if transmitter["type"] == "Transponder" and center_frequency is None:
+                center_frequency = (
+                    transmitter['downlink_high'] + transmitter['downlink_low']
+                ) // 2
+                observation["center_frequency"] = center_frequency
+            transm_uuid_station_center_freq_set.add((transmitter_uuid, station, center_frequency))
 
         transmitter_station_list = [
             (self.transmitters[transmitter_uuid], station, center_freq)

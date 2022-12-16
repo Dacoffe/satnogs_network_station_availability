@@ -712,9 +712,9 @@ $(document).ready( function(){
         var downlink_drift = transmitter_object.data('downlink-drift');
         if (transmitter_type === 'Transponder') {
             frequency_input.attr({ 'min': (downlink_drift && downlink_drift < 0) ? downlink_low + downlink_drift : downlink_low, 'max': (downlink_drift && downlink_drift > 0) ? downlink_high + downlink_drift : downlink_high});
-            frequency_input.val(downlink_low);
+            frequency_input.val(Math.floor((downlink_high + downlink_low) / 2));
             frequency_input.data('is-valid', true);
-            frequency_input_format.html(format_frequency(downlink_low));
+            frequency_input_format.html(format_frequency(Math.floor((downlink_high + downlink_low) / 2)));
             $('#center-frequency-formgroup').fadeIn('fast');
         } else {
             frequency_input.data('is-valid', false);
