@@ -7,7 +7,8 @@ from rest_framework import serializers
 
 from network.base.db_api import DBConnectionError, get_tle_sets_by_norad_id_set, \
     get_transmitters_by_uuid_set
-from network.base.models import Antenna, DemodData, FrequencyRange, Observation, Satellite, Station
+from network.base.models import ActiveStationConfiguration, Antenna, DemodData, FrequencyRange, \
+    Observation, Satellite, Station
 from network.base.perms import UserNoPermissionError, \
     check_schedule_perms_of_violators_per_station, check_schedule_perms_per_station
 from network.base.scheduling import create_new_observation
@@ -565,29 +566,9 @@ class StationSerializer(serializers.ModelSerializer):
 
 class StationConfigurationSerializer(serializers.ModelSerializer):
     """SatNOGS Network Station Configuration API Serializer"""
-    satnogs_api_token = serializers.SerializerMethodField()
-    satnogs_station_elev = serializers.IntegerField(source='alt')
-    satnogs_station_id = serializers.SerializerMethodField()
-    satnogs_station_lat = serializers.FloatField(source='lat')
-    satnogs_station_lon = serializers.FloatField(source='lng')
-
     class Meta:
-        model = Station
-        fields = [
-            'satnogs_station_id', 'satnogs_api_token', 'satnogs_station_elev',
-            'satnogs_station_lat', 'satnogs_station_lon', 'satnogs_soapy_rx_device',
-            'satnogs_antenna', 'satnogs_rx_samp_rate', 'satnogs_rf_gain'
-        ]
-
-    def get_satnogs_api_token(self, obj):
-        """Returns API key of station owner"""
-        if obj.owner:
-            return obj.owner.auth_token.key
-        return None
-
-    def get_satnogs_station_id(self, obj):
-        """Returns API key of station owner"""
-        return obj.pk
+        model = ActiveStationConfiguration
+        fields = ['configuration']
 
 
 class JobSerializer(serializers.ModelSerializer):

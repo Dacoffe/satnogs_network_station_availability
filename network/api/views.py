@@ -20,11 +20,12 @@ from rest_framework.serializers import ValidationError
 
 from network.api import authentication, filters, pagination, serializers
 from network.api.perms import StationOwnerPermission
-from network.base.models import Observation, Station
+from network.base.models import ActiveStationConfiguration, Observation, Station
 from network.base.rating_tasks import rate_observation
 from network.base.stats import get_transmitter_with_stats_by_uuid
 from network.base.tasks import delay_task_with_lock, \
     get_and_refresh_transmitters_with_stats_cache, process_audio, sync_frame_to_db
+from network.base.utils import get_api_url
 from network.base.validators import NegativeElevationError, NoTleSetError, \
     ObservationOverlapError, SchedulingLimitError, SinglePassError
 
@@ -158,14 +159,33 @@ class StationView(  # pylint: disable=R0901
 
 class StationConfigurationView(viewsets.ReadOnlyModelViewSet):  # pylint: disable=R0901
     """SatNOGS Network Station Configuration API view class"""
-    queryset = Station.objects.all()
+    queryset = ActiveStationConfiguration.objects.all()
     serializer_class = serializers.StationConfigurationSerializer
     authentication_classes = [authentication.ClientIDAuthentication]
     permission_classes = [IsAuthenticated]
 
     def list(self, request, *args, **kwargs):
-        station = get_object_or_404(Station, client_id=request.auth)
-        return HttpResponseRedirect(redirect_to='/api/configuration/' + str(station.id) + '/')
+        configuration = get_object_or_404(
+            ActiveStationConfiguration, station__client_id=request.auth
+        )
+        configuration.configuration['Network Configuration'] = {
+            "station_id": configuration.station.pk,
+            "api_url": get_api_url(),
+            "api_token": configuration.station.owner.auth_token.key
+        }
+        return Response(configuration.configuration)
+
+    def retrieve(self, request, *args, **kwargs):
+        pk = kwargs['pk'] if kwargs['pk'].isdigit() else None  # pylint: disable=C0103
+        configuration = get_object_or_404(
+            ActiveStationConfiguration, pk=pk, station__client_id=request.auth
+        )
+        configuration.configuration['Network Configuration'] = {
+            "station_id": configuration.station.pk,
+            "api_url": get_api_url(),
+            "api_token": configuration.station.owner.auth_token.key
+        }
+        return Response(configuration.configuration)
 
 
 @api_view(['POST'])

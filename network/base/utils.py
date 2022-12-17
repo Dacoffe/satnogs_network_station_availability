@@ -6,6 +6,7 @@ from datetime import datetime
 import requests  # pylint: disable=C0412
 from django.conf import settings
 from django.contrib.admin.helpers import label_for_field
+from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.utils.text import slugify
@@ -231,3 +232,18 @@ def sync_demoddata_to_db(frame):
 
     frame.copied_to_db = True
     frame.save(update_fields=['copied_to_db'])
+
+
+def get_api_url():
+    """Returns the URL of the API"""
+    site = Site.objects.get_current()
+    domain = site.domain
+
+    if 'https://' in domain or 'http://' in domain:
+        api_url = domain + '/api'
+    elif 'localhost' in domain:
+        api_url = 'http://' + domain + '/api'
+    else:
+        api_url = 'https://' + domain + '/api'
+
+    return api_url
