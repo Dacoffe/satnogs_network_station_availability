@@ -15,7 +15,7 @@ from django.utils.timezone import make_aware, now, utc
 from django.views.decorators.http import require_POST
 
 from network.base.db_api import DBConnectionError, get_tle_set_by_norad_id, get_tle_sets, \
-    get_transmitter_by_uuid, get_transmitters_by_norad_id, get_transmitters_by_status
+    get_transmitter_by_uuid, get_transmitters, get_transmitters_by_norad_id
 from network.base.decorators import ajax_required
 from network.base.forms import ObservationFormSet, SatelliteFilterForm
 from network.base.models import Observation, Satellite, Station
@@ -340,7 +340,7 @@ def pass_predictions(request, station_id):
 
     available_transmitter_and_tle_sets = True
     try:
-        all_transmitters = get_transmitters_by_status('active')
+        all_transmitters = get_transmitters()
         all_tle_sets = get_tle_sets()
     except DBConnectionError:
         available_transmitter_and_tle_sets = False
@@ -351,7 +351,8 @@ def pass_predictions(request, station_id):
             # ground station antenna frequency capabilities
             norad_id = satellite.norad_cat_id
             transmitters = [
-                t for t in all_transmitters if t['norad_cat_id'] == norad_id
+                t for t in all_transmitters
+                if t['norad_cat_id'] == norad_id and t["status"] in ("active", "inactive")
                 and is_transmitter_in_station_range(t, station)  # noqa: W503
             ]
             tle = next(
@@ -479,7 +480,7 @@ def transmitters_view(request):
         return JsonResponse(data, safe=False)
 
     transmitters = [
-        t for t in transmitters if t['status'] == 'active' and t['downlink_low'] is not None
+        t for t in transmitters if t["status"] != "invalid" and t['downlink_low'] is not None
     ]
     if station_id:
         supported_transmitters = []
@@ -496,6 +497,13 @@ def transmitters_view(request):
                 supported_transmitters.append(transmitter)
         transmitters = supported_transmitters
 
-    data = {'transmitters': transmitters_with_stats(transmitters)}
+    data = {
+        "transmitters_active": transmitters_with_stats(
+            [t for t in transmitters if t["status"] == "active"]
+        ),
+        "transmitters_inactive": transmitters_with_stats(
+            [t for t in transmitters if t["status"] == "inactive"]
+        )
+    }
 
     return JsonResponse(data, safe=False)

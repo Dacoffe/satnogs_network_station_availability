@@ -240,39 +240,72 @@ $(document).ready( function(){
                                                     No transmitter available
                                                   </option>`).prop('disabled', true);
                 $('#transmitter-selection').selectpicker('refresh');
-            } else if (data.transmitters.length > 0) {
+            } else if (data.transmitters_active.length > 0 || data.transmitters_inactive.length > 0) {
                 var transmitters_options = '';
+                var inactive_transmitters_options = '';
+                var hidden_input = '';
+                var transmitter;
                 if (filters.transmitter){
-                    var is_transmitter_available = (data.transmitters.findIndex(tr => tr.uuid == filters.transmitter) > -1);
-                    if(is_transmitter_available) {
-                        var transmitter = data.transmitters.find(tr => tr.uuid == filters.transmitter);
+                    var is_transmitter_available_active = (data.transmitters_active.findIndex(tr => tr.uuid == filters.transmitter) > -1);
+                    if(is_transmitter_available_active) {
+                        transmitter = data.transmitters_active.find(tr => tr.uuid == filters.transmitter);
                         transmitters_options = create_transmitter_option(filters.satellite, transmitter);
                         $('#transmitter-selection').html(transmitters_options);
                         $('#transmitter-selection').selectpicker('val', filters.transmitter);
-                        var hidden_input='<input type="hidden" name="transmitter" value="'+ filters.transmitter + '">';
+                        hidden_input='<input type="hidden" name="transmitter" value="'+ filters.transmitter + '">';
                         $('#transmitter-selection').after(hidden_input);
                         filters.transmitter = transmitter.uuid;
                     } else {
-                        $('#transmitter-selection').html(`<option id="no-transmitter" value="" selected>
-                                                            No transmitter available
-                                                          </option>`).prop('disabled', true);
-                        delete filters.transmitter;
+                        var is_transmitter_available_inactive = (data.transmitters_inactive.findIndex(tr => tr.uuid == filters.transmitter) > -1);
+                        if(is_transmitter_available_inactive) {
+                            transmitter = data.transmitters_inactive.find(tr => tr.uuid == filters.transmitter);
+                            transmitters_options = create_transmitter_option(filters.satellite, transmitter);
+                            $('#transmitter-selection').html(transmitters_options);
+                            $('#transmitter-selection').selectpicker('val', filters.transmitter);
+                            hidden_input='<input type="hidden" name="transmitter" value="'+ filters.transmitter + '">';
+                            $('#transmitter-selection').after(hidden_input);
+                            filters.transmitter = transmitter.uuid;
+                        } else {
+                            $('#transmitter-selection').html(`<option id="no-transmitter" value="" selected>
+                            No transmitter available
+                          </option>`).prop('disabled', true);
+                            delete filters.transmitter;
+                        }
                     }
                     $('#transmitter-selection').selectpicker('refresh');
                 } else {
                     var max_good_count = 0;
                     var max_good_val = '';
-                    $.each(data.transmitters, function (i, transmitter) {
+                    $.each(data.transmitters_active, function (i, transmitter) {
                         if (max_good_count <= transmitter.good_count) {
                             max_good_count = transmitter.good_count;
                             max_good_val = transmitter.uuid;
                         }
                         transmitters_options += create_transmitter_option(filters.satellite, transmitter);
                     });
-                    $('#transmitter-selection').html(transmitters_options).prop('disabled', false);
+                    var inactive_max_good_count = 0;
+                    var inactive_max_good_val = '';
+                    $.each(data.transmitters_inactive, function (i, transmitter) {
+                        if (!max_good_count && inactive_max_good_count <= transmitter.good_count) {
+                            inactive_max_good_count = transmitter.good_count;
+                            inactive_max_good_val = transmitter.uuid;
+                        }
+                        inactive_transmitters_options += create_transmitter_option(filters.satellite, transmitter);
+                    });
+
+                    if(transmitters_options) {
+                        transmitters_options = '<optgroup label="Active">' + transmitters_options + '</optgroup>';
+                    }
+                    
+                    if(inactive_transmitters_options) {
+                        inactive_transmitters_options = '<optgroup label="Inactive">' + inactive_transmitters_options + '</optgroup>';
+                    }
+
+                    $('#transmitter-selection').html(transmitters_options + inactive_transmitters_options).prop('disabled', false);
+
                     $('#transmitter-selection').selectpicker('refresh');
-                    $('#transmitter-selection').selectpicker('val', max_good_val);
-                    filters.transmitter = max_good_val;
+                    $('#transmitter-selection').selectpicker('val', max_good_val || inactive_max_good_val);
+                    filters.transmitter = max_good_val || inactive_max_good_val;
                 }
                 $('.tle').hide();
                 $('.tle[data-norad="' + filters.satellite + '"]').show();

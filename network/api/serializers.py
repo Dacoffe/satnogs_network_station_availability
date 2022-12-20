@@ -95,6 +95,7 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
     observer = serializers.SerializerMethodField()
     center_frequency = serializers.SerializerMethodField()
     observation_frequency = serializers.SerializerMethodField()
+    transmitter_status = serializers.SerializerMethodField()
 
     class Meta:
         model = Observation
@@ -108,7 +109,8 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
             'transmitter_uplink_low', 'transmitter_uplink_high', 'transmitter_uplink_drift',
             'transmitter_downlink_low', 'transmitter_downlink_high', 'transmitter_downlink_drift',
             'transmitter_mode', 'transmitter_invert', 'transmitter_baud', 'transmitter_updated',
-            'tle0', 'tle1', 'tle2', 'center_frequency', 'observer', 'observation_frequency'
+            'transmitter_status', 'tle0', 'tle1', 'tle2', 'center_frequency', 'observer',
+            'observation_frequency'
         )
         read_only_fields = [
             'id', 'start', 'end', 'observation', 'ground_station', 'transmitter', 'norad_cat_id',
@@ -119,8 +121,8 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
             'transmitter_type', 'transmitter_uplink_low', 'transmitter_uplink_high',
             'transmitter_uplink_drift', 'transmitter_downlink_low', 'transmitter_downlink_high',
             'transmitter_downlink_drift', 'transmitter_mode', 'transmitter_invert',
-            'transmitter_baud', 'transmitter_created', 'transmitter_updated', 'tle0', 'tle1',
-            'tle2', 'observer', 'center_frequency', 'observation_frequency'
+            'transmitter_baud', 'transmitter_created', 'transmitter_updated', 'transmitter_status',
+            'tle0', 'tle1', 'tle2', 'observer', 'center_frequency', 'observation_frequency'
         ]
 
     def update(self, instance, validated_data):
@@ -135,6 +137,14 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
         if obj.center_frequency or frequency_drift is None:
             return frequency
         return int(round(frequency + ((frequency * frequency_drift) / 1e9)))
+
+    def get_transmitter_status(self, obj):
+        """Returns the status of the transmitter at the time of observation"""
+        if obj.transmitter_status:
+            return "active"
+        if obj.transmitter_status is not None:
+            return "inactive"
+        return "unknown"
 
     def get_center_frequency(self, obj):
         """Returns observation center frequency"""
