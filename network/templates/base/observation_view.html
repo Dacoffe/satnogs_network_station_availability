@@ -293,16 +293,6 @@
             </td>
           </tr>
         {% endif %}
-        {% if observation.client_metadata %}
-          <tr>
-            <td>
-              <span class="badge badge-dark">Metadata</span>
-            </td>
-            <td>
-              <pre id="json-renderer" data-json="{{ observation.client_metadata }}"></pre>
-            </td>
-          </tr>
-        {% endif %}
         <tr>
           <td>
             <span class="badge badge-dark">Polar Plot</span>
@@ -408,12 +398,19 @@
                aria-controls="tab-data"
                role="tab"
                data-toggle="tab">
-              Data
-              {% if demoddata_count > 0 %}
-                <span class="badge badge-dark d-inline">{{ demoddata_count }}</span>
-              {% endif %}
-            </a>
-          </li>
+            Data
+            {% if demoddata_count > 0 %}
+            <span class="badge badge-dark d-inline">{{ demoddata_count }}</span>
+            {% endif %}
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#tab-metadata"
+             aria-controls="tab-metadata"
+             role="tab"
+             data-toggle="tab">Metadata
+           </a>
+        </li>
         </ul>
 
         <div class="tab-content">
@@ -558,6 +555,15 @@
             {% else %}
               <div class="notice">
                 Waiting for demoded data
+              </div>
+            {% endif %}
+          </div>
+          <div role="tabpanel" class="tab-pane tab-metadata" id="tab-metadata">
+            {% if observation.client_metadata %}
+              <pre class="mt-3 bg-light border border-secondary" id="json-renderer" data-json="{{ observation.client_metadata }}"></pre>
+            {% else %}
+              <div class="notice">
+                Waiting for metadata
               </div>
             {% endif %}
           </div>
