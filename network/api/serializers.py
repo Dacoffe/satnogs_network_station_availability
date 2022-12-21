@@ -72,7 +72,7 @@ class UpdateObservationSerializer(serializers.ModelSerializer):
         fields = ('id', 'payload', 'waterfall', 'client_metadata', 'client_version')
 
 
-class ObservationSerializer(serializers.ModelSerializer):
+class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R0904
     """SatNOGS Network Observation API Serializer"""
     transmitter = serializers.SerializerMethodField()
     transmitter_updated = serializers.SerializerMethodField()
@@ -94,6 +94,7 @@ class ObservationSerializer(serializers.ModelSerializer):
     tle2 = serializers.SerializerMethodField()
     observer = serializers.SerializerMethodField()
     center_frequency = serializers.SerializerMethodField()
+    observation_frequency = serializers.SerializerMethodField()
 
     class Meta:
         model = Observation
@@ -107,7 +108,7 @@ class ObservationSerializer(serializers.ModelSerializer):
             'transmitter_uplink_low', 'transmitter_uplink_high', 'transmitter_uplink_drift',
             'transmitter_downlink_low', 'transmitter_downlink_high', 'transmitter_downlink_drift',
             'transmitter_mode', 'transmitter_invert', 'transmitter_baud', 'transmitter_updated',
-            'tle0', 'tle1', 'tle2', 'center_frequency', 'observer'
+            'tle0', 'tle1', 'tle2', 'center_frequency', 'observer', 'observation_frequency'
         )
         read_only_fields = [
             'id', 'start', 'end', 'observation', 'ground_station', 'transmitter', 'norad_cat_id',
@@ -119,7 +120,7 @@ class ObservationSerializer(serializers.ModelSerializer):
             'transmitter_uplink_drift', 'transmitter_downlink_low', 'transmitter_downlink_high',
             'transmitter_downlink_drift', 'transmitter_mode', 'transmitter_invert',
             'transmitter_baud', 'transmitter_created', 'transmitter_updated', 'tle0', 'tle1',
-            'tle2', 'observer', 'center_frequency'
+            'tle2', 'observer', 'center_frequency', 'observation_frequency'
         ]
 
     def update(self, instance, validated_data):
@@ -127,9 +128,17 @@ class ObservationSerializer(serializers.ModelSerializer):
         super().update(instance, validated_data)
         return instance
 
+    def get_observation_frequency(self, obj):
+        """Returns observation center frequency"""
+        frequency = obj.center_frequency or obj.transmitter_downlink_low
+        frequency_drift = obj.transmitter_downlink_drift
+        if obj.center_frequency or frequency_drift is None:
+            return frequency
+        return int(round(frequency + ((frequency * frequency_drift) / 1e9)))
+
     def get_center_frequency(self, obj):
         """Returns observation center frequency"""
-        return obj.center_frequency or obj.transmitter_downlink_low
+        return obj.center_frequency
 
     def get_transmitter(self, obj):
         """Returns Transmitter UUID"""
@@ -592,7 +601,7 @@ class JobSerializer(serializers.ModelSerializer):
         """Returns Observation frequency"""
         frequency = obj.center_frequency or obj.transmitter_downlink_low
         frequency_drift = obj.transmitter_downlink_drift
-        if obj.center_frequency or (frequency_drift is None):
+        if obj.center_frequency or frequency_drift is None:
             return frequency
         return int(round(frequency + ((frequency * frequency_drift) / 1e9)))
 

@@ -554,7 +554,7 @@ def create_new_observation(
         station_lat=station.lat,
         station_lng=station.lng,
         station_antennas=json.dumps(antennas),
-        center_frequency=center_frequency or transmitter['downlink_low'],
+        center_frequency=center_frequency or None,
     )
 
 
