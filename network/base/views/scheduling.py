@@ -37,6 +37,9 @@ def create_new_observations(formset, user):
     for observation_data in formset.cleaned_data:
         transmitter_uuid = observation_data['transmitter_uuid']
         transmitter = formset.transmitters[transmitter_uuid]
+        center_frequency = observation_data.get('center_frequency', None)
+        if transmitter["type"] == "Transponder" and center_frequency is None:
+            center_frequency = (transmitter['downlink_high'] + transmitter['downlink_low']) // 2
         tle_set = formset.tle_sets[transmitter['norad_cat_id']]
 
         observations_per_norad_id[transmitter['norad_cat_id']].append(observation_data['start'])
@@ -48,7 +51,7 @@ def create_new_observations(formset, user):
             end=observation_data['end'],
             author=user,
             tle_set=tle_set,
-            center_frequency=observation_data.get('center_frequency', None)
+            center_frequency=center_frequency
         )
         new_observations.append(observation)
 
@@ -188,25 +191,29 @@ def prediction_windows_parse_parameters(request):
     return params
 
 
+def get_tle_set_if_available(norad_cat_id):
+    """ Returns TLE set for NORAD ID if exists or raises an exception"""
+    tle_set = get_tle_set_by_norad_id(norad_cat_id)
+    if tle_set:
+        return tle_set[0]
+    raise ValueError('No TLEs for this satellite yet.')
+
+
 @ajax_required
 def prediction_windows(request):
     """Calculates and returns passes of satellites over stations"""
 
     try:
         error_found = True
-        # Parse parameters and validate parameters
+        # Parse and validate parameters
         params = prediction_windows_parse_parameters(request)
 
         # Check the selected satellite exists and is alive
         satellite = Satellite.objects.filter(status='alive'
                                              ).get(norad_cat_id=params['sat_norad_id'])
 
-        # Check if there is a TLE available for this satellite
-        tle_set = get_tle_set_by_norad_id(satellite.norad_cat_id)
-        if tle_set:
-            tle = tle_set[0]
-        else:
-            raise ValueError('No TLEs for this satellite yet.')
+        # Get TLE set if there is one available for this satellite
+        tle = get_tle_set_if_available(satellite.norad_cat_id)
 
         # Check the selected transmitter exists, and if yes,
         # store this transmitter in the downlink variable
@@ -217,6 +224,8 @@ def prediction_windows(request):
             if not is_frequency_in_transmitter_range(params['center_frequency'], transmitter[0]):
                 raise OutOfRangeError('The center frequency is out of the transmitter\'s range.')
             downlink = params['center_frequency']
+        if transmitter[0]["type"] == "Transponder" and not params['center_frequency']:
+            downlink = (transmitter[0]['downlink_high'] + transmitter[0]['downlink_low']) // 2
         else:
             downlink = transmitter[0]['downlink_low']
         error_found = False
