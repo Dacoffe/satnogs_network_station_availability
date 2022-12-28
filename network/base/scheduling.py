@@ -355,20 +355,23 @@ def predict_available_observation_windows(
         observer.horizon = str(station.horizon)
 
     try:
-        satellite.compute(observer)
-    except ValueError:
-        return passes_found, station_windows
-
-    attempts_for_finding_rise = 0
-    if satellite.alt > 0:
-        while satellite.alt > 0 and attempts_for_finding_rise < 1440:
-            attempts_for_finding_rise += 1
-            observer.date = ephem.Date(observer.date - ephem.minute)
-            satellite.compute(observer)
         try:
-            pass_params = next_pass(observer, satellite)
-        except (TypeError, ValueError):
-            pass
+            satellite.compute(observer)
+        except ValueError:
+            return passes_found, station_windows
+
+        attempts_for_finding_rise = 0
+        if satellite.alt > 0:
+            while satellite.alt > 0 and attempts_for_finding_rise < 1440:
+                attempts_for_finding_rise += 1
+                observer.date = ephem.Date(observer.date - ephem.minute)
+                satellite.compute(observer)
+            try:
+                pass_params = next_pass(observer, satellite)
+            except (TypeError, ValueError):
+                pass
+    except RuntimeError:
+        return passes_found, station_windows
 
     while True:
         try:
