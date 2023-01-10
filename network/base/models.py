@@ -16,7 +16,6 @@ from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.timezone import now
-from PIL import Image
 from shortuuidfield import ShortUUIDField
 from storages.backends.s3boto3 import S3Boto3Storage
 
@@ -641,22 +640,6 @@ class DemodData(models.Model):
     )
     copied_to_db = models.BooleanField(default=False)
     is_image = models.BooleanField(default=False)
-
-    def is__image(self):
-        """Return true if data file is an image"""
-        try:
-            if self.payload_demod:
-                with self.payload_demod.storage.open(self.payload_demod.name,
-                                                     mode='rb') as data_file:
-                    Image.open(data_file)
-            else:
-                with self.demodulated_data.storage.open(self.demodulated_data.name,
-                                                        mode='rb') as data_file:
-                    Image.open(data_file)
-        except (IOError, TypeError, ValueError, Image.DecompressionBombError):
-            return False
-        else:
-            return True
 
     def display_payload_hex(self):
         """
