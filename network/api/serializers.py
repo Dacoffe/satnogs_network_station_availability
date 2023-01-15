@@ -139,11 +139,7 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
     @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_observation_frequency(self, obj):
         """Returns observation center frequency"""
-        frequency = obj.center_frequency or obj.transmitter_downlink_low
-        frequency_drift = obj.transmitter_downlink_drift
-        if obj.center_frequency or frequency_drift is None:
-            return frequency
-        return int(round(frequency + ((frequency * frequency_drift) / 1e9)))
+        return obj.observation_frequency
 
     @extend_schema_field(serializers.BooleanField(allow_null=True))
     def get_transmitter_unconfirmed(self, obj):

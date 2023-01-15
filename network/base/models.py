@@ -697,6 +697,17 @@ class Observation(models.Model):
             return self.payload.url
         return ''
 
+    @property
+    def observation_frequency(self):
+        """
+        Return the observation frequency
+        """
+        frequency = self.center_frequency or self.transmitter_downlink_low
+        frequency_drift = self.transmitter_downlink_drift
+        if self.center_frequency or frequency_drift is None:
+            return frequency
+        return int(round(frequency + ((frequency * frequency_drift) / 1e9)))
+
     class Meta:
         ordering = ['-start', '-end']
         indexes = [models.Index(fields=['-start', '-end'])]
