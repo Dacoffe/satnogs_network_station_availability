@@ -296,7 +296,7 @@ $(document).ready( function(){
                     if(transmitters_options) {
                         transmitters_options = '<optgroup label="Active">' + transmitters_options + '</optgroup>';
                     }
-                    
+
                     if(inactive_transmitters_options) {
                         inactive_transmitters_options = '<optgroup label="Inactive">' + inactive_transmitters_options + '</optgroup>';
                     }
