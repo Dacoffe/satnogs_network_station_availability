@@ -471,6 +471,7 @@ class Observation(models.Model):
     transmitter_baud = models.FloatField(validators=[MinValueValidator(0)], blank=True, null=True)
     transmitter_created = models.DateTimeField(default=now)
     transmitter_status = models.BooleanField(null=True, blank=True)
+    transmitter_unconfirmed = models.BooleanField(blank=True, null=True)
     station_alt = models.PositiveIntegerField(null=True, blank=True)
     station_lat = models.FloatField(
         validators=[MaxValueValidator(90), MinValueValidator(-90)], null=True, blank=True

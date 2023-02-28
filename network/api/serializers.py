@@ -96,6 +96,7 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
     center_frequency = serializers.SerializerMethodField()
     observation_frequency = serializers.SerializerMethodField()
     transmitter_status = serializers.SerializerMethodField()
+    transmitter_unconfirmed = serializers.SerializerMethodField()
 
     class Meta:
         model = Observation
@@ -110,7 +111,7 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
             'transmitter_downlink_low', 'transmitter_downlink_high', 'transmitter_downlink_drift',
             'transmitter_mode', 'transmitter_invert', 'transmitter_baud', 'transmitter_updated',
             'transmitter_status', 'tle0', 'tle1', 'tle2', 'center_frequency', 'observer',
-            'observation_frequency'
+            'observation_frequency', 'transmitter_unconfirmed'
         )
         read_only_fields = [
             'id', 'start', 'end', 'observation', 'ground_station', 'transmitter', 'norad_cat_id',
@@ -122,7 +123,8 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
             'transmitter_uplink_drift', 'transmitter_downlink_low', 'transmitter_downlink_high',
             'transmitter_downlink_drift', 'transmitter_mode', 'transmitter_invert',
             'transmitter_baud', 'transmitter_created', 'transmitter_updated', 'transmitter_status',
-            'tle0', 'tle1', 'tle2', 'observer', 'center_frequency', 'observation_frequency'
+            'tle0', 'tle1', 'tle2', 'observer', 'center_frequency', 'observation_frequency',
+            'transmitter_unconfirmed'
         ]
 
     def update(self, instance, validated_data):
@@ -137,6 +139,10 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
         if obj.center_frequency or frequency_drift is None:
             return frequency
         return int(round(frequency + ((frequency * frequency_drift) / 1e9)))
+
+    def get_transmitter_unconfirmed(self, obj):
+        """Returns whether the transmitter was unconfirmed at the time of observation"""
+        return obj.transmitter_unconfirmed
 
     def get_transmitter_status(self, obj):
         """Returns the status of the transmitter at the time of observation"""

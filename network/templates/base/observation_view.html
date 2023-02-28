@@ -186,6 +186,16 @@
             {% endif %}
           </td>
         </tr>
+        {% if observation.transmitter_unconfirmed %}
+        <tr>
+          <td>
+            <span class="badge badge-secondary">Transmitter Unconfirmed</span>
+          </td>
+          <td>
+           Yes
+          </td>
+        </tr>
+        {% endif %}
         <tr>
           <td>
             <span class="badge badge-secondary">Transmitter Frequency</span>
