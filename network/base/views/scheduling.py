@@ -508,11 +508,14 @@ def transmitters_view(request):
 
     data = {
         "transmitters_active": transmitters_with_stats(
-            [t for t in transmitters if t["status"] == "active"]
+            [t for t in transmitters if t["status"] == "active" and not t["unconfirmed"]]
         ),
         "transmitters_inactive": transmitters_with_stats(
-            [t for t in transmitters if t["status"] == "inactive"]
-        )
+            [t for t in transmitters if t["status"] == "inactive" and not t["unconfirmed"]]
+        ),
+        "transmitters_unconfirmed": transmitters_with_stats(
+            [t for t in transmitters if t["unconfirmed"]]
+        ),
     }
 
     return JsonResponse(data, safe=False)
