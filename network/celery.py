@@ -86,6 +86,13 @@ def find_and_rate_failed_observations():
     periodic_task()
 
 
+@APP.task
+def sync_to_db():
+    """Wrapper task for 'sync_to_db' shared task"""
+    from network.base.tasks import sync_to_db as periodic_task
+    periodic_task()
+
+
 @APP.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):  # pylint: disable=W0613
     """Initializes celery tasks that need to run on a scheduled basis"""
@@ -102,6 +109,8 @@ def setup_periodic_tasks(sender, **kwargs):  # pylint: disable=W0613
     )
 
     sender.add_periodic_task(RUN_HOURLY, fetch_data.s(), name='fetch_data')
+
+    sender.add_periodic_task(RUN_HOURLY, sync_to_db.s(), name='sync_to_db')
 
     sender.add_periodic_task(RUN_HOURLY, station_status_update.s(), name='station_status_update')
 

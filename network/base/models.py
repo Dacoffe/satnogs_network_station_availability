@@ -19,7 +19,7 @@ from django.utils.timezone import now
 from shortuuidfield import ShortUUIDField
 from storages.backends.s3boto3 import S3Boto3Storage
 
-from network.base.db_api import get_artifact_metadata_by_observation_id
+from network.base.db_api import DBConnectionError, get_artifact_metadata_by_observation_id
 from network.base.managers import ObservationManager
 from network.base.utils import bands_from_range
 from network.users.models import User
@@ -331,7 +331,7 @@ class FrequencyRange(models.Model):
         if self.min_frequency < settings.MIN_FREQUENCY_FOR_RANGE:
             raise ValidationError(
                 {
-                    'min_frequency': ('Minimum frequency should be less than {0}.').format(
+                    'min_frequency': ('Minimum frequency should be more than {0}.').format(
                         settings.MIN_FREQUENCY_FOR_RANGE
                     )
                 }
@@ -583,13 +583,21 @@ class Observation(models.Model):
     @property
     def has_artifact(self):
         """Check if the observation has an associated artifact in satnogs-db."""
-        artifact_metadata = get_artifact_metadata_by_observation_id(self.id)
+        try:
+            artifact_metadata = get_artifact_metadata_by_observation_id(self.id)
+        except DBConnectionError:
+            return False
+
         return truth(artifact_metadata)
 
     @property
     def artifact_url(self):
         """Return url for the oberations artifact file (if it exists)"""
-        artifact_metadata = get_artifact_metadata_by_observation_id(self.id)
+        try:
+            artifact_metadata = get_artifact_metadata_by_observation_id(self.id)
+        except DBConnectionError:
+            return ''
+
         if not artifact_metadata:
             return ''
         return artifact_metadata[0]['artifact_file']
@@ -641,6 +649,9 @@ class DemodData(models.Model):
     )
     copied_to_db = models.BooleanField(default=False)
     is_image = models.BooleanField(default=False)
+
+    class Meta:
+        indexes = [models.Index(fields=["copied_to_db", "is_image"])]
 
     def display_payload_hex(self):
         """

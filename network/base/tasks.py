@@ -391,26 +391,41 @@ def clean_observations():
 
 
 @shared_task
-def sync_to_db(frame_id=None):
-    """Task to send demod data to SatNOGS DB / SiDS"""
-    frames = DemodData.objects.filter(copied_to_db=False).exclude(
-        observation__transmitter_mode__in=settings.NOT_SYNCED_MODES
+def sync_to_db():
+    """Task to send all non-synced demod data to SatNOGS DB / SiDS"""
+    frames = DemodData.objects.filter(
+        copied_to_db=False, is_image=False
+    ).exclude(observation__transmitter_mode__in=settings.NOT_SYNCED_MODES).filter(
+        observation__station_lng__isnull=False, observation__station_lat__isnull=False
     )
-
-    if frame_id:
-        frames = frames.filter(pk=frame_id)[:1]
-
     for frame in frames:
-        if frame.is_image:
+        if frame.payload_demod and not frame.payload_demod.storage.exists(frame.payload_demod.name
+                                                                          ):
             continue
-        if frame.payload_demod:
-            if not frame.payload_demod.storage.exists(frame.payload_demod.name):
-                continue
         try:
             sync_demoddata_to_db(frame)
         except requests.exceptions.RequestException:
-            # Sync to db failed, skip this frame for a future task instance
             continue
+
+
+@shared_task
+def sync_frame_to_db(frame_id):
+    """Task to send a single demod data to SatNOGS DB / SiDS"""
+    frame = DemodData.objects.select_related("observation").get(pk=frame_id)
+
+    missing_station_coord = not bool(
+        frame.observation.station_lat and frame.observation.station_lng
+    )
+    missing_payload_file = bool(
+        frame.payload_demod and not frame.payload_demod.storage.exists(frame.payload_demod.name)
+    )
+    mode_in_nonsynced = bool(frame.observation.transmitter_mode in settings.NOT_SYNCED_MODES)
+    if any((frame.is_image, missing_station_coord, missing_payload_file, mode_in_nonsynced)):
+        pass
+    try:
+        sync_demoddata_to_db(frame)
+    except requests.exceptions.RequestException:
+        pass
 
 
 @shared_task

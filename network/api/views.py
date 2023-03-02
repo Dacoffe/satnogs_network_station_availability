@@ -22,7 +22,7 @@ from network.api import authentication, filters, pagination, serializers
 from network.api.perms import StationOwnerPermission
 from network.base.models import Observation, Station
 from network.base.rating_tasks import rate_observation
-from network.base.tasks import delay_task_with_lock, process_audio, sync_to_db
+from network.base.tasks import delay_task_with_lock, process_audio, sync_frame_to_db
 from network.base.validators import NegativeElevationError, NoTleSetError, \
     ObservationOverlapError, SchedulingLimitError, SinglePassError
 
@@ -127,7 +127,7 @@ class ObservationView(  # pylint: disable=R0901
             rate_observation.delay(instance.id, 'waterfall_upload')
         # Rate observation only on first demoddata uploading
         if request.data.get('demoddata') and demoddata_id:
-            sync_to_db.delay(frame_id=demoddata_id)
+            sync_frame_to_db.delay(frame_id=demoddata_id)
             if not observation_has_data:
                 rate_observation.delay(instance.id, 'data_upload')
         if request.data.get('payload'):

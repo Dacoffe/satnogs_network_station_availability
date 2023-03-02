@@ -19,6 +19,7 @@ def satnogs_db_api_request_authed(url):
         raise DBConnectionError('Error in DB API connection. Blank DB API URL!')
     try:
         request = requests.get(url, headers=headers)
+        request.raise_for_status()
     except requests.exceptions.RequestException as error:
         raise DBConnectionError('Error in DB API connection. Please try again!') from error
     return request.json()

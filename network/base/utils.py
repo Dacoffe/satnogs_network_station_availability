@@ -202,7 +202,7 @@ def sync_demoddata_to_db(frame):
     # SiDS parameters
     params = {
         'noradID': sat.norad_cat_id,
-        'source': ground_station.name,
+        'source': "Unknown",
         'timestamp': submit_datetime,
         'locator': 'longLat',
         'longitude': obs.station_lng,
@@ -210,10 +210,12 @@ def sync_demoddata_to_db(frame):
         'frame': frame.display_payload_hex().replace(' ', ''),
         'satnogs_network': 'True',  # NOT a part of SiDS
         'observation_id': obs.id,  # NOT a part of SiDS
-        'station_id': obs.ground_station.id  # NOT a part of SiDS
     }
+    if ground_station:
+        params['source'] = ground_station.name
+        params['station_id'] = ground_station.id  # NOT a part of SiDS
 
-    telemetry_url = "{}telemetry/".format(settings.DB_API_ENDPOINT)
+    telemetry_url = f"{settings.DB_API_ENDPOINT}telemetry/"
 
     response = requests.post(telemetry_url, data=params, timeout=settings.DB_API_TIMEOUT)
     response.raise_for_status()
