@@ -5,7 +5,7 @@
 {% block title %} - Ground Stations{% endblock %}
 
 {% block css %}
-  <link rel="stylesheet" href="{% static 'lib/mapbox-gl/dist/mapbox-gl.css' %}">
+  <link rel="stylesheet" href="{% static 'lib/maplibre-gl/dist/maplibre-gl.css' %}">
 {% endblock css %}
 
 {% block content %}
@@ -40,7 +40,7 @@
         <a href='#map' class="btn btn-outline-dark" role="button" data-toggle="modal" data-target="#MapModal">
           <span class="bi bi-geo-alt-fill" aria-hidden="true"></span>
         </a>
-      </span">
+      </span>
     </div>
   </div>
 
@@ -217,7 +217,7 @@
 
 
 {% block javascript %}
-  <script src="{% static 'lib/mapbox-gl/dist/mapbox-gl.js' %}"></script>
+  <script src="{% static 'lib/maplibre-gl/dist/maplibre-gl.js' %}"></script>
   <script src="{% static 'js/stations.js' %}"></script>
   <script src="{% static 'js/map.js' %}"></script>
 {% endblock %}

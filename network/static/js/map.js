@@ -1,4 +1,4 @@
-/*global mapboxgl*/
+/*global maplibregl*/
 
 $(document).ready(function() {
     'use strict';
@@ -6,9 +6,9 @@ $(document).ready(function() {
     var mapboxtoken = $('div#map').data('mapboxtoken');
     var stations = $('div#map').data('stations');
 
-    mapboxgl.accessToken = mapboxtoken;
+    maplibregl.accessToken = mapboxtoken;
 
-    var map = new mapboxgl.Map({
+    var map = new maplibregl.Map({
         container: 'map',
         style: 'mapbox://styles/pierros/cj8kftshl4zll2slbelhkndwo',
         zoom: 2,
@@ -19,7 +19,7 @@ $(document).ready(function() {
     map.touchZoomRotate.disableRotation();
     map.dragRotate.disable();
     if (!('ontouchstart' in window)) {
-        map.addControl(new mapboxgl.NavigationControl());
+        map.addControl(new maplibregl.NavigationControl());
     }
 
     map.on('load', function () {
@@ -160,7 +160,7 @@ $(document).ready(function() {
     }
 
     // Create a popup, but don't add it to the map yet.
-    var popup = new mapboxgl.Popup({
+    var popup = new maplibregl.Popup({
         closeButton: false,
         closeOnClick: true
     });

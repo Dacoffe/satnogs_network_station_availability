@@ -6,7 +6,7 @@
 {% block title %} - Home{% endblock %}
 
 {% block css %}
-  <link rel="stylesheet" href="{% static 'lib/mapbox-gl/dist/mapbox-gl.css' %}">
+  <link rel="stylesheet" href="{% static 'lib/maplibre-gl/dist/maplibre-gl.css' %}">
 {% endblock css %}
 
 {% block body-class %}class="home"{% endblock %}
@@ -79,6 +79,6 @@
 {% block footer %}{% endblock %}
 
 {% block javascript %}
-  <script src="{% static 'lib/mapbox-gl/dist/mapbox-gl.js' %}"></script>
+  <script src="{% static 'lib/maplibre-gl/dist/maplibre-gl.js' %}"></script>
   <script src="{% static 'js/map.js' %}"></script>
 {% endblock %}

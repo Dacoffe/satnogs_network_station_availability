@@ -1,4 +1,4 @@
-/* global mapboxgl, moment, Slider, calcPolarPlotSVG  */
+/* global maplibregl, moment, Slider, calcPolarPlotSVG  */
 /* jshint esversion: 6 */
 
 $(document).ready(function() {
@@ -39,10 +39,10 @@ $(document).ready(function() {
         $('#map-station').addClass('alert-error');
         $('#map-station').html('Map can\'t be rendered:<br/> Station location is not defined.');
     } else {
-        if (!mapboxgl.supported()) {
+        if (!maplibregl.supported()) {
             $('#map-station').addClass('error');
             $('#map-station').addClass('alert-error');
-            $('#map-station').html('Map can\'t be rendered:<br/> Your browser does not support MapboxGL (WebGL required).');
+            $('#map-station').html('Map can\'t be rendered:<br/> Your browser does not support maplibregl (WebGL required).');
         } else {
             var mapboxtoken = $('div#map-station').data('mapboxtoken');
             if (!mapboxtoken) {
@@ -50,15 +50,15 @@ $(document).ready(function() {
                 $('#map-station').addClass('alert-error');
                 $('#map-station').html('Map can\'t be rendered:<br/> Mapbox Token is not available.');
             } else {
-                mapboxgl.accessToken = mapboxtoken;
-                var map = new mapboxgl.Map({
+                maplibregl.accessToken = mapboxtoken;
+                var map = new maplibregl.Map({
                     container: 'map-station',
                     style: 'mapbox://styles/pierros/cj8kftshl4zll2slbelhkndwo',
                     zoom: 5,
                     minZoom: 2,
                     center: [parseFloat(station_info.lng),parseFloat(station_info.lat)]
                 });
-                map.addControl(new mapboxgl.NavigationControl());
+                map.addControl(new maplibregl.NavigationControl());
                 map.on('load', function () {
                     map.loadImage('/static/img/pin.png', function(error, image) {
                         map.addImage('pin', image);
