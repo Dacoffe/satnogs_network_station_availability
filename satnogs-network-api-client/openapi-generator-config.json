@@ -1,5 +1,11 @@
 {
     "packageName": "satnogsnetworkapiclient",
     "projectName": "satnogs-network-api-client",
-    "generateSourceCodeOnly": true
+    "generateSourceCodeOnly": true,
+    "appName": "SatNOGS Network",
+    "appDescription": "SatNOGS Network is a web application implementing a global scheduling and monitoring network for ground station operations.",
+    "infoUrl": "https://gitlab.com/librespacefoundation/satnogs/satnogs-network",
+    "infoEmail": "dev@satnogs.org",
+    "licenseInfo": "Copyright (C) 2023 Libre Space Foundation <https://libre.space/>",
+    "licenseUrl": "https://www.gnu.org/licenses/agpl-3.0.html"
 }
