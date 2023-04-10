@@ -70,19 +70,17 @@ html_context = {
     "conf_py_path": "/docs/",
 }
 
+gitlab_user = html_context['gitlab_user']
+gitlab_repo = html_context['gitlab_repo']
+
 if '+' in version:
-    api_reference_url = 'https://gitlab.com/{gitlab_user}/{gitlab_repo}/-/jobs/artifacts/{full_revisionid}/file/satnogs-network-api-client/html2/index.html?job=api'.format(
-        gitlab_user=html_context['gitlab_user'],
-        gitlab_repo=html_context['gitlab_repo'],
-        full_revisionid=full_revisionid
-    )
+    openapi_yml_url = f'https://gitlab.com/{gitlab_user}/{gitlab_repo}/-/jobs/artifacts/{full_revisionid}/file/satnogs-network-api-client/openapi.yml?job=schema'
+    api_reference_url = f'https://gitlab.com/{gitlab_user}/{gitlab_repo}/-/jobs/artifacts/{full_revisionid}/file/satnogs-network-api-client/html2/index.html?job=api'
 else:
-    api_reference_url = 'https://{gitlab_user}.gitlab.io/{gitlab_repo}/api/index.html'.format(
-        gitlab_user=html_context['gitlab_user'], gitlab_repo=html_context['gitlab_repo']
-    )
-rst_epilog = """
-.. |api_reference_url| replace:: {project} API and SDK Documentation
-.. _api_reference_url: {api_reference_url}
-""".format(
-    project=project, api_reference_url=api_reference_url
-)
+    openapi_yml_url = f'https://{gitlab_user}.gitlab.io/{gitlab_repo}/api/openapi.yml'
+    api_reference_url = f'https://{gitlab_user}.gitlab.io/{gitlab_repo}/api/index.html'
+
+rst_epilog = f"""
+.. _SatNOGS Network OpenAPI document: {openapi_yml_url}
+.. _interactive API documentation: {api_reference_url}
+"""
