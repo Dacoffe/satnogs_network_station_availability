@@ -229,6 +229,7 @@ pages:
   script:
     - mv docs/_build/html/ public/
     - mv satnogs-network-api-client/html2/ public/api/
+    - mv satnogs-network-api-client/openapi.yml public/api/openapi.yml
   artifacts:
     paths:
       - public
