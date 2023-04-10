@@ -27,7 +27,7 @@ schema:
     - pip install --no-cache-dir --no-deps -r "requirements.txt" --force-reinstall .
     - >-
       ./manage.py spectacular
-      --file satnogs-network-api-client/api-schema.yml
+      --file satnogs-network-api-client/openapi.yml
       --validate
 #      --fail-on-warn
   artifacts:
@@ -47,14 +47,14 @@ api:
     - >-
       docker-entrypoint.sh
       generate
-      -i satnogs-network-api-client/api-schema.yml
+      -i satnogs-network-api-client/openapi.yml
       -g python
       -o satnogs-network-api-client
       -c satnogs-network-api-client/openapi-generator-config.json
     - >-
       docker-entrypoint.sh
       generate
-      -i satnogs-network-api-client/api-schema.yml
+      -i satnogs-network-api-client/openapi.yml
       -g html2
       -o satnogs-network-api-client/html2
       -c satnogs-network-api-client/openapi-generator-config.json
