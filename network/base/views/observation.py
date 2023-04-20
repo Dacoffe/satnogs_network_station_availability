@@ -124,6 +124,8 @@ class ObservationListView(ListView):  # pylint: disable=R0901
                     demoddata__payload_demod__isnull=True,
                     demoddata__demodulated_data__isnull=True
                 )
+            if 'i1' in results:
+                observations = observations.filter(demoddata__is_image=True)
 
         if rated:
             if 'rwu' in rated:
