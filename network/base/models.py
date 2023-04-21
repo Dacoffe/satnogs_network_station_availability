@@ -36,7 +36,7 @@ STATION_STATUSES = (
     (0, 'Offline'),
 )
 STATION_VIOLATOR_SCHEDULING_CHOICES = (
-    (0, 'Noone'),
+    (0, 'No one'),
     (1, 'Only Operators'),
     (2, 'Everyone'),
 )
