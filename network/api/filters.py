@@ -7,6 +7,10 @@ from network.base.models import Observation, Station
 from network.users.models import User
 
 
+class NumberInFilter(django_filters.BaseInFilter, django_filters.NumberFilter):
+    """Filter for comma separated numbers"""
+
+
 class ObservationViewFilter(FilterSet):
     """SatNOGS Network Observation API View Filter"""
     OBSERVATION_STATUS_CHOICES = [
@@ -56,7 +60,7 @@ class ObservationViewFilter(FilterSet):
         queryset=User.objects.filter(observations__isnull=False).distinct()
     )
 
-    observation_id = django_filters.BaseInFilter(field_name='id', label="Observation ID(s)")
+    observation_id = NumberInFilter(field_name='id', label="Observation ID(s)")
 
     # see https://django-filter.readthedocs.io/en/master/ref/filters.html for W0613
     def filter_status(self, queryset, name, value):  # pylint: disable=W0613,R0201
