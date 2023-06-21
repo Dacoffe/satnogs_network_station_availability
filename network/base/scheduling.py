@@ -316,6 +316,79 @@ def next_pass(observer, satellite, singlepass=True):
     }
 
 
+def generate_geo_observation_window(observer, satellite, start, end):
+    '''Calculate a pass for an object already overhead
+
+    :param observer: ephem object for the station
+    :type observer: ephem.Observer
+    :param satellite: ephem object for the satellite
+    :type satellite: ephem.Body
+    :param start: Start datetime of scheduling period
+    :type start: datetime string in '%Y-%m-%d %H:%M'
+    :param end: End datetime of scheduling period
+    :type end: datetime string in '%Y-%m-%d %H:%M'
+
+    :return: pass parameters used for generating observation windows
+    '''
+    pass_params = {}
+    satellite.compute(observer)
+    pass_params['rise_time'] = start
+    pass_params['rise_az'] = int(satellite.az * 180 / math.pi)
+    pass_params['tca_time'] = (start + timedelta(hours=12)).strftime("%Y-%m-%d %H:%M:%S.%f")
+    pass_params['tca_alt'] = int(satellite.alt * 180 / math.pi)
+    # skip to end of period and take 'set' measurements
+    observer.date = ephem.Date(observer.date + 24 * ephem.hour)
+    satellite.compute(observer)
+    pass_params['set_time'] = end
+    pass_params['set_az'] = int(satellite.az * 180 / math.pi)
+    return pass_params
+
+
+def generate_overhead_observation_window(observer, satellite):
+    '''Calculate a pass for an object already overhead
+
+    :param observer: ephem object for the station
+    :type observer: ephem.Observer
+    :param satellite: ephem object for the satellite
+    :type satellite: ephem.Body
+
+    :return: pass parameters used for generating observation windows
+    '''
+    pass_params = {}
+    min_horizon = float(observer.horizon)
+    satellite.compute(observer)
+    # Window is up, rise time is now
+    pass_params['rise_time'] = observer.date.datetime()
+    pass_params['rise_az'] = int(satellite.az * 180 / math.pi)
+    max_alt = satellite.az
+    max_alt_time = observer.date
+    minutes_for_finding_rise = 0
+    # Search forward to set time, and catch tca during search
+    while ephem.degrees(satellite.alt) > min_horizon and \
+            minutes_for_finding_rise < 60 * 24:
+        if max_alt < satellite.alt:
+            max_alt = satellite.alt
+            max_alt_time = observer.date
+        minutes_for_finding_rise += 1
+        observer.date = ephem.Date(observer.date + ephem.minute)
+        satellite.compute(observer)
+    observation_min_end = (
+        now() + timedelta(minutes=settings.OBSERVATION_DATE_MIN_START) +
+        timedelta(seconds=settings.OBSERVATION_DURATION_MIN)
+    ).strftime("%Y-%m-%d %H:%M:%S.%f")
+    if observer.date.datetime() < observation_min_end:
+        return {}
+    # Found set time
+    pass_params['set_time'] = observer.date.datetime()
+    pass_params['set_az'] = int(satellite.az * 180 / math.pi)
+    # Move to TCA
+    observer.date = max_alt_time
+    satellite.compute(observer)
+    pass_params['tca_time'] = observer.date.datetime()
+    pass_params['tca_alt'] = int(satellite.alt * 180 / math.pi)
+    return pass_params
+
+
 def predict_available_observation_windows(
     station, min_horizon, overlapped, tle, start, end, duration
 ):
@@ -349,6 +422,8 @@ def predict_available_observation_windows(
     observer.lat = str(station.lat)
     observer.elevation = station.alt
     observer.date = ephem.Date(start)
+    # Speeds up calculations by removing refraction
+    observer.pressure = 0
     if min_horizon is not None:
         observer.horizon = str(min_horizon)
     else:
@@ -360,16 +435,35 @@ def predict_available_observation_windows(
         except ValueError:
             return passes_found, station_windows
 
-        attempts_for_finding_rise = 0
-        if satellite.alt > 0:
-            while satellite.alt > 0 and attempts_for_finding_rise < 1440:
-                attempts_for_finding_rise += 1
-                observer.date = ephem.Date(observer.date - ephem.minute)
-                satellite.compute(observer)
+        # satellite currently up
+        if ephem.degrees(satellite.alt) > float(observer.horizon):
             try:
+                # Will cause GEO to error out, HEO & LEO caught here
+                geo_pass = False
                 pass_params = next_pass(observer, satellite)
-            except (TypeError, ValueError):
-                pass
+                # Discard previous results, generate window from satellite overhead
+                pass_params = generate_overhead_observation_window(observer, satellite)
+            # GEO caught here
+            except ValueError:
+                pass_params = generate_geo_observation_window(observer, satellite, start, end)
+                geo_pass = True
+            except TypeError:
+                return passes_found, station_windows
+            passes_found.append(pass_params)
+            # Check if overlaps with existing scheduled observations
+            # Adjust or discard window if overlaps exist
+            scheduled_obs = station.scheduled_obs
+
+            station_windows.extend(
+                create_station_windows(
+                    scheduled_obs, overlapped, pass_params, observer, satellite, tle, duration
+                )
+            )
+            time_start_new = pass_params['set_time'] + timedelta(minutes=1)
+            observer.date = time_start_new.strftime("%Y-%m-%d %H:%M:%S.%f")
+            if geo_pass:
+                return passes_found, station_windows
+
     except RuntimeError:
         return passes_found, station_windows
 
@@ -381,14 +475,6 @@ def predict_available_observation_windows(
         except (TypeError, ValueError):
             break
 
-        if pass_params['rise_time'] < start:
-            time_start_new = pass_params['set_time'] + timedelta(minutes=1)
-            observer.date = time_start_new.strftime("%Y-%m-%d %H:%M:%S.%f")
-            if start < pass_params['set_time']:
-                pass_params['rise_time'] = start
-            else:
-                continue
-
         # no match if the sat will not rise above the configured min horizon
         if pass_params['rise_time'] >= end:
             # start of next pass outside of window bounds
@@ -399,14 +485,6 @@ def predict_available_observation_windows(
             pass_params['set_time'] = end
 
         passes_found.append(pass_params)
-
-        time_start_new = pass_params['set_time'] + timedelta(minutes=1)
-        observer.date = time_start_new.strftime("%Y-%m-%d %H:%M:%S.%f")
-
-        window_duration = (pass_params['set_time'] - pass_params['rise_time']).total_seconds()
-        if not over_min_duration(window_duration):
-            continue
-
         # Check if overlaps with existing scheduled observations
         # Adjust or discard window if overlaps exist
         scheduled_obs = station.scheduled_obs
@@ -416,6 +494,8 @@ def predict_available_observation_windows(
                 scheduled_obs, overlapped, pass_params, observer, satellite, tle, duration
             )
         )
+        time_start_new = pass_params['set_time'] + timedelta(minutes=1)
+        observer.date = time_start_new.strftime("%Y-%m-%d %H:%M:%S.%f")
     return passes_found, station_windows
 
 
@@ -491,14 +571,17 @@ def create_new_observation(
     # check that end datetime is before the start datetime of the next pass, in other words that
     # end time belongs to the same single pass.
     observer.date = start + timedelta(minutes=1)
-    next_satellite_pass = next_pass(observer, sat_ephem, False)
-    if next_satellite_pass['rise_time'] < end:
-        raise SinglePassError(
-            "Observation should include only one pass of the satellite with transmitter {}"
-            " on station {}, please check start({}) and end({}) datetimes and try again".format(
-                transmitter['uuid'], station.id, start, end
+    try:
+        next_satellite_pass = next_pass(observer, sat_ephem, False)
+        if next_satellite_pass['rise_time'] < end:
+            raise SinglePassError(
+                "Observation should include only one pass of the satellite with transmitter {}"
+                " on station {}, please check start({}) and end({}) datetimes and try again".
+                format(transmitter['uuid'], station.id, start, end)
             )
-        )
+    # not valid for always up
+    except ValueError:
+        pass
 
     # List all station antennas with their frequency ranges.
     antennas = []

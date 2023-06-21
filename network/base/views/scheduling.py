@@ -346,6 +346,10 @@ def pass_predictions(request, station_id):
     observation_min_start = (
         datetime.utcnow() + timedelta(minutes=settings.OBSERVATION_DATE_MIN_START)
     ).strftime("%Y-%m-%d %H:%M:%S.%f")
+    observation_min_end = (
+        datetime.utcnow() + timedelta(minutes=settings.OBSERVATION_DATE_MIN_START) +
+        timedelta(seconds=settings.OBSERVATION_DURATION_MIN)
+    ).strftime("%Y-%m-%d %H:%M:%S.%f")
 
     available_transmitter_and_tle_sets = True
     try:
@@ -382,6 +386,8 @@ def pass_predictions(request, station_id):
                 satellite_stats = satellite_stats_by_transmitter_list(transmitters)
                 for window in station_windows:
                     valid = window['start'] > observation_min_start and window['valid_duration']
+                    if not valid:
+                        valid = window['end'] > observation_min_end and window['valid_duration']
                     window_start = datetime.strptime(window['start'], '%Y-%m-%d %H:%M:%S.%f')
                     window_end = datetime.strptime(window['end'], '%Y-%m-%d %H:%M:%S.%f')
                     sat_pass = {
