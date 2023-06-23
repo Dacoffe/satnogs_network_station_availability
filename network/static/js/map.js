@@ -91,45 +91,13 @@ $(document).ready(function() {
             url: stations
         }).done(function(data) {
             data.forEach(function(m) {
+
                 if (m.status == 1){
-                    testing_points.source.data.features.push({
-                        'type': 'Feature',
-                        'geometry': {
-                            'type': 'Point',
-                            'coordinates': [
-                                parseFloat(m.lng),
-                                parseFloat(m.lat)]
-                        },
-                        'properties': {
-                            'description': '<a href="/stations/' + m.id + '">' + m.id + ' - ' + m.name + '</a>',
-                        }
-                    });
+                    create_station_point(testing_points, m);
                 } else if (m.status == 2) {
-                    online_points.source.data.features.push({
-                        'type': 'Feature',
-                        'geometry': {
-                            'type': 'Point',
-                            'coordinates': [
-                                parseFloat(m.lng),
-                                parseFloat(m.lat)]
-                        },
-                        'properties': {
-                            'description': '<a href="/stations/' + m.id + '">' + m.id + ' - ' + m.name + '</a>',
-                        }
-                    });
+                    create_station_point(online_points, m);
                 } else if (m.status == 0) {
-                    offline_points.source.data.features.push({
-                        'type': 'Feature',
-                        'geometry': {
-                            'type': 'Point',
-                            'coordinates': [
-                                parseFloat(m.lng),
-                                parseFloat(m.lat)]
-                        },
-                        'properties': {
-                            'description': '<a href="/stations/' + m.id + '">' + m.id + ' - ' + m.name + '</a>',
-                        }
-                    });
+                    create_station_point(offline_points, m);
                 }
             });
 
@@ -155,6 +123,27 @@ $(document).ready(function() {
 
         });
     });
+
+    function create_station_point(array, station) {
+        var key = `${station.lng}${station.lat}`;
+        var index = array.source.data.features.findIndex(e => e.key === key);
+        if (index > -1){
+            array.source.data.features[index].properties.description += '</br><a href="/stations/' + station.id + '">' + station.id + ' - ' + station.name + '</a>';
+        }
+        array.source.data.features.push({
+            'key': key,
+            'type': 'Feature',
+            'geometry': {
+                'type': 'Point',
+                'coordinates': [
+                    parseFloat(station.lng),
+                    parseFloat(station.lat)]
+            },
+            'properties': {
+                'description': '<a href="/stations/' + station.id + '">' + station.id + ' - ' + station.name + '</a>',
+            }
+        });
+    }
 
     // Toggle map layer
     function toggle_layer(map, layer) {
