@@ -31,7 +31,9 @@ class ObservationListView(ListView):  # pylint: disable=R0901
     context_object_name = "observations"
     paginate_by = settings.ITEMS_PER_PAGE
     template_name = 'base/observations.html'
-    str_filters = ['norad', 'observer', 'station', 'start', 'end', 'transmitter_mode']
+    str_filters = [
+        'norad', 'observer', 'station', 'start', 'end', 'transmitter_mode', 'transmitter_uuid'
+    ]
     flag_filters = ['bad', 'good', 'unknown', 'future', 'failed']
     filtered = None
 
@@ -76,6 +78,7 @@ class ObservationListView(ListView):  # pylint: disable=R0901
             'start': 'start__gt',
             'end': 'end__lt',
             'transmitter_mode': 'transmitter_mode__icontains',
+            'transmitter_uuid': 'transmitter_uuid__icontains',
         }
 
         # Create observations filter based on the received HTTP POST parameters
@@ -160,6 +163,8 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         station = self.request.GET.get('station', None)
         start = self.request.GET.get('start', get_two_days_ago())
         end = self.request.GET.get('end', None)
+        transmitter_uuid = self.request.GET.get('transmitter_uuid', None)
+
         context['future'] = self.request.GET.get('future', '1')
         context['bad'] = self.request.GET.get('bad', '1')
         context['good'] = self.request.GET.get('good', '1')
@@ -168,6 +173,10 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         context['results'] = self.request.GET.getlist('results')
         context['rated'] = self.request.GET.getlist('rated')
         context['transmitter_mode'] = self.request.GET.get('transmitter_mode', None)
+        context['transmitter_uuids'] = \
+            Observation.objects.all().order_by('transmitter_uuid').values_list(
+            'transmitter_uuid',
+            flat=True)
         context['filtered'] = bool(self.filtered)
         if norad_cat_id is not None and norad_cat_id != '':
             context['norad'] = int(norad_cat_id)
@@ -185,6 +194,8 @@ class ObservationListView(ListView):  # pylint: disable=R0901
                 del self.request.session['scheduled']
             except KeyError:
                 pass
+        if transmitter_uuid:
+            context['transmitters_uuid'] = transmitter_uuid
         context['can_schedule'] = schedule_perms(self.request.user)
         return context
 
