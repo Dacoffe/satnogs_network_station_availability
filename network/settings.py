@@ -138,7 +138,6 @@ TEMPLATES = [
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.request',
-                'network.base.context_processors.analytics',
                 'network.base.context_processors.stage_notice',
                 'network.base.context_processors.user_processor',
                 'network.base.context_processors.auth_block',
@@ -358,7 +357,6 @@ CSP_SCRIPT_SRC = config(
     'CSP_SCRIPT_SRC',
     cast=lambda v: tuple(s.strip() for s in v.split(',')),
     default="'self',"
-    'https://*.google-analytics.com,'
     "'unsafe-eval'"
 )
 CSP_IMG_SRC = config(
@@ -368,7 +366,6 @@ CSP_IMG_SRC = config(
     'https://*.gravatar.com,'
     'https://*.mapbox.com,'
     'https://*.satnogs.org,'
-    'https://*.google-analytics.com,'
     'data:,'
     'blob:'
 )

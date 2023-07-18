@@ -6,13 +6,6 @@ from network import __version__
 from network.base.stats import unknown_observations_count
 
 
-def analytics(request):
-    """Returns analytics code."""
-    if settings.ENVIRONMENT == 'production':
-        return {'analytics_code': render_to_string('includes/analytics.html')}
-    return {'analytics_code': ''}
-
-
 def stage_notice(request):
     """Displays stage notice."""
     if settings.ENVIRONMENT == 'stage':
