@@ -2,7 +2,7 @@
 #
 # Development and maintenance script
 #
-# Copyright (C) 2021 Libre Space Foundation <https://libre.space/>
+# Copyright (C) 2021, 2023 Libre Space Foundation <https://libre.space/>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -151,7 +151,6 @@ parse_args() {
 			if [ -z "$1" ]; then
 				echo "ERROR: No service name specified!" >&2
 				usage
-				exit 1
 			fi
 			if ! "$COMPOSE_CMD" exec "$1" "$SHELL_CMD"; then
 				echo "Please make sure that the services are up!" >&2
@@ -167,7 +166,8 @@ parse_args() {
 			;;
 		django-admin)
 			has_command "docker-compose"
-			if ! "$COMPOSE_CMD" exec "$SERVICE_WEB" "$MANAGE_CMD" django-admin; then
+			shift
+			if ! "$COMPOSE_CMD" exec "$SERVICE_WEB" "$MANAGE_CMD" "$@"; then
 				echo "Please make sure that the services are up!" >&2
 				exit 1
 			fi
@@ -175,6 +175,7 @@ parse_args() {
 			;;
 		tox)
 			has_command "tox"
+			shift
 			"$TOX_CMD" "$@"
 			return
 			;;
@@ -206,7 +207,6 @@ parse_args() {
 			;;
 		*)
 			usage
-			exit 1
 			;;
 	esac
 }
