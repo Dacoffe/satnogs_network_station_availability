@@ -33,16 +33,15 @@ Usage: $(basename "$0") [OPTIONS]... [COMMAND]...
 SatNOGS Development and Maintenance script.
 
 DOCKER COMMANDS:
-  DOCKER_COMPOSE_COMMANDS [ARGS]
-                        Run any Docker Compose command.
-                         See 'docker-compose --help' for details.
-                         'up' command will also attempt to initialize
-                         the installation and will always run in the
-                         background.
+  up                    Start services in the background and attempt to
+                         initialize the installation.
   shell SERVICE         Open a shell to a running service.
   clean                 Bring down all services and remove volumes.
   django-admin          Execute 'django-admin'. See 'django-admin help'
                          for available subcommands.
+  compose DOCKER_COMPOSE_COMMANDS [ARGS]
+                        Run any Docker Compose command.
+                         See 'docker-compose --help' for details.
 
 VIRTUALENV COMMANDS:
   develop               Run application in development mode and
@@ -131,18 +130,20 @@ has_command() {
 parse_args() {
 	arg="$1"
 	case $arg in
-		build|config|create|down|events|exec|images|kill|logs|pause|port|ps|pull|push|restart|rm|run|scale|start|stop|top|unpause|up)
+		compose)
 			has_command "docker-compose"
-			if [ "$arg" = "up" ]; then
-				frontend_deps install
-				shift
-				"$COMPOSE_CMD" "$arg" -d "$@"
-				wait_prepare
-				docker_initialize
-				echo "Services start-up completed."
-			else
-				"$COMPOSE_CMD" "$@"
-			fi
+			shift
+			"$COMPOSE_CMD" "$@"
+			return
+			;;
+		up)
+			has_command "docker-compose"
+			frontend_deps install
+			shift
+			"$COMPOSE_CMD" "$arg" -d "$@"
+			wait_prepare
+			docker_initialize
+			echo "Services start-up completed."
 			return
 			;;
 		shell)
