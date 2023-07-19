@@ -55,7 +55,7 @@ To run SatNOGS Network service::
 
 To stop SatNOGS Network service::
 
-  $ ./satnogs.sh down
+  $ ./satnogs.sh compose down
 
 To clean-up SatNOGS Network installation::
 
