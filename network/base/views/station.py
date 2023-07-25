@@ -4,7 +4,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.db import DatabaseError, transaction
-from django.db.models import Count, Q
+from django.db.models import Count, IntegerField, OuterRef, Q, Subquery
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -14,7 +15,7 @@ from django.views.generic import ListView
 from network.base.decorators import ajax_required
 from network.base.forms import AntennaInlineFormSet, FrequencyRangeInlineFormSet, StationForm, \
     StationRegistrationForm
-from network.base.models import AntennaType, Station, StationStatusLog
+from network.base.models import AntennaType, Observation, Station, StationStatusLog
 from network.base.perms import modify_delete_station_perms, schedule_station_perms
 from network.base.serializers import StationSerializer
 from network.base.utils import populate_formset_error_messages
@@ -67,9 +68,13 @@ class StationListView(ListView):  # pylint: disable=R0901
         return filter_params
 
     def get_queryset(self):
+        future_obs_subquery = Observation.objects.filter(
+            ground_station_id=OuterRef('id'), end__gt=now()
+        ).values('ground_station_id').annotate(c=Count('id')).values('c')
+
         stations = Station.objects.annotate(
             total_obs=Count('observations'),
-            future_obs=Count('pk', filter=Q(observations__end__gt=now())),
+            future_obs=Coalesce(Subquery(future_obs_subquery, output_field=IntegerField()), 0)
         ).select_related('owner').prefetch_related(
             'antennas', 'antennas__antenna_type', 'antennas__frequency_ranges'
         ).order_by('-status', 'id')
