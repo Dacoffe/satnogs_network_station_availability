@@ -32,15 +32,19 @@ class ObservationView(  # pylint: disable=R0901
         mixins.CreateModelMixin, viewsets.GenericViewSet):
     """SatNOGS Network Observation API view class"""
     filterset_class = filters.ObservationViewFilter
-    permission_classes = [StationOwnerPermission]
     pagination_class = pagination.LinkedHeaderPageNumberPagination
+
+    def get_permissions(self):
+        if self.action in ('update', 'create'):
+            self.permission_classes = [StationOwnerPermission]
+        return super().get_permissions()
 
     def get_queryset(self):
         if self.action == 'update':
             queryset = Observation.objects.select_for_update()
         else:
-            queryset = Observation.objects.prefetch_related(
-                'satellite', 'demoddata', 'ground_station'
+            queryset = Observation.objects.prefetch_related('demoddata').select_related(
+                'satellite', 'ground_station', "waterfall_status_user", "author"
             )
         if isinstance(queryset, QuerySet):
             # Ensure queryset is re-evaluated on each request.
