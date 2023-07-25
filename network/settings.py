@@ -302,6 +302,10 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ('rest_framework.authentication.TokenAuthentication', ),
     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend', ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'network.api.renderers.BrowsableAPIRendererWithoutForms',
+    ]
 }
 SPECTACULAR_DEFAULTS = {
     'SCHEMA_PATH_PREFIX': r'/api',
