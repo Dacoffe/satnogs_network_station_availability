@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils.timezone import now
+from django.utils.timezone import now, timedelta
 from django.views.generic import ListView
 
 from network.base.db_api import DBConnectionError, get_transmitters_by_norad_id
@@ -16,6 +16,11 @@ from network.base.rating_tasks import rate_observation
 from network.base.stats import satellite_stats_by_transmitter_list, transmitters_with_stats
 from network.base.utils import community_get_discussion_details
 from network.users.models import User
+
+
+def get_two_days_ago():
+    """Helper function to get the datetime 48 hours before as formatted string"""
+    return (now() - timedelta(days=2)).strftime("%Y-%m-%d %H:%M")
 
 
 class ObservationListView(ListView):  # pylint: disable=R0901
@@ -92,6 +97,10 @@ class ObservationListView(ListView):  # pylint: disable=R0901
             ) or results or rated or filter_dict
         )
 
+        # If user has not filtered the results, display the observations of the last 48 hours
+        if not self.filtered:
+            filter_dict["start__gt"] = get_two_days_ago()
+
         observations = observations.filter(**filter_dict)
 
         if not filter_params['failed']:
@@ -149,7 +158,7 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         norad_cat_id = self.request.GET.get('norad', None)
         observer = self.request.GET.get('observer', None)
         station = self.request.GET.get('station', None)
-        start = self.request.GET.get('start', None)
+        start = self.request.GET.get('start', get_two_days_ago())
         end = self.request.GET.get('end', None)
         context['future'] = self.request.GET.get('future', '1')
         context['bad'] = self.request.GET.get('bad', '1')
