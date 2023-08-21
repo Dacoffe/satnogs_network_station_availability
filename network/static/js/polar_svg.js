@@ -18,6 +18,20 @@
 function calcPolarPlotSVG(timeframe, groundstation, tleLine1, tleLine2) {
     'use strict';
 
+    var svg_namespace = 'http://www.w3.org/2000/svg';
+    if (groundstation.lon == 'None' || groundstation.lat == 'None' || groundstation.alt == 'None' ) {
+        var no_location_text = document.createElementNS(svg_namespace, 'text');
+        no_location_text.textContent = 'No Location Data';
+        no_location_text.setAttributeNS(null, 'fill', 'red');
+        no_location_text.setAttributeNS(null, 'stroke', 'red');
+        no_location_text.setAttributeNS(null, 'stroke-width', '1');
+        no_location_text.setAttributeNS(null, 'font-size', '20px');
+        no_location_text.setAttribute('x', '0');
+        no_location_text.setAttribute('y', '0');
+        no_location_text.setAttribute('text-anchor', 'middle');
+        return [no_location_text];
+    }
+
     const pi = Math.PI;
     const deg2rad = pi / 180.0;
     const rad2deg = 180 / pi;
@@ -36,7 +50,6 @@ function calcPolarPlotSVG(timeframe, groundstation, tleLine1, tleLine2) {
         return ret;
     };
 
-    var svg_namespace = 'http://www.w3.org/2000/svg';
     var polarOrbit = document.createElementNS(svg_namespace, 'path');
     polarOrbit.setAttributeNS(null, 'fill', 'none');
     polarOrbit.setAttributeNS(null, 'stroke', 'blue');
@@ -60,48 +73,61 @@ function calcPolarPlotSVG(timeframe, groundstation, tleLine1, tleLine2) {
     }
 
 
-    // Draw the orbit pass on the polar az/el plot
-    var g = '';
-    for (var t = moment(timeframe.start); t < moment(timeframe.end); t.add(20, 's')) {
-        var sky_position = polarGetAzEl(t);
-        var coord = polarGetXY(sky_position.azimuth, sky_position.elevation);
+    try {
+        // Draw the orbit pass on the polar az/el plot
+        var g = '';
+        for (var t = moment(timeframe.start); t < moment(timeframe.end); t.add(20, 's')) {
+            var sky_position = polarGetAzEl(t);
+            var coord = polarGetXY(sky_position.azimuth, sky_position.elevation);
 
-        if (g == '') {
-            // Start of line
-            g += 'M';
-        } else {
-            // Continue line
-            g += ' L';
+            if (g == '') {
+                // Start of line
+                g += 'M';
+            } else {
+                // Continue line
+                g += ' L';
+            }
+            g += coord.x + ' ' + coord.y;
         }
-        g += coord.x + ' ' + coord.y;
+        polarOrbit.setAttribute('d', g);
+
+        // Draw observation start
+        var point_start = document.createElementNS(svg_namespace, 'circle');
+        point_start.setAttributeNS(null, 'fill', 'lightgreen');
+        point_start.setAttributeNS(null, 'stroke', 'black');
+        point_start.setAttributeNS(null, 'stroke-width', '1');
+
+        var sky_position_rise = polarGetAzEl(moment(timeframe.start));
+        var coord_rise = polarGetXY(sky_position_rise.azimuth, sky_position_rise.elevation);
+
+        point_start.setAttribute('cx', coord_rise.x);
+        point_start.setAttribute('cy', coord_rise.y);
+        point_start.setAttribute('r', 7);
+
+        // Draw oberservation end
+        var point_end = document.createElementNS(svg_namespace, 'circle');
+        point_end.setAttributeNS(null, 'fill', 'red');
+        point_end.setAttributeNS(null, 'stroke', 'black');
+        point_end.setAttributeNS(null, 'stroke-width', '1');
+
+        var sky_position_set = polarGetAzEl(moment(timeframe.end));
+        var coord_set = polarGetXY(sky_position_set.azimuth, sky_position_set.elevation);
+
+        point_end.setAttribute('cx', coord_set.x);
+        point_end.setAttribute('cy', coord_set.y);
+        point_end.setAttribute('r', 7);
+
+        return [polarOrbit, point_start, point_end];
+    } catch(error) {
+        var decayed_text = document.createElementNS(svg_namespace, 'text');
+        decayed_text.textContent = 'Probably Decayed';
+        decayed_text.setAttributeNS(null, 'fill', 'red');
+        decayed_text.setAttributeNS(null, 'stroke', 'red');
+        decayed_text.setAttributeNS(null, 'stroke-width', '1');
+        decayed_text.setAttributeNS(null, 'font-size', '20px');
+        decayed_text.setAttribute('x', '0');
+        decayed_text.setAttribute('y', '0');
+        decayed_text.setAttribute('text-anchor', 'middle');
+        return [decayed_text];
     }
-    polarOrbit.setAttribute('d', g);
-
-    // Draw observation start
-    var point_start = document.createElementNS(svg_namespace, 'circle');
-    point_start.setAttributeNS(null, 'fill', 'lightgreen');
-    point_start.setAttributeNS(null, 'stroke', 'black');
-    point_start.setAttributeNS(null, 'stroke-width', '1');
-
-    var sky_position_rise = polarGetAzEl(moment(timeframe.start));
-    var coord_rise = polarGetXY(sky_position_rise.azimuth, sky_position_rise.elevation);
-
-    point_start.setAttribute('cx', coord_rise.x);
-    point_start.setAttribute('cy', coord_rise.y);
-    point_start.setAttribute('r', 7);
-
-    // Draw oberservation end
-    var point_end = document.createElementNS(svg_namespace, 'circle');
-    point_end.setAttributeNS(null, 'fill', 'red');
-    point_end.setAttributeNS(null, 'stroke', 'black');
-    point_end.setAttributeNS(null, 'stroke-width', '1');
-
-    var sky_position_set = polarGetAzEl(moment(timeframe.end));
-    var coord_set = polarGetXY(sky_position_set.azimuth, sky_position_set.elevation);
-
-    point_end.setAttribute('cx', coord_set.x);
-    point_end.setAttribute('cy', coord_set.y);
-    point_end.setAttribute('r', 7);
-
-    return [polarOrbit, point_start, point_end];
 }
