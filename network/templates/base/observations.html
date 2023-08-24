@@ -19,16 +19,9 @@
     </div>
 
     <div class="col d-none d-lg-flex justify-content-end align-items-center">
-      {% if is_paginated %}
-          {% load paginator %}{% paginator request 3%}
-      {% endif %}
       <span class="observations-actions">
         <a href="#legend" class="btn btn-outline-dark" role="button" data-toggle="modal" data-target="#LegendModal">
           <span class="bi bi-info-circle" aria-hidden="true"></span>
-        </a>
-        <a class="btn btn-outline-dark" role="button" data-toggle="collapse"
-           href="#collapseFilters" aria-expanded="false" aria-controls="collapseFilters">
-          <span class="bi bi-funnel-fill" aria-hidden="true"></span>
         </a>
       	{% if can_schedule %}
           <a class="btn btn-primary" role="button" href="{% url 'base:observation_new' %}">
@@ -40,22 +33,18 @@
 
     <div class="col d-flex d-lg-none justify-content-end align-items-center">
       <span class="observations-actions">
-        <a class="btn btn-outline-dark" role="button" data-toggle="collapse"
-                href="#collapseFilters" aria-expanded="false" aria-controls="collapseFilters">
-          <span class="bi bi-funnel-fill" aria-hidden="true"></span>
-        </a>
         {% if can_schedule %}
           <a class="btn btn-primary" href="{% url 'base:observation_new' %}">
             <span class="bi bi-plus" aria-hidden="true"></span>
           </a>
         {% endif %}
-      </span">
+      </span>
     </div>
   </div>
 
-  <div class="collapse{% if norad %} in{% endif %} px-2 pt-2" id="collapseFilters" data-filtered="{{ filtered }}">
+  <div class="{% if norad %} in{% endif %} pt-2" id="collapseFilters" data-url_query="{% url 'base:vet_observations' %}?{{ url_query }}">
     <div class="filter-section card">
-      <form id="observation-filter" class="form row" method="get" action="{% url 'base:observations_list' %}">
+      <form class="form row" method="get" action="{% url 'base:observations_list' %}">
         <div class="form-group status-filter col-md-4 col-lg-3">
           <label for="status-selector">Status</label>
           <div id="status-selector" class="btn-group-toggle" role="group" aria-label="Group of status filters" data-toggle="buttons">
@@ -118,61 +107,19 @@
             {% endfor %}
           </select>
         </div>
-        <div class="form-group col-md-4 col-lg-3">
-          <label for="observer-selection">Observer</label>
-          <select class="form-control selectpicker" data-style="btn" name="observer" autocomplete="off" id="observer-selection" data-live-search="true">
-            <option value="" selected>All</option>
-            {% for author in authors %}
-              <option data-author="{{ author.id }}" value="{{ author.id }}"
-                      {% if author.id == observer_id %}selected{% endif %}>
-                {{ author.displayname }}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="form-group col-md-4 col-lg-3">
-          <label for="station-selection">Station</label>
-          <select class="form-control selectpicker" data-style="btn" name="station" autocomplete="off" id="station-selection" data-live-search="true">
-            <option value="" selected>All</option>
-            {% for station in stations %}
-              <option data-station="{{ station }}" value="{{ station.id }}"
-                      {% if station.id == station_id %}selected{% endif %}>
-                {{ station.id }} - {{ station.name }}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="form-group col-md-4 col-lg-3">
-          <label for="results-selection">Results</label>
-          <select class="form-control selectpicker" data-style="btn" name="results" autocomplete="off" id="results-selection" multiple>
-            <optgroup label="Waterfall" data-icon="bi-image" data-max-options="1">
-              <option value="w1" {% if 'w1' in results %}selected{% endif %}>With Waterfall</option>
-              <option value="w0" {% if 'w0' in results %}selected{% endif %}>Without Waterfall </option>
-            </optgroup>
-            <optgroup label="Audio" data-icon="bi-volume-up-fill" data-max-options="1">
-              <option value="a1" {% if 'a1' in results %}selected{% endif %}>With Audio</option>
-              <option value="a0" {% if 'a0' in results %}selected{% endif %}>Without Audio</option>
-            </optgroup>
-            <optgroup label="Data" data-icon="bi-file-earmark-fill" data-max-options="1">
-              <option value="d1" {% if 'd1' in results %}selected{% endif %}>With Data</option>
-              <option value="d0" {% if 'd0' in results %}selected{% endif %}>Without Data</option>
-              <option value="i1" {% if 'i1' in results %}selected{% endif %}>Image</option>
-            </optgroup>
-          </select>
-        </div>
         <div class="form-group col-md-4 col-lg-3 ">
           <label class="control-label">Start Time</label>
           <div class='input-group datetimepicker' id="datetimepicker-start"
-               {% if start is not None %}
-                 data-value = "{{ start }}"
-               {% endif %}
-               data-td-target-input="nearest"
-               data-td-target-toggle="nearest">
+              {% if start is not None %}
+                data-value = "{{ start }}"
+              {% endif %}
+              data-td-target-input="nearest"
+              data-td-target-toggle="nearest">
             <input data-td-target="#datetimepicker-start"
-                   type="text"
-                   class="form-control"
-                   name="start"
-                   autocomplete="off"/>
+                  type="text"
+                  class="form-control"
+                  name="start"
+                  autocomplete="off"/>
             <span class="input-group-append"
                   data-td-target="#datetimepicker-start"
                   data-td-toggle="datetimepicker">
@@ -180,19 +127,19 @@
             </span>
           </div>
         </div>
-        <div class="form-group col-md-4 col-lg-3 ">
+        <div class="form-group col-md-4 col-lg-3">
           <label class="control-label">End Time</label>
           <div class='input-group datetimepicker' id="datetimepicker-end"
-               {% if end is not None %}
-                 data-value = "{{ end }}"
-               {% endif %}
-               data-td-target-input="nearest"
-               data-td-target-toggle="nearest">
+              {% if end is not None %}
+                data-value = "{{ end }}"
+              {% endif %}
+              data-td-target-input="nearest"
+              data-td-target-toggle="nearest">
             <input data-td-target="#datetimepicker-end"
-                   type="text"
-                   class="form-control"
-                   name="end"
-                   autocomplete="off"/>
+                  type="text"
+                  class="form-control"
+                  name="end"
+                  autocomplete="off"/>
             <span class="input-group-append"
                   data-td-target="#datetimepicker-end"
                   data-td-toggle="datetimepicker">
@@ -200,41 +147,102 @@
             </span>
           </div>
         </div>
-        <div class="form-group col-md-4 col-lg-3">
-          <label for="results-selection">Rated Artifacts</label>
-          <select class="form-control selectpicker" data-style="btn" name="rated" autocomplete="off" id="results-selection" multiple>
-            <optgroup label="Waterfall" data-icon="bi-image" data-max-options="1">
-              <option value="rwu" {% if 'rwu' in rated %}selected{% endif %}>Non Rated</option>
-              <option value="rw1" {% if 'rw1' in rated %}selected{% endif %}>With Signal</option>
-              <option value="rw0" {% if 'rw0' in rated %}selected{% endif %}>Without Signal</option>
-            </optgroup>
-          </select>
+        <div class="col-12 d-flex pt-3 pb-4">
+          <button type="button" id="more-filters-button" class="btn btn-link" data-toggle="collapse"
+                    data-target="#collapseMoreFilters" aria-expanded="false" aria-controls="collapseMoreFilters">
+              <span id="more-filters-button-content" class="bi bi-chevron-down"></span> Show More Filters
+            </button>
         </div>
-        <div class="form-group col-md-4 col-lg-3">
-          <label for="results-selection">Transmitter Mode</label>
-          <input class="form-control form-control-sidebar" type="search" id="search" name="transmitter_mode"
-              aria-labelledby="search-label"
-              {% if transmitter_mode is not None %}
-                value = "{{ transmitter_mode }}"
-              {% endif %}>
-        </div>
-        <div class="form-group col-md-4 col-lg-3">
-          <label for="transmitter-uuid-selection">Transmitter uuid</label>
-          <select class="form-control selectpicker" data-style="btn" name="transmitter_uuid" autocomplete="off" id="transmitter-uuid-selection" data-live-search="true">
-            <option value="" selected>All</option>
-            {% for transmitter_uuid in transmitter_uuids %}
-              <option data-transmitter_uuid="{{ transmitter_uuid }}" value="{{ transmitter_uuid }}"
-                      {% if transmitter_uuid == transmitters_uuid %}selected{% endif %}>
-                {{ transmitter_uuid }}
-              </option>
-            {% endfor %}
-          </select>
+        <div class="collapse form col-12 row{% if more_filtered %} show{% endif %}" id="collapseMoreFilters">
+          <div class="form-group col-md-4 col-lg-3">
+            <label for="observer-selection">Observer</label>
+            <select class="form-control selectpicker" data-style="btn" name="observer" autocomplete="off" id="observer-selection" data-live-search="true">
+              <option value="" selected>All</option>
+              {% for author in authors %}
+                <option data-author="{{ author.id }}" value="{{ author.id }}"
+                        {% if author.id == observer_id %}selected{% endif %}>
+                  {{ author.displayname }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group col-md-4 col-lg-3">
+            <label for="station-selection">Station</label>
+            <select class="form-control selectpicker" data-style="btn" name="station" autocomplete="off" id="station-selection" data-live-search="true">
+              <option value="" selected>All</option>
+              {% for station in stations %}
+                <option data-station="{{ station }}" value="{{ station.id }}"
+                        {% if station.id == station_id %}selected{% endif %}>
+                  {{ station.id }} - {{ station.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group col-md-4 col-lg-3">
+            <label for="results-selection">Results</label>
+            <select class="form-control selectpicker" data-style="btn" name="results" autocomplete="off" id="results-selection" multiple>
+              <optgroup label="Waterfall" data-icon="bi-image" data-max-options="1">
+                <option value="w1" {% if 'w1' in results %}selected{% endif %}>With Waterfall</option>
+                <option value="w0" {% if 'w0' in results %}selected{% endif %}>Without Waterfall </option>
+              </optgroup>
+              <optgroup label="Audio" data-icon="bi-volume-up-fill" data-max-options="1">
+                <option value="a1" {% if 'a1' in results %}selected{% endif %}>With Audio</option>
+                <option value="a0" {% if 'a0' in results %}selected{% endif %}>Without Audio</option>
+              </optgroup>
+              <optgroup label="Data" data-icon="bi-file-earmark-fill" data-max-options="1">
+                <option value="d1" {% if 'd1' in results %}selected{% endif %}>With Data</option>
+                <option value="d0" {% if 'd0' in results %}selected{% endif %}>Without Data</option>
+                <option value="i1" {% if 'i1' in results %}selected{% endif %}>Image</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group col-md-4 col-lg-3">
+            <label for="results-selection">Rated Artifacts</label>
+            <select class="form-control selectpicker" data-style="btn" name="rated" autocomplete="off" id="results-selection" multiple>
+              <optgroup label="Waterfall" data-icon="bi-image" data-max-options="1">
+                <option value="rwu" {% if 'rwu' in rated %}selected{% endif %}>Non Rated</option>
+                <option value="rw1" {% if 'rw1' in rated %}selected{% endif %}>With Signal</option>
+                <option value="rw0" {% if 'rw0' in rated %}selected{% endif %}>Without Signal</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group col-md-4 col-lg-3">
+            <label for="results-selection">Transmitter Mode</label>
+            <input class="form-control form-control-sidebar" type="search" id="search" name="transmitter_mode"
+                aria-labelledby="search-label"
+                {% if transmitter_mode is not None %}
+                  value = "{{ transmitter_mode }}"
+                {% endif %}>
+          </div>
+          <div class="form-group col-md-4 col-lg-3">
+            <label for="transmitter-uuid-selection">Transmitter uuid</label>
+            <select class="form-control selectpicker" data-style="btn" name="transmitter_uuid" autocomplete="off" id="transmitter-uuid-selection" data-live-search="true">
+              <option value="" selected>All</option>
+              {% for transmitter_uuid in transmitter_uuids %}
+                <option data-transmitter_uuid="{{ transmitter_uuid }}" value="{{ transmitter_uuid }}"
+                        {% if transmitter_uuid == transmitters_uuid %}selected{% endif %}>
+                  {{ transmitter_uuid }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
         </div>
         <div class="form-group col-md-12 text-center">
-          <button type="submit" class="btn btn-primary">Update filters</button>
+          <button type="submit-{{form_type}}" class="btn btn-primary">Search</button>
         </div>
       </form>
     </div>
+  </div>
+
+  <div class="d-flex mt-5 mb-2 justify-content-between">
+      {% if user.is_authenticated and observations %}
+        <button id="submit-vet-filter" class="btn btn-secondary">Vet Search Results ({{ paginator.count }})</button>
+      {% else %}
+          <div></div>
+      {% endif %}
+      {% if is_paginated %}
+          {% load paginator %}{% paginator request 3 %}
+      {% endif %}
   </div>
 
   <div class="row">
@@ -336,13 +344,20 @@
                 {% endif %}
               </td>
             </tr>
+          {% empty %}
+            <p>No observations to display</p>
           {% endfor %}
         </tbody>
       </table>
-      {% if is_paginated %}{% load paginator %}{% paginator request 3 %}{% endif %}
-      <div class="text-center mt-2">
-        Query returned {{ observations|length }} observation{{ observations|length|pluralize }}.
-        <a id="open-all" href="#">Open all in tabs</a>
+      <div class="d-flex mt-5 mb-2 justify-content-between">
+          {% if user.is_authenticated and observations %}
+            <button id="submit-vet-filter" class="btn btn-secondary">Vet Search Results ({{ paginator.count }})</button>
+          {% else %}
+            <div></div>
+          {% endif %}
+          {% if is_paginated %}
+              {% load paginator %}{% paginator request 3 %}
+          {% endif %}
       </div>
     </div>
   </div>

@@ -24,6 +24,16 @@ BASE_URLPATTERNS = (
             observation.observation_delete,
             name='observation_delete'
         ),
+        path(
+            'vet-observations/',
+            observation.VetObservationsView.as_view(),
+            name='vet_observations'
+        ),
+        path(
+            'vet-observations-chunks/',
+            observation.VetObservationsChunkListView.as_view(),
+            name='vet_observations_chunks'
+        ),
         re_path(
             r'^waterfall_vet/(?P<observation_id>[0-9]+)/$',
             observation.waterfall_vet,

@@ -1,7 +1,12 @@
 /* global WaveSurfer calcPolarPlotSVG */
 
-$(document).ready(function() {
+$(document).ready(observationView);
+document.addEventListener('obs_changed', observationView, false);
+
+function observationView() {
     'use strict';
+
+    let obs_vetted = new Event('obs_vetted');
 
     // Format time for the player
     function formatTime(timeSeconds) {
@@ -185,6 +190,7 @@ $(document).ready(function() {
             $('#waterfall-status-badge').show();
             $('#waterfall-status-form').show();
             $('#rating-status').show();
+            document.dispatchEvent(obs_vetted);
             return;
         }).fail(function() {
             var error_msg = 'Something went wrong, please try again';
@@ -437,14 +443,12 @@ $(document).ready(function() {
         $('#hex-button').removeClass('active');
     });
 
-    // Hotkeys bindings
+    // Hotkeys bindings\
+    $(document).unbind('keyup');
     $(document).bind('keyup', function(event){
         if (event.which == 88) {
             var link_delete = $('#obs-delete');
             link_delete[0].click();
-        } else if (event.which == 68) {
-            var link_discuss = $('#obs-discuss');
-            link_discuss[0].click();
         } else if (event.which == 85) {
             var link_unknown = $('#unknown-status');
             link_unknown[0].click();
@@ -456,4 +460,4 @@ $(document).ready(function() {
             link_bad[0].click();
         }
     });
-});
+}

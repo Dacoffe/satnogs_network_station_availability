@@ -486,6 +486,12 @@ COMMUNITY_TIMEOUT = config('COMMUNITY_TIMEOUT', default=2.0, cast=float)
 # ListView pagination
 ITEMS_PER_PAGE = config('ITEMS_PER_PAGE', default=25, cast=int)
 
+# Multiple vetting workflow
+VET_ITEMS_PER_CHUNK = config('VET_ITEMS_PER_CHUNK', default=20, cast=int)
+CHUNKS_BUFFER_HEADSTART = config('CHUNKS_BUFFER_HEADSTART', default=1, cast=int)
+FWD_BUFFER_CHUNKS = config('FWD_BUFFER_CHUNKS', default=2, cast=int)
+BWD_BUFFER_CHUNKS = config('BWD_BUFFER_CHUNKS', default=2, cast=int)
+
 # Cache expiration of the lock for "process audio" task
 PROCESS_AUDIO_LOCK_EXPIRATION = config('PROCESS_AUDIO_LOCK_EXPIRATION', default=900, cast=int)
 

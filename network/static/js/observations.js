@@ -132,33 +132,25 @@ $(document).ready(function() {
         }
     });
 
-    // Check if filters should be displayed
-    if (window.location.hash == '#collapseFilters') {
-        $('#collapseFilters').collapse('hide');
-    } else if ($('#collapseFilters').data('filtered') == 'True') {
-        $('#collapseFilters').collapse('show');
-    }
-
-    // Open all observations in new tabs
-    $('#open-all').click(function() {
-        $('a.obs-link').each(function() {
-            window.open($(this).attr('href'));
-        });
-    });
-
-    // Open all observations in new tabs with "Shift + A"
-    $(document).bind('keyup', function(event){
-        if (event.shiftKey && (event.which == 97 || event.which == 65)) {
-            $('#open-all').click();
-        }
-    });
-
     // Disable submitting form when hiting enter on date inputs
     $(document).on('keypress', '.datetimepicker input', function (e) {
         var code = e.keyCode || e.which;
         if (code == 13) {
             e.preventDefault();
             return false;
+        }
+    });
+
+    $('#submit-vet-filter').click(() => {
+        window.location = $('#collapseFilters').data('url_query');
+    });
+
+    document.getElementById('more-filters-button').addEventListener('click', function() {
+        const buttonSpan = document.getElementById('more-filters-button-content');
+        if (buttonSpan && buttonSpan.classList.contains('bi-chevron-down')) {
+            this.innerHTML = '<span id="more-filters-button-content" class="bi bi-chevron-up"></span> Hide More Filters';
+        } else {
+            this.innerHTML = '<span id="more-filters-button-content" class="bi bi-chevron-down"></span> Show More Filters';
         }
     });
 });

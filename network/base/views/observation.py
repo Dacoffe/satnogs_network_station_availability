@@ -1,9 +1,17 @@
 """Django base views for SatNOGS Network"""
+from math import ceil
+from urllib.parse import urlparse
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.paginator import Paginator
+from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.context_processors import csrf
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.timezone import now, timedelta
 from django.views.generic import ListView
@@ -36,6 +44,7 @@ class ObservationListView(ListView):  # pylint: disable=R0901
     ]
     flag_filters = ['bad', 'good', 'unknown', 'future', 'failed']
     filtered = None
+    more_filtered = None  # Filtered by filters hidden by default
 
     def get_filter_params(self):
         """
@@ -89,7 +98,7 @@ class ObservationListView(ListView):  # pylint: disable=R0901
 
             filter_dict[filter_key] = filter_params[parameter_key]
 
-        self.filtered = (
+        self.filtered = bool(
             (
                 not all(
                     [
@@ -103,6 +112,13 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         # If user has not filtered the results, display the observations of the last 48 hours
         if not self.filtered:
             filter_dict["start__gt"] = get_two_days_ago()
+
+        # If the user has used the extra filters, display hte extra filter section expaned
+        self.more_filtered = (
+            results or rated or filter_dict.get('author') or filter_dict.get('ground_station_id')
+            or filter_dict.get('transmitter_mode__icontains')
+            or filter_dict.get('transmitter_uuid__icontains')
+        )
 
         observations = observations.filter(**filter_dict)
 
@@ -161,7 +177,7 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         norad_cat_id = self.request.GET.get('norad', None)
         observer = self.request.GET.get('observer', None)
         station = self.request.GET.get('station', None)
-        start = self.request.GET.get('start', get_two_days_ago())
+        start = get_two_days_ago() if not self.filtered else self.request.GET.get('start')
         end = self.request.GET.get('end', None)
         transmitter_uuid = self.request.GET.get('transmitter_uuid', None)
 
@@ -177,7 +193,7 @@ class ObservationListView(ListView):  # pylint: disable=R0901
             Observation.objects.all().order_by('transmitter_uuid').values_list(
             'transmitter_uuid',
             flat=True)
-        context['filtered'] = bool(self.filtered)
+        context['more_filtered'] = bool(self.more_filtered)
         if norad_cat_id is not None and norad_cat_id != '':
             context['norad'] = int(norad_cat_id)
         if observer is not None and observer != '':
@@ -197,42 +213,15 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         if transmitter_uuid:
             context['transmitters_uuid'] = transmitter_uuid
         context['can_schedule'] = schedule_perms(self.request.user)
+        context['url_query'] = urlparse(self.request.build_absolute_uri()).query
         return context
 
 
-def observation_view(request, observation_id):
-    """View for single observation page."""
-    observation = get_object_or_404(Observation, id=observation_id)
-
-    can_vet = vet_perms(request.user, observation)
-
-    can_delete = delete_perms(request.user, observation)
-
-    if observation.has_audio and not observation.audio_url:
-        messages.error(
-            request, 'Audio file is not currently available,'
-            ' if the problem persists please contact an administrator.'
-        )
-
-    has_comments = False
-    discuss_url = ''
-    discuss_slug = ''
-    if settings.ENVIRONMENT == 'production':
-        discussion_details = community_get_discussion_details(
-            observation.id, observation.satellite.name, observation.satellite.norad_cat_id,
-            'https:%2F%2F{}{}'.format(request.get_host(), request.path)
-        )
-        has_comments = discussion_details['has_comments']
-        discuss_url = discussion_details['url']
-        discuss_slug = discussion_details['slug']
-
-    has_demoddata = observation.demoddata.all().exists()
-    demoddata = observation.demoddata.all()
-    demoddata_count = len(demoddata)
+def get_observation_demoddata_details(observation, demoddata, demoddata_count):
+    """Returns details about the Demoddata of the observation"""
     demoddata_details = []
     show_hex_to_ascii_button = False
-
-    if has_demoddata:
+    if demoddata_count:
         if observation.transmitter_mode == 'CW':
             content_type = 'text'
         else:
@@ -274,8 +263,114 @@ def observation_view(request, observation_id):
                             'type': content_type
                         }
                     )
+        demoddata_details = sorted(demoddata_details, key=lambda d: d['name'])
+    return demoddata_details, show_hex_to_ascii_button
 
-    demoddata_details = sorted(demoddata_details, key=lambda d: d['name'])
+
+class VetObservationAbstractView(LoginRequiredMixin, ObservationListView):  # pylint: disable=R0901
+    """View to vet multiple observations."""
+    template_name = ''
+    object_list = []
+
+    # template_name = 'base/vet_observation_container.html'
+
+    def get_queryset(self):
+        """ Limits the queryset to those observations that the user can vet.
+            works, similar to 'vet_perms' function.
+        """
+        queryset = super().get_queryset().annotate(demoddata_count=Count('demoddata'))
+        if not (self.request.user.is_superuser
+                or self.request.user.groups.filter(name='Moderators').exists()
+                or self.request.user.ground_stations.filter(status=2).exists()):
+            queryset = queryset.filter(
+                Q(author=self.request.user)
+                | Q(ground_station__isnull=False, ground_station__owner=self.request.user)
+            )
+        return queryset
+
+    def get(self, request, *args, **kwargs):
+        pass
+
+
+class VetObservationsChunkListView(VetObservationAbstractView):  # pylint: disable=R0901
+    """View for getting the observations to vet as HTML snippets"""
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        paginator = Paginator(queryset, settings.VET_ITEMS_PER_CHUNK)
+        page_num = request.GET.get('page')
+        page_obj = paginator.get_page(page_num)
+        obs_html = []
+        for obs in page_obj.object_list:
+            demoddata_details = get_observation_demoddata_details(
+                obs, obs.demoddata.all(), obs.demoddata_count
+            )
+
+            context = {
+                "observation": obs,
+                "from_vetting": True,
+                "can_vet": True,
+                "demoddata_count": obs.demoddata_count,
+                "demoddata_details": demoddata_details[0],
+                "show_hex_to_ascii_button": demoddata_details[1],
+            }
+            context.update(csrf(request))
+
+            rendered = render_to_string("includes/observation_detail.html", context)
+            obs_html.append(rendered)
+
+        return JsonResponse(obs_html, safe=False)
+
+
+class VetObservationsView(VetObservationAbstractView):  # pylint: disable=R0901
+    """View for vetting multiple observations"""
+    template_name = 'base/vet_observation_container.html'
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        queryset_count = queryset.count()
+        context = self.get_context_data()
+        parsed_url = urlparse(request.build_absolute_uri())
+        context["query_url"] = reverse('base:vet_observations_chunks') + '?' + parsed_url.query
+        context["page_size"] = settings.VET_ITEMS_PER_CHUNK
+        context["total_pages_num"] = ceil(queryset_count / settings.VET_ITEMS_PER_CHUNK)
+        context["total_items"] = queryset_count
+        context["chunks_buffer_headstart"] = settings.CHUNKS_BUFFER_HEADSTART
+        context["fwd_buffer_chunks"] = settings.FWD_BUFFER_CHUNKS
+        context["bwd_buffer_chunks"] = settings.BWD_BUFFER_CHUNKS
+        return self.render_to_response(context)
+
+
+def observation_view(request, observation_id):
+    """View for single observation page."""
+    observation = get_object_or_404(Observation, id=observation_id)
+
+    can_vet = vet_perms(request.user, observation)
+
+    can_delete = delete_perms(request.user, observation)
+
+    if observation.has_audio and not observation.audio_url:
+        messages.error(
+            request, 'Audio file is not currently available,'
+            ' if the problem persists please contact an administrator.'
+        )
+
+    has_comments = False
+    discuss_url = ''
+    discuss_slug = ''
+    if settings.ENVIRONMENT == 'production':
+        discussion_details = community_get_discussion_details(
+            observation.id, observation.satellite.name, observation.satellite.norad_cat_id,
+            'https:%2F%2F{}{}'.format(request.get_host(), request.path)
+        )
+        has_comments = discussion_details['has_comments']
+        discuss_url = discussion_details['url']
+        discuss_slug = discussion_details['slug']
+
+    demoddata_count = observation.demoddata.count()
+    demoddata = observation.demoddata.all()
+    demoddata_details, show_hex_to_ascii_button = get_observation_demoddata_details(
+        observation, demoddata, demoddata_count
+    )
 
     return render(
         request, 'base/observation_view.html', {
