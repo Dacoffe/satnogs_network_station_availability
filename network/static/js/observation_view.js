@@ -156,6 +156,22 @@ function observationView() {
         $('#rating-status span').prop('title', status_title);
     }
 
+    function handling_vetting_elements(response){
+        if (response){
+            $('#vetting-spinner').removeClass('d-inline-block');
+            $('#rating-spinner').hide();
+            $('#waterfall-status-badge').show();
+            $('#waterfall-status-form').show();
+            $('#rating-status').show();
+        } else {
+            $('#waterfall-status-badge').hide();
+            $('#waterfall-status-form').hide();
+            $('#rating-status').hide();
+            $('#vetting-spinner').addClass('d-inline-block');
+            $('#rating-spinner').show();
+        }
+    }
+
     //Vetting request
     function vet_waterfall(id, vet_status){
         var data = {};
@@ -168,38 +184,27 @@ function observationView() {
             dataType: 'json',
             beforeSend: function(xhr) {
                 xhr.setRequestHeader('X-CSRFToken', $('[name="csrfmiddlewaretoken"]').val());
-                $('#waterfall-status-badge').hide();
-                $('#waterfall-status-form').hide();
-                $('#rating-status').hide();
-                $('#vetting-spinner').addClass('d-inline-block');
-                $('#rating-spinner').show();
+                handling_vetting_elements(false);
             }
         }).done(function(results) {
             if (Object.prototype.hasOwnProperty.call(results, 'error')) {
                 var error_msg = results.error;
                 show_alert('danger',error_msg);
-            } else {
-                show_alert('success', 'Waterfall is vetted succesfully as "' + results.waterfall_status_display + '" and observation status changed to "' + results.status_display + '"');
-                change_vetting_badges(results.waterfall_status_user, results.waterfall_status_datetime,
-                    results.waterfall_status_badge, results.waterfall_status_display,
-                    results.status, results.status_badge,
-                    results.status_display);
+                handling_vetting_elements(true);
+                return;
             }
-            $('#vetting-spinner').removeClass('d-inline-block');
-            $('#rating-spinner').hide();
-            $('#waterfall-status-badge').show();
-            $('#waterfall-status-form').show();
-            $('#rating-status').show();
+            show_alert('success', 'Waterfall is vetted succesfully as "' + results.waterfall_status_display + '" and observation status changed to "' + results.status_display + '"');
+            change_vetting_badges(results.waterfall_status_user, results.waterfall_status_datetime,
+                results.waterfall_status_badge, results.waterfall_status_display,
+                results.status, results.status_badge,
+                results.status_display);
+            handling_vetting_elements(true);
             document.dispatchEvent(obs_vetted);
             return;
         }).fail(function() {
             var error_msg = 'Something went wrong, please try again';
             show_alert('danger', error_msg);
-            $('#vetting-spinner').removeClass('d-inline-block');
-            $('#rating-spinner').hide();
-            $('#waterfall-status-badge').show();
-            $('#waterfall-status-form').show();
-            $('#rating-status').show();
+            handling_vetting_elements(true);
             return;
         });
     }

@@ -118,12 +118,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function hide_alert(){
+        $('#alert-messages').html('');
+    }
+
     function save_current_obs_state() {
         // Saves changes made to the DOM to the in-memory HTML
         pages[current_page_num.toString()][current_obs_index] = container.innerHTML;
     }
 
     function moveNext() {
+        hide_alert();
         save_current_obs_state();
         btn_prev.disabled = false;
         current_obs_index = (current_obs_index + 1) % page_size;
@@ -153,6 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function moveBack() {
+        hide_alert();
         save_current_obs_state();
         btn_next.disabled = false;
         current_obs_index = current_obs_index - 1;
