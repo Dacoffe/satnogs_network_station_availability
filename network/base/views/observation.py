@@ -331,6 +331,8 @@ class VetObservationsView(VetObservationAbstractView):  # pylint: disable=R0901
         context = self.get_context_data()
         parsed_url = urlparse(request.build_absolute_uri())
         context["query_url"] = reverse('base:vet_observations_chunks') + '?' + parsed_url.query
+        context["observation_search_url"
+                ] = reverse('base:observations_list') + '?' + parsed_url.query
         context["page_size"] = settings.VET_ITEMS_PER_CHUNK
         context["total_pages_num"] = ceil(queryset_count / settings.VET_ITEMS_PER_CHUNK)
         context["total_items"] = queryset_count

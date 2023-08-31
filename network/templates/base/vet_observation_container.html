@@ -37,7 +37,7 @@
   data-bwd_buffer_chunks="{{ bwd_buffer_chunks }}" data-page_size="{{ page_size }}" data-total_items="{{ total_items }}" 
   data-total_pages_num="{{ total_pages_num }}" data-query_url="{{ query_url }}">
   {% if not total_items %}
-    <p class="my-3">No observations to vet. Return to <a href="{% url 'base:observations_list' %}">observations</a></p>
+    <p class="my-3">No observations to vet. Check your search and your vetting permissions and try again. <a href="{{ observation_search_url }}"> Back to the observations search</a>.</p>
   {% endif %}
 </div>
 {% endblock content %}
