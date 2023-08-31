@@ -216,11 +216,13 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = pages[current_page_num.toString()][current_obs_index];
         document.dispatchEvent(obs_changed_event);
         let img_tag = document.getElementById('waterfall-img');
+        let waterfall_spinner = document.getElementById('waterfall-loading');
         if(img_tag) {
             waitForWaterfall(img_tag, () => {
                 let waterfall_blob = waterfalls[`${current_page_num.toString()}-${current_obs_index.toString()}`];
                 let img_src = URL.createObjectURL(waterfall_blob);
                 img_tag.src = img_src;
+                waterfall_spinner.remove();
             });
         }
     

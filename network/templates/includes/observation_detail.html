@@ -479,6 +479,9 @@
                 {% endif %}
               </div>
               <div id="waterfall-{{ observation.id }}">
+                {% if from_vetting == True %}
+                  <div id="waterfall-loading" class="m-auto d-block spinner-border text-muted"></div>
+                {% endif %}
                 {% if observation.waterfall_old %}
                   <img id="waterfall-img" class="img-fluid" {% if from_vetting %}data-{% endif %}src="{{ observation.waterfall_old.url }}" alt="waterfall">
                 {% else %}
