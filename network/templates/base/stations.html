@@ -46,7 +46,7 @@
 
   <div class="collapse px-2 pt-2" id="collapseFilters" data-filtered="{{ is_filtered }}">
     <div class="filter-section card">
-      <form id="station-filter" class="form row" method="get" action="{% url 'base:stations_list' %}">
+      <form id="station-filter" class="row" method="get" action="{% url 'base:stations_list' %}">
         {% for error in freq_filter_errors %}
           <div class="alert alert-danger" role="alert">{{error}}</div>
         {% endfor %}

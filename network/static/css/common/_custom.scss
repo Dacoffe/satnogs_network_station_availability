@@ -83,26 +83,6 @@ span.datetime-time {
 
 // Filters Observations and Stations
 
-#collapseFilters {
-
-    h4,
-    h3 {
-        display: inline-block;
-    }
-
-    label.btn-unknown {
-        font-weight: 900;
-    }
-
-    button.active {
-        border: 1px solid #333;
-
-        &:not(.active) {
-            color: #666;
-        }
-    }
-}
-
 .filter-section {
     background-color: #f5f5f5;
     padding: 10px;

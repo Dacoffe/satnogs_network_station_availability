@@ -42,118 +42,120 @@
     </div>
   </div>
 
-  <div class="{% if norad %} in{% endif %} pt-2" id="collapseFilters" data-url_query="{% url 'base:vet_observations' %}?{{ url_query }}">
+  <div id="search-filters" class="{% if norad %} in{% endif %} pt-2" data-url_query="{% url 'base:vet_observations' %}?{{ url_query }}">
     <div class="filter-section card">
-      <form class="form row" method="get" action="{% url 'base:observations_list' %}">
-        <div class="form-group status-filter col-md-4 col-lg-3">
-          <label for="status-selector">Status</label>
-          <div id="status-selector" class="btn-group-toggle" role="group" aria-label="Group of status filters" data-toggle="buttons">
-            <label class="btn btn-future btn-sm {% if future == '0' %}active btn-inactive{% endif %}"
-                   aria-expanded="true"
-                   aria-controls="future"
-                   data-toggle="tooltip"
-                   data-placement="bottom"
-                   title="Future">
-              <input type="checkbox" name="future" value="0" {% if future == '0' %}checked{% endif %} autocomplete="off">
-              <span class="bi bi-clock" aria-hidden="true"></span>
-            </label>
-            <label class="btn btn-good btn-sm {% if good == '0' %}active btn-inactive{% endif %}"
-                   aria-expanded="true"
-                   aria-controls="good"
-                   data-toggle="tooltip"
-                   data-placement="bottom"
-                   title="Good">
-              <input type="checkbox" name="good" value="0" {% if good == '0' %}checked{% endif %} autocomplete="off">
-              <span class="bi bi-check" aria-hidden="true"></span>
-            </label>
-            <label class="btn btn-bad btn-sm {% if bad == '0' %}active btn-inactive{% endif %}"
-                   aria-expanded="true"
-                   aria-controls="bad"
-                   data-toggle="tooltip"
-                   data-placement="bottom"
-                   title="Bad">
-              <input type="checkbox" name="bad" value="0" {% if bad == '0' %}checked{% endif %} autocomplete="off">
-              <span class="bi bi-x" aria-hidden="true"></span>
-            </label>
-            <label class="btn btn-unknown btn-sm {% if unknown == '0' %}active btn-inactive{% endif %}"
-                   aria-expanded="true"
-                   aria-controls="unknown"
-                   data-toggle="tooltip"
-                   data-placement="bottom"
-                   title="Unknown">
-              <input type="checkbox" name="unknown" value="0" {% if unknown == '0' %}checked{% endif %} autocomplete="off">
-              <span class="bi bi-question-circle" aria-hidden="true"></span>
-            </label>
-            <label class="btn btn-failed btn-sm {% if failed == '0' %}active btn-inactive{% endif %}"
-                   aria-expanded="true"
-                   aria-controls="failed"
-                   data-toggle="tooltip"
-                   data-placement="bottom"
-                   title="Failed">
-              <input type="checkbox" name="failed" value="0" {% if failed == '0' %}checked{% endif %} autocomplete="off">
-              <span class="bi bi-exclamation-triangle" aria-hidden="true"></span>
-            </label>
+      <form method="get" action="{% url 'base:observations_list' %}">
+        <div class="col-12 row">
+          <div class="form-group status-filter col-md-4 col-lg-3">
+            <label for="status-selector">Status</label>
+            <div id="status-selector" class="btn-group-toggle" role="group" aria-label="Group of status filters" data-toggle="buttons">
+              <label class="btn btn-future btn-sm {% if future == '0' %}active btn-inactive{% endif %}"
+                     aria-expanded="true"
+                     aria-controls="future"
+                     data-toggle="tooltip"
+                     data-placement="bottom"
+                     title="Future">
+                <input type="checkbox" name="future" value="0" {% if future == '0' %}checked{% endif %} autocomplete="off">
+                <span class="bi bi-clock" aria-hidden="true"></span>
+              </label>
+              <label class="btn btn-good btn-sm {% if good == '0' %}active btn-inactive{% endif %}"
+                     aria-expanded="true"
+                     aria-controls="good"
+                     data-toggle="tooltip"
+                     data-placement="bottom"
+                     title="Good">
+                <input type="checkbox" name="good" value="0" {% if good == '0' %}checked{% endif %} autocomplete="off">
+                <span class="bi bi-check" aria-hidden="true"></span>
+              </label>
+              <label class="btn btn-bad btn-sm {% if bad == '0' %}active btn-inactive{% endif %}"
+                     aria-expanded="true"
+                     aria-controls="bad"
+                     data-toggle="tooltip"
+                     data-placement="bottom"
+                     title="Bad">
+                <input type="checkbox" name="bad" value="0" {% if bad == '0' %}checked{% endif %} autocomplete="off">
+                <span class="bi bi-x" aria-hidden="true"></span>
+              </label>
+              <label class="btn btn-unknown btn-sm {% if unknown == '0' %}active btn-inactive{% endif %}"
+                     aria-expanded="true"
+                     aria-controls="unknown"
+                     data-toggle="tooltip"
+                     data-placement="bottom"
+                     title="Unknown">
+                <input type="checkbox" name="unknown" value="0" {% if unknown == '0' %}checked{% endif %} autocomplete="off">
+                <span class="bi bi-question-circle" aria-hidden="true"></span>
+              </label>
+              <label class="btn btn-failed btn-sm {% if failed == '0' %}active btn-inactive{% endif %}"
+                     aria-expanded="true"
+                     aria-controls="failed"
+                     data-toggle="tooltip"
+                     data-placement="bottom"
+                     title="Failed">
+                <input type="checkbox" name="failed" value="0" {% if failed == '0' %}checked{% endif %} autocomplete="off">
+                <span class="bi bi-exclamation-triangle" aria-hidden="true"></span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group col-md-4 col-lg-3">
+            <label for="satellite-selection">Satellite</label>
+            <select class="form-control selectpicker" data-style="btn" name="norad" autocomplete="off" id="satellite-selection" data-live-search="true">
+              <option value="" selected>All</option>
+              {% for satellite in satellites %}
+                <option data-norad="{{ satellite.norad_cat_id }}" value="{{ satellite.norad_cat_id }}"
+                        {% if satellite.norad_cat_id == norad %}selected{% endif %}>
+                  {{ satellite.norad_cat_id }} - {{ satellite.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group col-md-4 col-lg-3 ">
+            <label class="control-label">Start Time</label>
+            <div class='input-group datetimepicker' id="datetimepicker-start"
+                {% if start is not None %}
+                  data-value = "{{ start }}"
+                {% endif %}
+                data-td-target-input="nearest"
+                data-td-target-toggle="nearest">
+              <input data-td-target="#datetimepicker-start"
+                    type="text"
+                    class="form-control"
+                    name="start"
+                    autocomplete="off"/>
+              <span class="input-group-append"
+                    data-td-target="#datetimepicker-start"
+                    data-td-toggle="datetimepicker">
+                  <i class="input-group-text bi bi-calendar3"></i>
+              </span>
+            </div>
+          </div>
+          <div class="form-group col-md-4 col-lg-3">
+            <label class="control-label">End Time</label>
+            <div class='input-group datetimepicker' id="datetimepicker-end"
+                {% if end is not None %}
+                  data-value = "{{ end }}"
+                {% endif %}
+                data-td-target-input="nearest"
+                data-td-target-toggle="nearest">
+              <input data-td-target="#datetimepicker-end"
+                    type="text"
+                    class="form-control"
+                    name="end"
+                    autocomplete="off"/>
+              <span class="input-group-append"
+                    data-td-target="#datetimepicker-end"
+                    data-td-toggle="datetimepicker">
+                  <i class="input-group-text bi bi-calendar3"></i>
+              </span>
+            </div>
           </div>
         </div>
-        <div class="form-group col-md-4 col-lg-3">
-          <label for="satellite-selection">Satellite</label>
-          <select class="form-control selectpicker" data-style="btn" name="norad" autocomplete="off" id="satellite-selection" data-live-search="true">
-            <option value="" selected>All</option>
-            {% for satellite in satellites %}
-              <option data-norad="{{ satellite.norad_cat_id }}" value="{{ satellite.norad_cat_id }}"
-                      {% if satellite.norad_cat_id == norad %}selected{% endif %}>
-                {{ satellite.norad_cat_id }} - {{ satellite.name }}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="form-group col-md-4 col-lg-3 ">
-          <label class="control-label">Start Time</label>
-          <div class='input-group datetimepicker' id="datetimepicker-start"
-              {% if start is not None %}
-                data-value = "{{ start }}"
-              {% endif %}
-              data-td-target-input="nearest"
-              data-td-target-toggle="nearest">
-            <input data-td-target="#datetimepicker-start"
-                  type="text"
-                  class="form-control"
-                  name="start"
-                  autocomplete="off"/>
-            <span class="input-group-append"
-                  data-td-target="#datetimepicker-start"
-                  data-td-toggle="datetimepicker">
-                <i class="input-group-text bi bi-calendar3"></i>
-            </span>
-          </div>
-        </div>
-        <div class="form-group col-md-4 col-lg-3">
-          <label class="control-label">End Time</label>
-          <div class='input-group datetimepicker' id="datetimepicker-end"
-              {% if end is not None %}
-                data-value = "{{ end }}"
-              {% endif %}
-              data-td-target-input="nearest"
-              data-td-target-toggle="nearest">
-            <input data-td-target="#datetimepicker-end"
-                  type="text"
-                  class="form-control"
-                  name="end"
-                  autocomplete="off"/>
-            <span class="input-group-append"
-                  data-td-target="#datetimepicker-end"
-                  data-td-toggle="datetimepicker">
-                <i class="input-group-text bi bi-calendar3"></i>
-            </span>
-          </div>
-        </div>
-        <div class="col-12 d-flex pt-3 pb-4">
+        <div class="col-12 d-flex">
           <button type="button" id="more-filters-button" class="btn btn-link" data-toggle="collapse"
                     data-target="#collapseMoreFilters" aria-expanded="false" aria-controls="collapseMoreFilters">
               <span id="more-filters-button-content" class="bi bi-chevron-down"></span> Show More Filters
             </button>
         </div>
-        <div class="collapse form col-12 row{% if more_filtered %} show{% endif %}" id="collapseMoreFilters">
+        <div class="collapse col-12 row{% if more_filtered %} show{% endif %}" id="collapseMoreFilters">
           <div class="form-group col-md-4 col-lg-3">
             <label for="observer-selection">Observer</label>
             <select class="form-control selectpicker" data-style="btn" name="observer" autocomplete="off" id="observer-selection" data-live-search="true">
@@ -234,7 +236,7 @@
     </div>
   </div>
 
-  <div class="d-flex mt-5 mb-2 justify-content-between">
+  <div class="d-flex mt-2 mb-2 justify-content-between">
       {% if user.is_authenticated and observations %}
         <button id="submit-vet-filter" class="btn btn-secondary">Vet Search Results ({{ paginator.count }})</button>
       {% else %}
@@ -349,7 +351,7 @@
           {% endfor %}
         </tbody>
       </table>
-      <div class="d-flex mt-5 mb-2 justify-content-between">
+      <div class="d-flex mt-2 mb-2 justify-content-between">
           {% if user.is_authenticated and observations %}
             <button id="submit-vet-filter" class="btn btn-secondary">Vet Search Results ({{ paginator.count }})</button>
           {% else %}

@@ -142,7 +142,7 @@ $(document).ready(function() {
     });
 
     $('#submit-vet-filter').click(() => {
-        window.location = $('#collapseFilters').data('url_query');
+        window.location = $('#search-filters').data('url_query');
     });
 
     document.getElementById('more-filters-button').addEventListener('click', function() {
