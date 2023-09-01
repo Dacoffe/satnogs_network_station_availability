@@ -141,7 +141,7 @@ $(document).ready(function() {
         }
     });
 
-    $('#submit-vet-filter').click(() => {
+    $('.submit-vet-filter').click(() => {
         window.location = $('#search-filters').data('url_query');
     });
 

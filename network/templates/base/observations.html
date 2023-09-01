@@ -238,7 +238,7 @@
 
   <div class="d-flex mt-2 mb-2 justify-content-between">
       {% if user.is_authenticated and observations %}
-        <button id="submit-vet-filter" class="btn btn-secondary">Vet Search Results ({{ paginator.count }})</button>
+        <button class="submit-vet-filter btn btn-secondary">Vet Search Results ({{ paginator.count }})</button>
       {% else %}
           <div></div>
       {% endif %}
@@ -353,7 +353,7 @@
       </table>
       <div class="d-flex mt-2 mb-2 justify-content-between">
           {% if user.is_authenticated and observations %}
-            <button id="submit-vet-filter" class="btn btn-secondary">Vet Search Results ({{ paginator.count }})</button>
+            <button class="submit-vet-filter btn btn-secondary">Vet Search Results ({{ paginator.count }})</button>
           {% else %}
             <div></div>
           {% endif %}
