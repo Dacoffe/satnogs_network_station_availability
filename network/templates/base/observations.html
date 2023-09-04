@@ -42,7 +42,7 @@
     </div>
   </div>
 
-  <div id="search-filters" class="{% if norad %} in{% endif %} pt-2" data-url_query="{% url 'base:vet_observations' %}?{{ url_query }}">
+  <div id="search-filters" class="{% if norad %} in{% endif %} pt-2" data-url_query="{% url 'base:vet_observations' %}?{{ vet_url_query }}">
     <div class="filter-section card">
       <form method="get" action="{% url 'base:observations_list' %}">
         <div class="col-12 row">

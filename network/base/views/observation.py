@@ -213,7 +213,15 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         if transmitter_uuid:
             context['transmitters_uuid'] = transmitter_uuid
         context['can_schedule'] = schedule_perms(self.request.user)
-        context['url_query'] = urlparse(self.request.build_absolute_uri()).query
+
+        url_query = urlparse(self.request.build_absolute_uri()).query
+        if not url_query:
+            vet_url_query = 'results=w1'
+        else:
+            vet_url_query = url_query.replace('results=w0', 'results=w1')
+            if vet_url_query == url_query:  # no 'results' parameter was given
+                vet_url_query += '&results=w1'
+        context['vet_url_query'] = vet_url_query
         return context
 
 
@@ -271,8 +279,6 @@ class VetObservationAbstractView(LoginRequiredMixin, ObservationListView):  # py
     """View to vet multiple observations."""
     template_name = ''
     object_list = []
-
-    # template_name = 'base/vet_observation_container.html'
 
     def get_queryset(self):
         """ Limits the queryset to those observations that the user can vet.
