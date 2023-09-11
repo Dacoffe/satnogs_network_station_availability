@@ -292,7 +292,7 @@ class VetObservationAbstractView(LoginRequiredMixin, ObservationListView):  # py
                 Q(author=self.request.user)
                 | Q(ground_station__isnull=False, ground_station__owner=self.request.user)
             )
-        return queryset
+        return queryset.order_by('-id')
 
     def get(self, request, *args, **kwargs):
         pass
