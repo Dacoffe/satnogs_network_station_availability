@@ -192,7 +192,7 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         context['transmitter_uuids'] = \
             Observation.objects.all().order_by('transmitter_uuid').values_list(
             'transmitter_uuid',
-            flat=True)
+            flat=True).distinct()
         context['more_filtered'] = bool(self.more_filtered)
         if norad_cat_id is not None and norad_cat_id != '':
             context['norad'] = int(norad_cat_id)
