@@ -287,6 +287,7 @@ class VetObservationAbstractView(LoginRequiredMixin, ObservationListView):  # py
         queryset = super().get_queryset().annotate(demoddata_count=Count('demoddata'))
         if not (self.request.user.is_superuser
                 or self.request.user.groups.filter(name='Moderators').exists()
+                or self.request.user.has_perm('base.can_vet')
                 or self.request.user.ground_stations.filter(status=2).exists()):
             queryset = queryset.filter(
                 Q(author=self.request.user)

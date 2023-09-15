@@ -616,6 +616,7 @@ class Observation(models.Model):
     class Meta:
         ordering = ['-start', '-end']
         indexes = [models.Index(fields=['-start', '-end'])]
+        permissions = (('can_vet', 'Can vet observations'), )
 
     def __str__(self):
         return str(self.id)
