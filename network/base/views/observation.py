@@ -334,7 +334,7 @@ class VetObservationsView(VetObservationAbstractView):  # pylint: disable=R0901
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         queryset_count = queryset.count()
-        context = self.get_context_data()
+        context = {}
         parsed_url = urlparse(request.build_absolute_uri())
         context["query_url"] = reverse('base:vet_observations_chunks') + '?' + parsed_url.query
         context["observation_search_url"
