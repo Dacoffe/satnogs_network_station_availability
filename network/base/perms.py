@@ -192,9 +192,8 @@ def vet_perms(user, observation):
         except AttributeError:
             pass
         # User has special permissions
-        if user.groups.filter(name='Moderators').exists():
-            return True
-        if user.is_superuser:
+        if user.groups.filter(name='Moderators'
+                              ).exists() or user.is_superuser or user.has_perm('base.can_vet'):
             return True
     return False
 
