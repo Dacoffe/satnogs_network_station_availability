@@ -153,4 +153,23 @@ $(document).ready(function() {
             this.innerHTML = '<span id="more-filters-button-content" class="bi bi-chevron-down"></span> Show More Filters';
         }
     });
+
+    $('#transmitter-uuid-selection').selectpicker({
+        hideDisabled: true
+    });
+
+    $('#satellite-selection').on('changed.bs.select',  function() {
+        const selectedSatelliteNorad = $(this).val();
+        const options = document.querySelectorAll('#transmitter-uuid-selection option');
+        
+        options.forEach(option => {
+            if (option.dataset['norad'] === selectedSatelliteNorad || !selectedSatelliteNorad) {
+                option.disabled = false;
+            } else {
+                option.disabled = true;
+            }
+        });
+    
+        $('#transmitter-uuid-selection').selectpicker('refresh');
+    });
 });

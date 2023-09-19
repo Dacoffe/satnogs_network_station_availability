@@ -189,10 +189,10 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         context['results'] = self.request.GET.getlist('results')
         context['rated'] = self.request.GET.getlist('rated')
         context['transmitter_mode'] = self.request.GET.get('transmitter_mode', None)
-        context['transmitter_uuids'] = \
-            Observation.objects.all().order_by('transmitter_uuid').values_list(
-            'transmitter_uuid',
-            flat=True).distinct()
+        context['transmitter_uuids_info'] = \
+            Observation.objects.all().prefetch_related(
+                'satellite').order_by('transmitter_uuid').values(
+            'transmitter_uuid', 'satellite__norad_cat_id', 'satellite__name').distinct()
         context['more_filtered'] = bool(self.more_filtered)
         if norad_cat_id is not None and norad_cat_id != '':
             context['norad'] = int(norad_cat_id)

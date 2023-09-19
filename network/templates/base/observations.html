@@ -218,12 +218,12 @@
           </div>
           <div class="form-group col-md-4 col-lg-3">
             <label for="transmitter-uuid-selection">Transmitter uuid</label>
-            <select class="form-control selectpicker" data-style="btn" name="transmitter_uuid" autocomplete="off" id="transmitter-uuid-selection" data-live-search="true">
+            <select class="form-control selectpicker" data-style="btn" name="transmitter_uuid" autocomplete="off" id="transmitter-uuid-selection" data-live-search="true" data-live-search-placeholder="UUID, Satellite Name or NORAD ID">
               <option value="" selected>All</option>
-              {% for transmitter_uuid in transmitter_uuids %}
-                <option data-transmitter_uuid="{{ transmitter_uuid }}" value="{{ transmitter_uuid }}"
-                        {% if transmitter_uuid == transmitters_uuid %}selected{% endif %}>
-                  {{ transmitter_uuid }}
+              {% for uuid_enrty in transmitter_uuids_info %}
+                <option data-transmitter_uuid="{{ uuid_enrty.transmitter_uuid }}" data-satname="{{ uuid_enrty.satellite__name }}" data-norad="{{ uuid_enrty.satellite__norad_cat_id }}" value="{{ uuid_enrty.transmitter_uuid }}" data-tokens="{{ uuid_enrty.satellite__norad_cat_id }} {{ uuid_enrty.satellite__name }}"
+                        {% if uuid_enrty.transmitter_uuid == transmitters_uuid %}selected{% endif %}>
+                  {{ uuid_enrty.transmitter_uuid }} | {{ uuid_enrty.satellite__name }}
                 </option>
               {% endfor %}
             </select>
