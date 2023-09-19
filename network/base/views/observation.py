@@ -180,7 +180,7 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         start = get_two_days_ago() if not self.filtered else self.request.GET.get('start')
         end = self.request.GET.get('end', None)
         transmitter_uuid = self.request.GET.get('transmitter_uuid', None)
-
+        context['display_no_filter_warning'] = not self.filtered
         context['future'] = self.request.GET.get('future', '1')
         context['bad'] = self.request.GET.get('bad', '1')
         context['good'] = self.request.GET.get('good', '1')
