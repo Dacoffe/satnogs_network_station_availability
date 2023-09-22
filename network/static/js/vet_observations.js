@@ -51,30 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     } 
 
-    // function preload_waterfall(obs_html_list) {
-    // /* Search through the html of each observation and download the waterfall images.
-    //     No need to store them in javascript as they are cached by the browser.
-    // */
-    //     function extract_img_url(html_string) {
-    //         const regex = /<img[^>]+id="waterfall-img"[^>]+src="(.*?)"/g;
-    //         let match;
-        
-    //         if ((match = regex.exec(html_string)) !== null) {
-    //             return match[1];
-    //         }
-    //         return null;
-    //     }
-        
-    //     obs_html_list.forEach(obs_html => {
-    //         let src = extract_img_url(obs_html);
-    //         if (src) {
-    //             let waterfall = new Image();
-    //             waterfall.src = src;
-    //             waterfall = null;
-    //         }
-    //     });
-    // } 
-
     function set_copy_link_btn() {
     // Copies the link to the observation's detail page to the clipboard.
         if(total_items) {
@@ -213,6 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function replaceContainer() {
+        loading_spinner.classList.add('d-none');
         container.innerHTML = pages[current_page_num.toString()][current_obs_index];
         document.dispatchEvent(obs_changed_event);
         let img_tag = document.getElementById('waterfall-img');
@@ -222,7 +199,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 let waterfall_blob = waterfalls[`${current_page_num.toString()}-${current_obs_index.toString()}`];
                 let img_src = URL.createObjectURL(waterfall_blob);
                 img_tag.src = img_src;
-                waterfall_spinner.remove();
+                if(waterfall_spinner) {
+                    waterfall_spinner.remove();
+                }
             });
         }
     
@@ -253,7 +232,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     btn_prev.disabled = false;
                 }
-                loading_spinner.classList.add('d-none');
                 preload_waterfall(data, page_num);
             });
     }
