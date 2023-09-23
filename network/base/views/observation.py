@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.http import JsonResponse
@@ -29,6 +30,19 @@ from network.users.models import User
 def get_two_days_ago():
     """Helper function to get the datetime 48 hours before as formatted string"""
     return (now() - timedelta(days=2)).strftime("%Y-%m-%d %H:%M")
+
+
+def get_transmitter_uuids_list():
+    """Helper function to get the transmitter uuids list for populating the related filter in
+       observations page"""
+    transmitter_uuids = cache.get('observations-filters-transmitters-uuids')
+    if transmitter_uuids is None:
+        transmitter_uuids = list(
+            Observation.objects.all().prefetch_related('satellite').order_by('transmitter_uuid').
+            values('transmitter_uuid', 'satellite__norad_cat_id', 'satellite__name').distinct()
+        )
+        cache.set('observations-filters-transmitters-uuids', transmitter_uuids, None)
+    return transmitter_uuids
 
 
 class ObservationListView(ListView):  # pylint: disable=R0901
@@ -189,10 +203,7 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         context['results'] = self.request.GET.getlist('results')
         context['rated'] = self.request.GET.getlist('rated')
         context['transmitter_mode'] = self.request.GET.get('transmitter_mode', None)
-        context['transmitter_uuids_info'] = \
-            Observation.objects.all().prefetch_related(
-                'satellite').order_by('transmitter_uuid').values(
-            'transmitter_uuid', 'satellite__norad_cat_id', 'satellite__name').distinct()
+        context['transmitter_uuids_info'] = get_transmitter_uuids_list()
         context['more_filtered'] = bool(self.more_filtered)
         if norad_cat_id is not None and norad_cat_id != '':
             context['norad'] = int(norad_cat_id)
