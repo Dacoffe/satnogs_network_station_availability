@@ -1,4 +1,7 @@
-$(document).ready(function() {
+$(document).ready(satellite_script);
+document.addEventListener('obs_changed', satellite_script, false);
+
+function satellite_script() {
     'use strict';
 
     $('#SatelliteModal').on('show.bs.modal', function (event) {
@@ -74,4 +77,4 @@ $(document).ready(function() {
             }
         });
     });
-});
+}
