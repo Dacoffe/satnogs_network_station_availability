@@ -227,7 +227,8 @@ class ObservationListView(ListView):  # pylint: disable=R0901
 
         url_query = urlparse(self.request.build_absolute_uri()).query
         if not url_query:
-            vet_url_query = 'results=w1'
+            vet_url_query = 'results=w1&start=' + (now() -
+                                                   timedelta(days=2)).strftime("%Y-%m-%d+%H:%M")
         else:
             vet_url_query = url_query.replace('results=w0', 'results=w1')
             if vet_url_query == url_query:  # no 'results' parameter was given
