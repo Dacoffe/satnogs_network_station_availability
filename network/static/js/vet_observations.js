@@ -189,6 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function replaceContainer() {
+        $('.modal').modal('hide');
         loading_spinner.classList.add('d-none');
         container.innerHTML = pages[current_page_num.toString()][current_obs_index];
         document.dispatchEvent(obs_changed_event);
