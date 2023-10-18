@@ -470,7 +470,7 @@ def scheduling_stations(request):  # pylint: disable=too-many-return-statements
 
     center_frequency = request.POST.get('center_frequency', downlink)
     try:
-        center_frequency = int(center_frequency)
+        center_frequency = int(float(center_frequency))
     except ValueError:
         data = {'error': 'Center frequency value is invalid'}
         return JsonResponse(data, safe=False)

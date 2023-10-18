@@ -698,7 +698,7 @@ $(document).ready( function(){
     const frequency_errors = { '1': 'Value is not a number', '2': 'Value out of range' };
 
     frequency_input.on('input', function () {
-        var val = parseInt($(this).val());
+        var val = parseInt(parseFloat($(this).val()));
         const min = parseInt(frequency_input.attr('min'));
         const max = parseInt(frequency_input.attr('max'));
         var has_error = 0;

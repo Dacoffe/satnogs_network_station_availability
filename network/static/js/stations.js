@@ -27,14 +27,14 @@ $(document).ready(function () {
 
     var initial_freq_val = freq_input.val();
     if(initial_freq_val) {
-        freq_format.html(format_frequency(parseInt(initial_freq_val)));
+        freq_format.html(format_frequency(parseInt(parseFloat(initial_freq_val))));
     }
 
     freq_input.on('input', function(e) {
         e.stopPropagation();
         e.stopImmediatePropagation();
         var has_error = 0;
-        var val = parseInt($(this).val());
+        var val = parseInt(parseFloat($(this).val()));
         const frequency_errors = { '1': 'Value is not a number.', '2': 'Value cannot be less than 0.'};
 
         if (isNaN(val)) {

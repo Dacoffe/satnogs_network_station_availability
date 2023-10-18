@@ -58,7 +58,7 @@ class StationListView(ListView):  # pylint: disable=R0901
         if filter_freq:
             self.is_filtered = True
             try:
-                filter_freq = int(filter_freq)
+                filter_freq = int(float(filter_freq))
             except ValueError:
                 self.freq_filter_errors.append("Frequency: Invalid value")
                 return filter_params
