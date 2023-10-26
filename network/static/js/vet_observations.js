@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Copies the link to the observation's detail page to the clipboard.
         if(total_items) {
             let copy_link_btn = document.getElementById('copy-link-btn');
-            let full_uri = `${window.location.host}${copy_link_btn.dataset['permalink']}`;
+            let full_uri = `${window.location.protocol}//${window.location.host}${copy_link_btn.dataset['permalink']}`;
             copy_link_btn.addEventListener('click', () => {
                 navigator.clipboard.writeText(full_uri)
                     .then(() => {
