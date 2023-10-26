@@ -1,5 +1,4 @@
 """Django base views for SatNOGS Network"""
-from math import ceil
 from urllib.parse import urlparse
 
 from django.conf import settings
@@ -7,7 +6,6 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
-from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -287,39 +285,17 @@ def get_observation_demoddata_details(observation, demoddata, demoddata_count):
     return demoddata_details, show_hex_to_ascii_button
 
 
-class VetObservationAbstractView(LoginRequiredMixin, ObservationListView):  # pylint: disable=R0901
-    """View to vet multiple observations."""
-    template_name = ''
-    object_list = []
-
-    def get_queryset(self):
-        """ Limits the queryset to those observations that the user can vet.
-            works, similar to 'vet_perms' function.
-        """
-        queryset = super().get_queryset().annotate(demoddata_count=Count('demoddata'))
-        if not (self.request.user.is_superuser
-                or self.request.user.groups.filter(name='Moderators').exists()
-                or self.request.user.has_perm('base.can_vet')
-                or self.request.user.ground_stations.filter(status=2).exists()):
-            queryset = queryset.filter(
-                Q(author=self.request.user)
-                | Q(ground_station__isnull=False, ground_station__owner=self.request.user)
-            )
-        return queryset.order_by('-start', '-end')
-
-    def get(self, request, *args, **kwargs):
-        pass
-
-
-class VetObservationsChunkListView(VetObservationAbstractView):  # pylint: disable=R0901
+class VetObservationsChunkListView(LoginRequiredMixin, ListView):  # pylint: disable=R0901
     """View for getting the observations to vet as HTML snippets"""
+    def get_queryset(self):
+        ids = [int(obs_id) for obs_id in self.request.GET.get('obs_ids').split(',')]
+        return Observation.objects.filter(id__in=ids).annotate(demoddata_count=Count('demoddata')
+                                                               ).order_by('-start', '-end')
+
     def get(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        paginator = Paginator(queryset, settings.VET_ITEMS_PER_CHUNK)
-        page_num = request.GET.get('page')
-        page_obj = paginator.get_page(page_num)
+        observations = self.get_queryset()
         obs_html = []
-        for obs in page_obj.object_list:
+        for obs in observations:
             demoddata_details = get_observation_demoddata_details(
                 obs, obs.demoddata.all(), obs.demoddata_count
             )
@@ -340,21 +316,36 @@ class VetObservationsChunkListView(VetObservationAbstractView):  # pylint: disab
         return JsonResponse(obs_html, safe=False)
 
 
-class VetObservationsView(VetObservationAbstractView):  # pylint: disable=R0901
+class VetObservationsView(LoginRequiredMixin, ObservationListView):  # pylint: disable=R0901
     """View for vetting multiple observations"""
     template_name = 'base/vet_observation_container.html'
+    object_list = []
+
+    def get_queryset(self):
+        """ Limits the queryset to those observations that the user can vet.
+            works, similar to 'vet_perms' function.
+        """
+        queryset = super().get_queryset()
+        if not (self.request.user.is_superuser
+                or self.request.user.groups.filter(name='Moderators').exists()
+                or self.request.user.has_perm('base.can_vet')
+                or self.request.user.ground_stations.filter(status=2).exists()):
+            queryset = queryset.filter(
+                Q(author=self.request.user)
+                | Q(ground_station__isnull=False, ground_station__owner=self.request.user)
+            )
+        return queryset.order_by('-start', '-end')
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        queryset_count = queryset.count()
+        ids = queryset.values_list('id', flat=True)
         context = {}
         parsed_url = urlparse(request.build_absolute_uri())
-        context["query_url"] = reverse('base:vet_observations_chunks') + '?' + parsed_url.query
+        context["query_url"] = reverse('base:vet_observations_chunks')
+        context["obs_ids"] = list(ids)
         context["observation_search_url"
                 ] = reverse('base:observations_list') + '?' + parsed_url.query
         context["page_size"] = settings.VET_ITEMS_PER_CHUNK
-        context["total_pages_num"] = ceil(queryset_count / settings.VET_ITEMS_PER_CHUNK)
-        context["total_items"] = queryset_count
         context["chunks_buffer_headstart"] = settings.CHUNKS_BUFFER_HEADSTART
         context["fwd_buffer_chunks"] = settings.FWD_BUFFER_CHUNKS
         context["bwd_buffer_chunks"] = settings.BWD_BUFFER_CHUNKS

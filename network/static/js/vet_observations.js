@@ -5,19 +5,21 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     let container = document.getElementById('vet-obs-container');
-    const query_url = container.dataset['query_url'];  // The url with GET params to send the AJAX request
-    const total_pages_num = parseInt(container.dataset['total_pages_num']);
+    const query_url = container.dataset['query_url'];  // The url to send the AJAX request to get the chunks
+
+    const obs_ids = JSON.parse(document.getElementById('obs-ids').textContent);
+    const total_items = obs_ids.length;
+    const page_size = parseInt(container.dataset.page_size);
+    const total_pages_num = Math.ceil(total_items / page_size);
     const fwd_buffer_chunks = parseInt(container.dataset['fwd_buffer_chunks']);  // The number of next pages to hold in memory
     const bwd_buffer_chunks = parseInt(container.dataset['bwd_buffer_chunks']);  // The number of previous pages to hold in memory
     const chunks_buffer_headstart = Math.min(parseInt(container.dataset['chunks_buffer_headstart']), total_pages_num - 1);  // The number of pages to load besides the first, at the start of the vetting proccess
-    let total_items = parseInt(container.dataset['total_items']);
 
     let btn_prev = document.getElementById('btn-prev');
     let btn_next = document.getElementById('btn-next');
     let loading_spinner = document.getElementById('obs-loading');  // The spinner that displays instead of the 'next' button when next pages have not loaded yet
     let pages = {};  // Holds the arrays of observations' html(pages), using the page number (starting from 1) as key 
     let current_page_num = 1;
-    const page_size = parseInt(container.dataset.page_size);
     let current_obs_index = 0;  // The index of the observation in each page (0 to page_size-1) 
     const current_obs_display = document.getElementById('current-obs-display');  // The number of the displayed observation
     let obs_changed_event = new Event('obs_changed');  // Causes observation_view.js to add listeners for each observation
@@ -27,6 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
     btn_prev.disabled = true;
     btn_next.disabled = true;
     auto_advance_checkbox.checked = true;
+
+    if(total_items) {
+        document.getElementById('total-obs-display').innerHTML = total_items;
+    }
 
     function preload_waterfall(obs_html_list, page_num) {
     /* Search through the html of each observation and download the waterfall images.
@@ -215,8 +221,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function get_ids_param(page_num) {
+        // Implements paging and returns the IDs as comma-separated url parameter value 
+        const startIdx = (page_num - 1) * page_size;
+        const endIdx = startIdx + page_size;
+        const slice = obs_ids.slice(startIdx, endIdx);
+        return (slice.lenth > 1) ? slice.join(','): slice;
+    }
+
     function fetchObsHtml(page_num) {
-        return fetch(`${query_url}&page=${page_num}`)
+        const ids_param = get_ids_param(page_num);
+        return fetch(`${query_url}?obs_ids=${ids_param}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error. Status: ${response.status}`);
