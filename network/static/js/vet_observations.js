@@ -109,8 +109,25 @@ document.addEventListener('DOMContentLoaded', () => {
         pages[current_page_num.toString()][current_obs_index] = container.innerHTML;
     }
 
-    function moveNext() {
+    function waitForSatelliteModalClose() {
+        // Waits util the Satellite modal is closed
+        const satModal = $('#SatelliteModal');
+        if (satModal.hasClass('show')) {
+            satModal.modal('hide');
+            
+            // Needs to wait for the event because the call to .modal('hide');
+            // returns before the modal has actually been hidden
+            return new Promise(resolve => {
+                $(satModal).one('hidden.bs.modal', function() {
+                    resolve();
+                });
+            });
+        }
+    }
+
+    async function moveNext() {
         hide_alert();
+        await waitForSatelliteModalClose();
         save_current_obs_state();
         btn_prev.disabled = false;
         current_obs_index = (current_obs_index + 1) % page_size;
@@ -139,8 +156,9 @@ document.addEventListener('DOMContentLoaded', () => {
         set_copy_link_btn();
     }
 
-    function moveBack() {
+    async function moveBack() {
         hide_alert();
+        await waitForSatelliteModalClose();
         save_current_obs_state();
         btn_next.disabled = false;
         current_obs_index = current_obs_index - 1;
