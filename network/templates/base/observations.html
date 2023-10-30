@@ -223,7 +223,7 @@
               {% for uuid_enrty in transmitter_uuids_info %}
                 <option data-transmitter_uuid="{{ uuid_enrty.transmitter_uuid }}" data-satname="{{ uuid_enrty.satellite__name }}" data-norad="{{ uuid_enrty.satellite__norad_cat_id }}" value="{{ uuid_enrty.transmitter_uuid }}" data-tokens="{{ uuid_enrty.satellite__norad_cat_id }} {{ uuid_enrty.satellite__name }}"
                         {% if uuid_enrty.transmitter_uuid == transmitters_uuid %}selected{% endif %}>
-                  {{ uuid_enrty.transmitter_uuid }} | {{ uuid_enrty.satellite__name }}
+                  {{ uuid_enrty.transmitter_uuid }} | {{ uuid_enrty.satellite__name }} | {{ uuid_enrty.transmitter_freq }} MHz
                 </option>
               {% endfor %}
             </select>

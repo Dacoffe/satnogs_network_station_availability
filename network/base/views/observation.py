@@ -35,10 +35,26 @@ def get_transmitter_uuids_list():
        observations page"""
     transmitter_uuids = cache.get('observations-filters-transmitters-uuids')
     if transmitter_uuids is None:
-        transmitter_uuids = list(
-            Observation.objects.all().prefetch_related('satellite').order_by('transmitter_uuid').
-            values('transmitter_uuid', 'satellite__norad_cat_id', 'satellite__name').distinct()
-        )
+        transmitter_uuids = [
+            {
+                **transmitter, 'transmitter_freq': (
+                    "{:.3f} - {:.3f}".format(
+                        transmitter['transmitter_downlink_low'] /
+                        1e6 if transmitter['transmitter_downlink_low'] is not None else 0,
+                        transmitter['transmitter_downlink_high'] /
+                        1e6 if transmitter['transmitter_downlink_high'] is not None else 0
+                    ) if transmitter['transmitter_type'] == 'Transponder' else "{:.3f}".format(
+                        transmitter['transmitter_downlink_low'] /
+                        1e6 if transmitter['transmitter_downlink_low'] is not None else 0
+                    )
+                )
+            } for transmitter in Observation.objects.all().prefetch_related('satellite').
+            order_by('transmitter_uuid').values(
+                'transmitter_uuid', 'satellite__norad_cat_id', 'satellite__name',
+                'transmitter_downlink_low', 'transmitter_downlink_high', 'transmitter_type'
+            ).distinct()
+        ]
+
         cache.set('observations-filters-transmitters-uuids', transmitter_uuids, None)
     return transmitter_uuids
 
