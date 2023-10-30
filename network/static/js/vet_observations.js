@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let obs_changed_event = new Event('obs_changed');  // Causes observation_view.js to add listeners for each observation
     let auto_advance_checkbox = document.getElementById('auto-advance-checkbox');
     let waterfalls = {};
+    let wavesurfer = null;  // Reference to wavesurfer. It is set when the audio tab is loaded via custom event
     
     btn_prev.disabled = true;
     btn_next.disabled = true;
@@ -33,6 +34,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if(total_items) {
         document.getElementById('total-obs-display').innerHTML = total_items;
     }
+
+    window.addEventListener('wavesurferCreated', function(event) {
+        // Saves the reference to wavesurfer when the audio tab is loaded
+        wavesurfer = event.detail;
+    });
 
     function preload_waterfall(obs_html_list, page_num) {
     /* Search through the html of each observation and download the waterfall images.
@@ -105,6 +111,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function save_current_obs_state() {
+        if(wavesurfer) {    // If audio is playing, stop it
+            wavesurfer.stop();
+            wavesurfer.destroy();
+        }
         // Saves changes made to the DOM to the in-memory HTML
         pages[current_page_num.toString()][current_obs_index] = container.innerHTML;
     }
@@ -213,10 +223,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function replaceContainer() {
-        $('.modal').modal('hide');
         loading_spinner.classList.add('d-none');
         container.innerHTML = pages[current_page_num.toString()][current_obs_index];
         document.dispatchEvent(obs_changed_event);
+        $('#tab-waterfall-btn').tab('show');
         let img_tag = document.getElementById('waterfall-img');
         let waterfall_spinner = document.getElementById('waterfall-loading');
         if(img_tag) {

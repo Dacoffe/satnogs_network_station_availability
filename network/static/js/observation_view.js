@@ -65,6 +65,9 @@ function observationView() {
                 ]
             });
 
+            let wavesurferCreated = new CustomEvent('wavesurferCreated', { detail: wavesurfer });
+            window.dispatchEvent(wavesurferCreated);
+
             wavesurfer.on('destroy', hideProgress);
             wavesurfer.on('error', onError);
 
