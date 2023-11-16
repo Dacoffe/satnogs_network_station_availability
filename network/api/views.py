@@ -1,4 +1,5 @@
 """SatNOGS Network API django rest framework Views"""
+import math
 from random import choices
 from string import ascii_letters, digits
 
@@ -6,7 +7,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db.models.query import QuerySet
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -22,7 +23,8 @@ from network.api import authentication, filters, pagination, serializers
 from network.api.perms import StationOwnerPermission
 from network.base.models import Observation, Station
 from network.base.rating_tasks import rate_observation
-from network.base.tasks import delay_task_with_lock, process_audio, sync_frame_to_db
+from network.base.tasks import delay_task_with_lock, \
+    get_and_refresh_transmitters_with_stats_cache, process_audio, sync_frame_to_db
 from network.base.validators import NegativeElevationError, NoTleSetError, \
     ObservationOverlapError, SchedulingLimitError, SinglePassError
 
@@ -185,14 +187,68 @@ def station_register_view(request):
     return HttpResponseRedirect(redirect_to='/api/')
 
 
-class TransmitterView(  # pylint: disable=R0901
-        mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
-    """SatNOGS Network Transmitter API view class"""
-    queryset = Observation.objects.order_by().values('transmitter_uuid').distinct()
-    serializer_class = serializers.TransmitterSerializer
-    lookup_field = 'transmitter_uuid'
-    filterset_class = filters.TransmitterViewFilter
-    pagination_class = pagination.LinkedHeaderPageNumberPagination
+def get_transmitter_with_stats(uuid):
+    """Returns a single transmitter with associated statistics"""
+    queryset = Observation.objects.values('transmitter_uuid', ).distinct().annotate(
+        future=Count('pk', filter=Q(end__gt=now())),
+        bad=Count('pk', filter=Q(status__range=(-100, -1))),
+        unknown=Count('pk', filter=Q(status__range=(0, 99), end__lte=now())),
+        good=Count('pk', filter=Q(status__gte=100)),
+    )
+
+    transmitter = get_object_or_404(queryset, transmitter_uuid=uuid)
+    total_count = 0
+    unknown_count = transmitter['unknown'] or 0
+    future_count = transmitter['future'] or 0
+    good_count = transmitter['good'] or 0
+    bad_count = transmitter['bad'] or 0
+    total_count = unknown_count + future_count + good_count + bad_count
+    unknown_rate = 0
+    future_rate = 0
+    success_rate = 0
+    bad_rate = 0
+
+    if total_count:
+        unknown_rate = math.trunc(10000 * (unknown_count / total_count)) / 100
+        future_rate = math.trunc(10000 * (future_count / total_count)) / 100
+        success_rate = math.trunc(10000 * (good_count / total_count)) / 100
+        bad_rate = math.trunc(10000 * (bad_count / total_count)) / 100
+
+    transmitter['stats'] = {
+        'total_count': int(total_count),
+        'unknown_count': int(unknown_count),
+        'future_count': int(future_count),
+        'good_count': int(good_count),
+        'bad_count': int(bad_count),
+        'unknown_rate': int(unknown_rate),
+        'future_rate': int(future_rate),
+        'success_rate': int(success_rate),
+        'bad_rate': int(bad_rate)
+    }
+    return transmitter
+
+
+@api_view(['GET'])
+@permission_classes((AllowAny, ))
+def transmitter_detail_view(request, transmitter_uuid):
+    """API detail view for transmitter"""
+    transmitter = get_transmitter_with_stats(transmitter_uuid)
+    serializer = serializers.TransmitterSerializer(transmitter)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes((AllowAny, ))
+def transmitters_view(request):
+    """Transmitter list API view"""
+    query_params = request.GET
+    if query_params.get('uuid'):
+        queryset = [get_transmitter_with_stats(query_params.get('uuid'))]
+    else:
+        queryset = cache.get('transmitters-with-stats'
+                             ) or get_and_refresh_transmitters_with_stats_cache()
+    serializer = serializers.TransmitterSerializer(queryset, many=True)
+    return Response(serializer.data)
 
 
 class JobView(viewsets.ReadOnlyModelViewSet):  # pylint: disable=R0901

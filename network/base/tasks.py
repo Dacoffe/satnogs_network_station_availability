@@ -1,5 +1,6 @@
 """SatNOGS Network Celery task functions"""
 import logging
+import math
 import os
 import struct
 import zipfile
@@ -12,7 +13,7 @@ from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.core.mail import send_mail
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.db.models.signals import post_save
 from django.utils.timezone import now
 from internetarchive import upload
@@ -25,9 +26,64 @@ from network.base.db_api import DBConnectionError, get_tle_sets_by_norad_id_set,
 from network.base.models import DemodData, Observation, Satellite, Station
 from network.base.rating_tasks import rate_observation
 from network.base.signals import _station_post_save
-from network.base.utils import sync_demoddata_to_db
+from network.base.utils import format_frequency, format_frequency_range, sync_demoddata_to_db
 
 LOGGER = logging.getLogger('db')
+
+
+def get_and_refresh_transmitters_with_stats_cache():
+    """Refreshes the cache of transmitters with associated statistics and returns them"""
+    queryset = Observation.objects.order_by().values(
+        'transmitter_uuid', 'satellite__norad_cat_id', 'satellite__name',
+        'transmitter_downlink_low', 'transmitter_downlink_high', 'transmitter_type'
+    ).distinct().annotate(
+        future=Count('pk', filter=Q(end__gt=now())),
+        bad=Count('pk', filter=Q(status__range=(-100, -1))),
+        unknown=Count('pk', filter=Q(status__range=(0, 99), end__lte=now())),
+        good=Count('pk', filter=Q(status__gte=100)),
+    ).prefetch_related('satellite').order_by()
+    object_list = list(queryset)
+    for transmitter in object_list:
+        total_count = 0
+        unknown_count = transmitter['unknown'] or 0
+        future_count = transmitter['future'] or 0
+        good_count = transmitter['good'] or 0
+        bad_count = transmitter['bad'] or 0
+        total_count = unknown_count + future_count + good_count + bad_count
+        unknown_rate = 0
+        future_rate = 0
+        success_rate = 0
+        bad_rate = 0
+
+        if total_count:
+            unknown_rate = math.trunc(10000 * (unknown_count / total_count)) / 100
+            future_rate = math.trunc(10000 * (future_count / total_count)) / 100
+            success_rate = math.trunc(10000 * (good_count / total_count)) / 100
+            bad_rate = math.trunc(10000 * (bad_count / total_count)) / 100
+
+        transmitter['stats'] = {
+            'total_count': int(total_count),
+            'unknown_count': int(unknown_count),
+            'future_count': int(future_count),
+            'good_count': int(good_count),
+            'bad_count': int(bad_count),
+            'unknown_rate': int(unknown_rate),
+            'future_rate': int(future_rate),
+            'success_rate': int(success_rate),
+            'bad_rate': int(bad_rate)
+        }
+
+        if transmitter['transmitter_type'] == 'Transponder':
+            transmitter['transmitter_freq'] = format_frequency_range(
+                transmitter["transmitter_downlink_low"] or 0,
+                transmitter["transmitter_downlink_high"] or 0
+            )
+        else:
+            transmitter['transmitter_freq'] = format_frequency(
+                transmitter["transmitter_downlink_low"] or 0
+            )
+    cache.set('transmitters-with-stats', object_list, 5 * 3600)
+    return object_list
 
 
 def delay_task_with_lock(task, lock_id, lock_expiration, *args):

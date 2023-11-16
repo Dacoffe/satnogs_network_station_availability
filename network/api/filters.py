@@ -91,8 +91,3 @@ class StationViewFilter(FilterSet):
     class Meta:
         model = Station
         fields = ['id', 'name', 'status', 'client_version']
-
-
-class TransmitterViewFilter(FilterSet):
-    """SatNOGS Network Transmitter API View Filter"""
-    uuid = django_filters.CharFilter(field_name='transmitter_uuid')

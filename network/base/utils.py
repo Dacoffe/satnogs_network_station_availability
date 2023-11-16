@@ -12,7 +12,16 @@ from django.utils.text import slugify
 from requests.exceptions import RequestException
 
 
-def format_frequency(value):
+def format_frequency_range(low, high):
+    """Returns Hz formatted frequency range html string"""
+    formatted_low = format_frequency(low, append_unit=False)
+    formatted_high = format_frequency(high, append_unit=True)
+    if '-' in (formatted_low, formatted_high):
+        return '-'
+    return f'{formatted_low} - {formatted_high}'
+
+
+def format_frequency(value, append_unit=True):
     """Returns Hz formatted frequency html string"""
     try:
         to_format = float(value)
@@ -20,19 +29,19 @@ def format_frequency(value):
         return '-'
     if to_format >= 1000000000000:
         formatted = format(to_format / 1000000000000, '.3f')
-        formatted = formatted + ' THz'
+        formatted = formatted + (' THz' if append_unit else '')
     elif to_format >= 1000000000:
         formatted = format(to_format / 1000000000, '.3f')
-        formatted = formatted + ' GHz'
+        formatted = formatted + (' GHz' if append_unit else '')
     elif to_format >= 1000000:
         formatted = format(to_format / 1000000, '.3f')
-        formatted = formatted + ' MHz'
+        formatted = formatted + (' MHz' if append_unit else '')
     elif to_format >= 1000:
         formatted = format(to_format / 1000, '.3f')
-        formatted = formatted + ' KHz'
+        formatted = formatted + (' KHz' if append_unit else '')
     else:
         formatted = format(to_format, '.3f')
-        formatted = formatted + ' Hz'
+        formatted = formatted + (' Hz' if append_unit else '')
     return formatted
 
 

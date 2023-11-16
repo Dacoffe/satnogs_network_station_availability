@@ -6,7 +6,6 @@ from operator import itemgetter
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.cache import cache
 from django.db.models import Prefetch
 from django.forms import ValidationError
 from django.http import JsonResponse
@@ -59,17 +58,7 @@ def create_new_observations(formset, user):
     if formset.violators and not user.groups.filter(name='Operators').exists():
         check_violators_scheduling_limit(formset.violators, observations_per_norad_id)
 
-    transmitter_uuids = cache.get('observations-filters-transmitters-uuids')
-
     for observation in new_observations:
-        uuid = {
-            'transmitter_uuid': observation.transmitter_uuid,
-            'satellite__norad_cat_id': observation.satellite.norad_cat_id,
-            'satellite__name': observation.satellite.name
-        }
-        if uuid not in transmitter_uuids:
-            transmitter_uuids.append(uuid)
-            cache.set('observations-filters-transmitters-uuids', transmitter_uuids, None)
         observation.save()
 
     return new_observations

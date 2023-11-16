@@ -21,6 +21,7 @@ from network.base.models import Observation, Satellite, Station
 from network.base.perms import delete_perms, schedule_perms, vet_perms
 from network.base.rating_tasks import rate_observation
 from network.base.stats import satellite_stats_by_transmitter_list, transmitters_with_stats
+from network.base.tasks import get_and_refresh_transmitters_with_stats_cache
 from network.base.utils import community_get_discussion_details
 from network.users.models import User
 
@@ -28,35 +29,6 @@ from network.users.models import User
 def get_two_days_ago():
     """Helper function to get the datetime 48 hours before as formatted string"""
     return (now() - timedelta(days=2)).strftime("%Y-%m-%d %H:%M")
-
-
-def get_transmitter_uuids_list():
-    """Helper function to get the transmitter uuids list for populating the related filter in
-       observations page"""
-    transmitter_uuids = cache.get('observations-filters-transmitters-uuids')
-    if transmitter_uuids is None:
-        transmitter_uuids = [
-            {
-                **transmitter, 'transmitter_freq': (
-                    "{:.3f} - {:.3f}".format(
-                        transmitter['transmitter_downlink_low'] /
-                        1e6 if transmitter['transmitter_downlink_low'] is not None else 0,
-                        transmitter['transmitter_downlink_high'] /
-                        1e6 if transmitter['transmitter_downlink_high'] is not None else 0
-                    ) if transmitter['transmitter_type'] == 'Transponder' else "{:.3f}".format(
-                        transmitter['transmitter_downlink_low'] /
-                        1e6 if transmitter['transmitter_downlink_low'] is not None else 0
-                    )
-                )
-            } for transmitter in Observation.objects.all().prefetch_related('satellite').
-            order_by('transmitter_uuid').values(
-                'transmitter_uuid', 'satellite__norad_cat_id', 'satellite__name',
-                'transmitter_downlink_low', 'transmitter_downlink_high', 'transmitter_type'
-            ).distinct()
-        ]
-
-        cache.set('observations-filters-transmitters-uuids', transmitter_uuids, None)
-    return transmitter_uuids
 
 
 class ObservationListView(ListView):  # pylint: disable=R0901
@@ -217,7 +189,9 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         context['results'] = self.request.GET.getlist('results')
         context['rated'] = self.request.GET.getlist('rated')
         context['transmitter_mode'] = self.request.GET.get('transmitter_mode', None)
-        context['transmitter_uuids_info'] = get_transmitter_uuids_list()
+        context['transmitter_uuids_info'] = cache.get(
+            'transmitters-with-stats'
+        ) or get_and_refresh_transmitters_with_stats_cache()
         context['more_filtered'] = bool(self.more_filtered)
         if norad_cat_id is not None and norad_cat_id != '':
             context['norad'] = int(norad_cat_id)

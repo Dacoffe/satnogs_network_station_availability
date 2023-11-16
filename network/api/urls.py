@@ -10,6 +10,9 @@ ROUTER.register(r'jobs', views.JobView, basename='jobs')
 ROUTER.register(r'observations', views.ObservationView, basename='observations')
 ROUTER.register(r'stations', views.StationView, basename='stations')
 ROUTER.register(r'configuration', views.StationConfigurationView, basename='configuration')
-ROUTER.register(r'transmitters', views.TransmitterView, basename='transmitters')
 
-API_URLPATTERNS = ROUTER.urls + [path('station/register', views.station_register_view)]
+API_URLPATTERNS = ROUTER.urls + [
+    path('transmitters/', views.transmitters_view),
+    path('transmitters/<str:transmitter_uuid>', views.transmitter_detail_view),
+    path('station/register', views.station_register_view)
+]

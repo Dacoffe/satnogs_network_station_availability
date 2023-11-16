@@ -11,7 +11,6 @@ from network.base.models import Antenna, DemodData, FrequencyRange, Observation,
 from network.base.perms import UserNoPermissionError, \
     check_schedule_perms_of_violators_per_station, check_schedule_perms_per_station
 from network.base.scheduling import create_new_observation
-from network.base.stats import transmitter_stats_by_uuid
 from network.base.validators import ObservationOverlapError, OutOfRangeError, check_end_datetime, \
     check_overlaps, check_start_datetime, check_start_end_datetimes, \
     check_transmitter_station_pairs, check_violators_scheduling_limit
@@ -655,10 +654,7 @@ class TransmitterSerializer(serializers.Serializer):
 
     def get_stats(self, obj):
         """Returns Transmitter statistics"""
-        stats = transmitter_stats_by_uuid(obj['transmitter_uuid'])
-        for statistic in stats:
-            stats[statistic] = int(stats[statistic])
-        return stats
+        return obj['stats']
 
     def create(self, validated_data):
         """Creates an object instance of transmitter, currently disabled and returns None"""

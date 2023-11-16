@@ -12,6 +12,7 @@ RUN_EVERY_TWO_HOURS = 2 * 60 * 60
 RUN_HOURLY = 60 * 60
 RUN_EVERY_15_MINUTES = 60 * 15
 RUN_TWICE_HOURLY = 60 * 30
+RUN_EVERY_FOUR_HOURS = 60 * 60 * 4
 
 APP = Celery('network')
 
@@ -22,6 +23,13 @@ APP.autodiscover_tasks()
 # Wrapper tasks as workaround for registering shared tasks to beat scheduler
 # See https://github.com/celery/celery/issues/5059
 # and https://github.com/celery/celery/issues/3797#issuecomment-422656038
+@APP.task
+def refresh_transmitters_with_stats_cache():
+    """Wrapper task for 'refresh_transmitters_with_stats_cache' shared task"""
+    from network.base.tasks import get_and_refresh_transmitters_with_stats_cache as periodic_task
+    periodic_task()
+
+
 @APP.task
 def update_future_observations_with_new_tle_sets():
     """Wrapper task for 'update_future_observations_with_new_tle_sets' shared task"""
@@ -106,6 +114,12 @@ def setup_periodic_tasks(sender, **kwargs):  # pylint: disable=W0613
         RUN_TWICE_HOURLY,
         update_future_observations_with_new_transmitter_details.s(),
         name='update_future_observations_with_new_transmitter_details'
+    )
+
+    sender.add_periodic_task(
+        RUN_EVERY_FOUR_HOURS,
+        refresh_transmitters_with_stats_cache.s(),
+        name='refresh_transmitters_with_stats_cache'
     )
 
     sender.add_periodic_task(RUN_HOURLY, fetch_data.s(), name='fetch_data')
