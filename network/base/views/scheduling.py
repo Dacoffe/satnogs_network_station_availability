@@ -23,7 +23,7 @@ from network.base.perms import schedule_perms, schedule_station_violators_perms
 from network.base.scheduling import create_new_observation, get_available_stations, \
     over_min_duration, predict_available_observation_windows
 from network.base.serializers import StationSerializer
-from network.base.stats import satellite_stats_by_transmitter_list, transmitters_with_stats
+from network.base.stats import get_satellite_stats_by_transmitter_list, get_transmitters_with_stats
 from network.base.validators import NegativeElevationError, NoTleSetError, \
     ObservationOverlapError, OutOfRangeError, SchedulingLimitError, SinglePassError, \
     check_violators_scheduling_limit, is_frequency_in_transmitter_range, \
@@ -383,7 +383,7 @@ def pass_predictions(request, station_id):
             )
 
             if station_windows:
-                satellite_stats = satellite_stats_by_transmitter_list(transmitters)
+                satellite_stats = get_satellite_stats_by_transmitter_list(transmitters)
                 for window in station_windows:
                     valid = window['start'] > observation_min_start and window['valid_duration']
                     if not valid:
@@ -513,13 +513,13 @@ def transmitters_view(request):
         transmitters = supported_transmitters
 
     data = {
-        "transmitters_active": transmitters_with_stats(
+        "transmitters_active": get_transmitters_with_stats(
             [t for t in transmitters if t["status"] == "active" and not t["unconfirmed"]]
         ),
-        "transmitters_inactive": transmitters_with_stats(
+        "transmitters_inactive": get_transmitters_with_stats(
             [t for t in transmitters if t["status"] == "inactive" and not t["unconfirmed"]]
         ),
-        "transmitters_unconfirmed": transmitters_with_stats(
+        "transmitters_unconfirmed": get_transmitters_with_stats(
             [t for t in transmitters if t["unconfirmed"]]
         ),
     }

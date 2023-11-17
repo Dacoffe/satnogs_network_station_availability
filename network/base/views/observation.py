@@ -20,7 +20,7 @@ from network.base.decorators import ajax_required
 from network.base.models import Observation, Satellite, Station
 from network.base.perms import delete_perms, schedule_perms, vet_perms
 from network.base.rating_tasks import rate_observation
-from network.base.stats import satellite_stats_by_transmitter_list, transmitters_with_stats
+from network.base.stats import get_satellite_stats_by_transmitter_list, get_transmitters_with_stats
 from network.base.tasks import get_and_refresh_transmitters_with_stats_cache
 from network.base.utils import community_get_discussion_details
 from network.users.models import User
@@ -189,9 +189,11 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         context['results'] = self.request.GET.getlist('results')
         context['rated'] = self.request.GET.getlist('rated')
         context['transmitter_mode'] = self.request.GET.get('transmitter_mode', None)
-        context['transmitter_uuids_info'] = cache.get(
-            'transmitters-with-stats'
-        ) or get_and_refresh_transmitters_with_stats_cache()
+        cached_transmitters_with_stats = cache.get('transmitters-with-stats')
+        context['transmitter_uuids_info'] = cached_transmitters_with_stats.values(
+        ) if cached_transmitters_with_stats else get_and_refresh_transmitters_with_stats_cache(
+            in_list_form=True
+        )
         context['more_filtered'] = bool(self.more_filtered)
         if norad_cat_id is not None and norad_cat_id != '':
             context['norad'] = int(norad_cat_id)
@@ -470,7 +472,7 @@ def satellite_view(request, norad_id):
     except DBConnectionError as error:
         data = [{'error': str(error)}]
         return JsonResponse(data, safe=False)
-    satellite_stats = satellite_stats_by_transmitter_list(transmitters)
+    satellite_stats = get_satellite_stats_by_transmitter_list(transmitters)
     data = {
         'id': norad_id,
         'name': sat.name,
@@ -482,7 +484,7 @@ def satellite_view(request, norad_id):
         'unknown_count': satellite_stats['unknown_count'],
         'future_count': satellite_stats['future_count'],
         'total_count': satellite_stats['total_count'],
-        'transmitters': transmitters_with_stats(transmitters)
+        'transmitters': get_transmitters_with_stats(transmitters)
     }
 
     return JsonResponse(data, safe=False)

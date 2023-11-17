@@ -13,7 +13,7 @@ from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.core.mail import send_mail
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Max, Q
 from django.db.models.signals import post_save
 from django.utils.timezone import now
 from internetarchive import upload
@@ -31,19 +31,23 @@ from network.base.utils import format_frequency, format_frequency_range, sync_de
 LOGGER = logging.getLogger('db')
 
 
-def get_and_refresh_transmitters_with_stats_cache():
+def get_and_refresh_transmitters_with_stats_cache(in_list_form=False):
     """Refreshes the cache of transmitters with associated statistics and returns them"""
     queryset = Observation.objects.order_by().values(
         'transmitter_uuid', 'satellite__norad_cat_id', 'satellite__name',
         'transmitter_downlink_low', 'transmitter_downlink_high', 'transmitter_type'
     ).distinct().annotate(
+        date=Max('end'),
         future=Count('pk', filter=Q(end__gt=now())),
         bad=Count('pk', filter=Q(status__range=(-100, -1))),
         unknown=Count('pk', filter=Q(status__range=(0, 99), end__lte=now())),
         good=Count('pk', filter=Q(status__gte=100)),
     ).prefetch_related('satellite').order_by()
-    object_list = list(queryset)
-    for transmitter in object_list:
+    object_dict = {}
+    for transmitter in queryset:
+        same_transmitter = object_dict.get(transmitter["transmitter_uuid"])
+        if same_transmitter and same_transmitter["date"] > transmitter["date"]:
+            continue
         total_count = 0
         unknown_count = transmitter['unknown'] or 0
         future_count = transmitter['future'] or 0
@@ -82,8 +86,9 @@ def get_and_refresh_transmitters_with_stats_cache():
             transmitter['transmitter_freq'] = format_frequency(
                 transmitter["transmitter_downlink_low"] or 0
             )
-    cache.set('transmitters-with-stats', object_list, 5 * 3600)
-    return object_list
+        object_dict[transmitter['transmitter_uuid']] = transmitter
+    cache.set('transmitters-with-stats', object_dict, 5 * 3600)
+    return object_dict if not in_list_form else object_dict.values()
 
 
 def delay_task_with_lock(task, lock_id, lock_expiration, *args):
