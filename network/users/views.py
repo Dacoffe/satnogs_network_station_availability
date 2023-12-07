@@ -36,7 +36,6 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        print(settings.AUTH0, flush=True)
         context['auth0'] = settings.AUTH0
         return context
 
