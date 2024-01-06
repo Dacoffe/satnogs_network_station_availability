@@ -450,6 +450,7 @@ $(document).ready( function(){
         $(this).prop('disabled', true);
         $('#schedule-observation').prop('disabled', true);
         $('#calculate-observation').prop('disabled', true);
+        $('#form-obs').submit();
     });
 
     $('#schedule-observation').on('click', function() {
