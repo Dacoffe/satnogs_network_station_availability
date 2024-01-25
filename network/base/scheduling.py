@@ -331,7 +331,10 @@ def generate_geo_observation_window(observer, satellite, start, end):
     :return: pass parameters used for generating observation windows
     '''
     pass_params = {}
-    satellite.compute(observer)
+    try:
+        satellite.compute(observer)
+    except ValueError:
+        return pass_params
     pass_params['rise_time'] = start
     pass_params['rise_az'] = int(satellite.az * 180 / math.pi)
     pass_params['tca_time'] = (start + timedelta(hours=12)).strftime("%Y-%m-%d %H:%M:%S.%f")
@@ -446,7 +449,10 @@ def predict_available_observation_windows(
             # GEO caught here
             except ValueError:
                 pass_params = generate_geo_observation_window(observer, satellite, start, end)
-                geo_pass = True
+                if pass_params:
+                    geo_pass = True
+                else:
+                    return passes_found, station_windows
             except TypeError:
                 return passes_found, station_windows
             passes_found.append(pass_params)
