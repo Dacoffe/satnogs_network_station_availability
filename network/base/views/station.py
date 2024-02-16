@@ -1,4 +1,6 @@
 """Django base views for SatNOGS Network"""
+import json
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -11,11 +13,13 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.timezone import now
 from django.views.generic import ListView
+from jsonschema import Draft202012Validator, ValidationError
 
 from network.base.decorators import ajax_required
 from network.base.forms import AntennaInlineFormSet, FrequencyRangeInlineFormSet, StationForm, \
     StationRegistrationForm
-from network.base.models import AntennaType, Observation, Station, StationStatusLog
+from network.base.models import AntennaType, Observation, Station, StationConfiguration, \
+    StationConfigurationSchema, StationStatusLog, StationType
 from network.base.perms import modify_delete_station_perms, schedule_station_perms
 from network.base.serializers import StationSerializer
 from network.base.utils import populate_formset_error_messages
@@ -161,6 +165,7 @@ def station_view(request, station_id):
     return render(
         request, 'base/station_view.html', {
             'station': station,
+            'station_conf': json.dumps(station.active_configuration.configuration),
             'mapbox_id': settings.MAPBOX_MAP_ID,
             'mapbox_token': settings.MAPBOX_TOKEN,
             'can_schedule': can_schedule,
@@ -283,89 +288,16 @@ def initialize_station_and_registration_status(request, station_id):
 @login_required
 def station_edit(request, station_id=None):
     """Edit or add a single station."""
-    antenna_types = AntennaType.objects.all()
-    frequency_range_formsets = {}
-    antenna_formset = None
-
     (station, registered) = initialize_station_and_registration_status(request, station_id)
-
     if request.method == 'POST':
-        validation_successful = False
-        transaction_successful = False
+        return handle_station_edit_post(request, station, registered)
+    return handle_station_edit_get(request, station, registered)
 
-        if station:
-            station_form = StationForm(request.POST, request.FILES, instance=station)
-        else:
-            station_form = StationForm(request.POST, request.FILES)
 
-        antenna_formset = AntennaInlineFormSet(
-            request.POST, instance=station_form.instance, prefix='ant'
-        )
-        frequency_range_formsets = {}
-
-        for antenna_form in antenna_formset:
-            if not antenna_form['DELETE'].value():
-                prefix = antenna_form.prefix
-                frequency_range_formsets[prefix] = FrequencyRangeInlineFormSet(
-                    request.POST, instance=antenna_form.instance, prefix=prefix + '-fr'
-                )
-
-        if station_form.is_valid():
-            station = station_form.save(commit=False)
-            station.owner = request.user
-            if antenna_formset.is_valid():
-                for frequency_range_formset in frequency_range_formsets:
-                    if not frequency_range_formsets[frequency_range_formset].is_valid():
-                        populate_formset_error_messages(
-                            messages, request, frequency_range_formsets[frequency_range_formset]
-                        )
-                        break
-                else:
-                    validation_successful = True
-            else:
-                populate_formset_error_messages(messages, request, antenna_formset)
-        else:
-            messages.error(request, str(station_form.errors))
-
-        if validation_successful:
-            try:
-                with transaction.atomic():
-                    station.save()
-                    antenna_formset.save()
-                    for frequency_range_formset in frequency_range_formsets:
-                        frequency_range_formsets[frequency_range_formset].save()
-                    transaction_successful = True
-            except DatabaseError:
-                messages.error(
-                    request, 'Something went worng, if the problem persists'
-                    ' please contact an administrator'
-                )
-
-        if transaction_successful:
-            messages.success(request, 'Ground Station {0} saved successfully.'.format(station.id))
-            return redirect(reverse('base:station_view', kwargs={'station_id': station.id}))
-        return render(
-            request, 'base/station_edit.html', {
-                'registered': registered,
-                'station_form': station_form,
-                'antenna_formset': antenna_formset,
-                'frequency_range_formsets': frequency_range_formsets,
-                'antenna_types': antenna_types,
-                'max_antennas_per_station': settings.MAX_ANTENNAS_PER_STATION,
-                'max_frequency_ranges_per_antenna': settings.MAX_FREQUENCY_RANGES_PER_ANTENNA,
-                'max_frequency_for_range': settings.MAX_FREQUENCY_FOR_RANGE,
-                'min_frequency_for_range': settings.MIN_FREQUENCY_FOR_RANGE,
-                'vhf_min_frequency': settings.VHF_MIN_FREQUENCY,
-                'vhf_max_frequency': settings.VHF_MAX_FREQUENCY,
-                'uhf_min_frequency': settings.UHF_MIN_FREQUENCY,
-                'uhf_max_frequency': settings.UHF_MAX_FREQUENCY,
-                'l_min_frequency': settings.L_MIN_FREQUENCY,
-                'l_max_frequency': settings.L_MAX_FREQUENCY,
-                's_min_frequency': settings.S_MIN_FREQUENCY,
-                's_max_frequency': settings.S_MAX_FREQUENCY,
-                'image_changed': 'image' in station_form.changed_data,
-            }
-        )
+def handle_station_edit_get(request, station, registered):
+    """Returns the form for creating or editing a station."""
+    antenna_formset = None
+    frequency_range_formsets = {}
     if station:
         station_form = StationForm(instance=station)
         antenna_formset = AntennaInlineFormSet(instance=station, prefix='ant')
@@ -374,16 +306,107 @@ def station_edit(request, station_id=None):
             frequency_range_formsets[antenna_prefix] = FrequencyRangeInlineFormSet(
                 instance=antenna_form.instance, prefix=antenna_prefix + '-fr'
             )
+
     else:
         station_form = StationForm()
         antenna_formset = AntennaInlineFormSet(prefix='ant')
+
+    return render_station_edit_form(
+        request, station_form, registered, antenna_formset, frequency_range_formsets
+    )
+
+
+def handle_station_edit_post(request, station, registered):
+    """Handles the form submission for creating or editing a station"""
+    frequency_range_formsets = {}
+    station_form = StationForm(request.POST, request.FILES, instance=station)
+    antenna_formset = AntennaInlineFormSet(
+        request.POST, instance=station_form.instance, prefix='ant'
+    )
+    for antenna_form in antenna_formset:
+        if not antenna_form['DELETE'].value():
+            prefix = antenna_form.prefix
+            frequency_range_formsets[prefix] = FrequencyRangeInlineFormSet(
+                request.POST, instance=antenna_form.instance, prefix=prefix + '-fr'
+            )
+
+    if not station_form.is_valid():
+        messages.error(request, str(station_form.errors))
+        return render_station_edit_form(
+            request, station_form, registered, antenna_formset, frequency_range_formsets
+        )
+
+    station_configuration = station_form.cleaned_data.get('station_configuration')
+    schema_id = station_form.cleaned_data.get('schema')
+
+    station = station_form.save(commit=False)
+    station.owner = request.user
+    if not antenna_formset.is_valid():
+        populate_formset_error_messages(messages, request, antenna_formset)
+        return render_station_edit_form(
+            request, station_form, registered, antenna_formset, frequency_range_formsets
+        )
+
+    for frequency_range_formset in frequency_range_formsets:
+        if not frequency_range_formsets[frequency_range_formset].is_valid():
+            populate_formset_error_messages(
+                messages, request, frequency_range_formsets[frequency_range_formset]
+            )
+            return render_station_edit_form(
+                request, station_form, registered, antenna_formset, frequency_range_formsets
+            )
+
+    try:
+        schema_instance = StationConfigurationSchema.objects.select_related('station_type').get(
+            id=schema_id
+        )
+        Draft202012Validator(schema_instance.schema).validate(station_configuration)
+        with transaction.atomic():
+            is_station_new = not bool(station.pk)
+            station.save()
+            antenna_formset.save()
+            for frequency_range_formset in frequency_range_formsets:
+                frequency_range_formsets[frequency_range_formset].save()
+            if not is_station_new:
+                StationConfiguration.objects.filter(
+                    station=station, active=True
+                ).update(active=False)
+            StationConfiguration.objects.create(
+                name=f"{schema_instance.station_type.name} - {schema_instance.name}",
+                station=station,
+                schema=schema_instance,
+                configuration=station_configuration
+            )
+        messages.success(request, 'Ground Station {0} saved successfully.'.format(station.id))
+        return redirect(reverse('base:station_view', kwargs={'station_id': station.id}))
+    except StationConfigurationSchema.DoesNotExist:
+        messages.error(request, 'Cannot find schema')
+    except ValidationError:
+        messages.error(request, 'Configuration is not valid')
+    except DatabaseError:
+        messages.error(
+            request, 'Something went worng, if the problem persists'
+            ' please contact an administrator'
+        )
+
+    return render_station_edit_form(
+        request, station_form, registered, antenna_formset, frequency_range_formsets
+    )
+
+
+def render_station_edit_form(
+    request, station_form, registered, antenna_formset, frequency_range_formsets
+):
+    """Creates the context and renders template for the station_edit page"""
     return render(
         request, 'base/station_edit.html', {
+            'station_types': StationType.objects.all(),
+            'conf_schemas': StationConfigurationSchema.objects.all(),
             'registered': registered,
             'station_form': station_form,
             'antenna_formset': antenna_formset,
             'frequency_range_formsets': frequency_range_formsets,
-            'antenna_types': antenna_types,
+            'antenna_types': AntennaType.objects.all(),
             'max_antennas_per_station': settings.MAX_ANTENNAS_PER_STATION,
             'max_frequency_ranges_per_antenna': settings.MAX_FREQUENCY_RANGES_PER_ANTENNA,
             'max_frequency_for_range': settings.MAX_FREQUENCY_FOR_RANGE,
@@ -396,5 +419,6 @@ def station_edit(request, station_id=None):
             'l_max_frequency': settings.L_MAX_FREQUENCY,
             's_min_frequency': settings.S_MIN_FREQUENCY,
             's_max_frequency': settings.S_MAX_FREQUENCY,
+            'image_changed': 'image' in station_form.changed_data,
         }
     )

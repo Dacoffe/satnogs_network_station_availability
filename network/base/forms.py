@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from django.conf import settings
 from django.forms import BaseFormSet, BaseInlineFormSet, CharField, DateTimeField, FloatField, \
-    Form, ImageField, IntegerField, ModelChoiceField, ModelForm, TypedChoiceField, \
+    Form, ImageField, IntegerField, JSONField, ModelChoiceField, ModelForm, TypedChoiceField, \
     ValidationError, formset_factory, inlineformset_factory
 
 from network.base.db_api import DBConnectionError, get_tle_sets_by_norad_id_set, \
@@ -199,6 +199,8 @@ class StationForm(ModelForm):
     lat = FloatField(min_value=-90.0, max_value=90.0)
     lng = FloatField(min_value=-180.0, max_value=180.0)
     violator_scheduling = TypedChoiceField(choices=STATION_VIOLATOR_SCHEDULING_CHOICES, coerce=int)
+    station_configuration = JSONField(required=True)
+    schema = IntegerField(required=True)
 
     class Meta:
         model = Station

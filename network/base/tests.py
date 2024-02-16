@@ -13,7 +13,8 @@ from django.utils.timezone import now
 from factory import fuzzy  # pylint: disable=C0412
 
 from network.base.models import OBSERVATION_STATUSES, Antenna, AntennaType, DemodData, \
-    FrequencyRange, Observation, Satellite, Station
+    FrequencyRange, Observation, Satellite, Station, StationConfiguration, \
+    StationConfigurationSchema
 from network.base.test_orbital import generate_fake_tle
 from network.users.models import User
 from network.users.tests import UserFactory
@@ -53,8 +54,28 @@ class StationFactory(factory.django.DjangoModelFactory):
     last_seen = fuzzy.FuzzyDateTime(now() - timedelta(days=3), now())
     horizon = fuzzy.FuzzyInteger(10, 20)
 
+    @factory.post_generation
+    def create_configuration(self, create, *args, **kwargs):
+        """Create and assign a configuration for the station"""
+        if not create:
+            return
+
+        StationConfigurationFactory(
+            station=self, schema=StationConfigurationSchema.objects.get(pk=1)
+        )
+
     class Meta:
         model = Station
+
+
+class StationConfigurationFactory(factory.django.DjangoModelFactory):
+    """Station configuration model factory."""
+    class Meta:
+        model = StationConfiguration
+
+    station = factory.Iterator(Station.objects.all())
+    schema = factory.Iterator(StationConfigurationSchema.objects.all())
+    name = fuzzy.FuzzyText()
 
 
 class AntennaFactory(factory.django.DjangoModelFactory):

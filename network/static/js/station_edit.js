@@ -1,7 +1,191 @@
-/*global human_frequency, bands_from_range*/
+/*global human_frequency, bands_from_range, JSONEditor*/
 /*eslint no-control-regex: 0*/
 $(document).ready(function() {
     'use strict';
+
+    let jsonEditor = null;
+    let stationType = -1;
+    let schemaId = -1;
+    let schema = null;
+    const currentConfigurationScript = document.getElementById('current-configuration');
+    let configuration;
+    if(currentConfigurationScript) {
+        configuration = JSON.parse(document.getElementById('current-configuration').textContent);
+    } else {
+        configuration = null;
+    }
+
+    const allSchemas = $('#configuration-schema-selection option').clone().toArray();
+    if(!configuration) {
+        $('#configuration-schema-selection-container').hide();
+    } else {
+        schemaId = $('#configuration-schema-selection').val();
+        if(schemaId !== '-1') { 
+            selectSchemaById(schemaId);
+        }
+    }
+
+    function setSchemaOptionsForStationTypeID(stationTypeId) {
+        $('#configuration-schema-selection').empty();
+        const schemaOptions = allSchemas.filter(element => {
+            return (element.dataset['stationType'] === stationTypeId || element.value === '-1');
+        });
+        $('#configuration-schema-selection').append(schemaOptions);
+    }
+
+    function selectSchemaById(currentSchemaId) {
+        schema = JSON.parse(document.getElementById(currentSchemaId).textContent);
+        if(jsonEditor) {
+            jsonEditor.destroy();
+        }
+        jsonEditor = new JSONEditor(document.getElementById('json-editor-container'), {
+            theme: 'bootstrap4',
+            schema: schema,
+            startval: configuration,
+            show_errors: 'interaction',
+            iconlib: 'bootstrap',
+            remove_button_labels: true,
+            disable_properties: true,
+            disable_edit_json: true,
+            display_required_only: true
+        });
+        jsonEditor.on('ready',() => {
+            $('#advancedEditInput').val(JSON.stringify(jsonEditor.getValue(), null, 2));
+            configuration = jsonEditor.getValue();
+
+            // Hack to trigger validation on each keystroke
+            $('#json-editor-container').find('input').on('input', function() {
+                var event = new Event('change', {
+                    'bubbles': true,
+                    'cancelable': true
+                });
+                this.dispatchEvent(event);
+            });
+
+            $('#json-renderer').jsonViewer(configuration, {rootCollapsable: false, withLinks: false});
+        });
+        
+        jsonEditor.on('change',function() {
+            const errors = jsonEditor.validate();
+            if(errors.length) {
+                $('#modal-save-config').prop('disabled', true);
+            } else {
+                $('#modal-save-config').prop('disabled', false);
+            }
+        });
+        $('#conf-controls-container').show();
+        $('#submit').prop('disabled', !$('form')[0].checkValidity());
+    }
+
+    $('#station-type-selection').on('changed.bs.select', function(event) {
+        stationType = event.target.value;
+        if(stationType == -1) {
+            $('#configuration-schema-selection-container').hide();
+            configuration = null;
+            $('#submit').prop('disabled', true);
+            $('#conf-controls-container').hide();
+        } else {
+            setSchemaOptionsForStationTypeID(stationType);
+            $('#configuration-schema-selection').selectpicker('refresh');
+            $('#configuration-schema-selection-container').show();
+            // If station is unregistered the unregistered configuration
+            // for the station type is selected already
+            schemaId = $('#configuration-schema-selection').val();
+            if(schemaId !== '-1') {
+                selectSchemaById(schemaId);
+            }
+        }
+    });
+
+    $('#configuration-schema-selection').on('changed.bs.select', function(event) {
+        schemaId = event.target.value;
+        if(schemaId == -1) {
+            $('#conf-controls-container').hide();
+            jsonEditor.destroy();
+            jsonEditor = null;
+            configuration = null;
+            $('#submit').prop('disabled', true);
+        } 
+        else {
+            selectSchemaById(schemaId);
+        }
+    });
+
+
+    $('#edit-conf').on('click', function() {
+        $('#advanced-edit-conf-modal').modal('hide');
+        $('#edit-conf-modal').modal('show');
+    });
+
+    $('#modal-save-config').on('click', function() {
+        const nonValidatedConfiguration = jsonEditor.getValue();
+        const errors = jsonEditor.validate(nonValidatedConfiguration);
+        if(!errors.length) {
+            configuration = nonValidatedConfiguration;
+            $('#advancedEditInput').val(JSON.stringify(jsonEditor.getValue(), null, 2));
+            $('#json-renderer').jsonViewer(configuration, {rootCollapsable: false, withLinks: false});
+            $('#edit-conf-modal').modal('hide');
+        }
+    });
+    
+    // Discards non-saved edits when closing the edit modal
+    $('#edit-conf-modal').on('hide.bs.modal', function() {
+        selectSchemaById(schemaId);
+    });
+
+    function validateAdvancedEdit(textareaValue) {
+        let advancedEditConf;
+        let errors;
+        try {
+            advancedEditConf = JSON.parse(textareaValue);
+            errors = jsonEditor.validate(advancedEditConf);
+        } catch (error) {
+            errors = [{'path': 'JSON error', 'message': 'Could not parse JSON'}];
+        }
+        if(errors.length) {
+            const errorContainer = document.getElementById('advanced-edit-errors');
+            errorContainer.innerHTML = '';
+            errors.forEach(function(error) {
+                errorContainer.innerText += `${error.path}: ${error.message}`;
+            });
+            $('#advanced-edit-errors').show();
+            $('#save-advanced-edit').prop('disabled', true);
+            console.debug('invalid');
+            // $('advancedEditInput').removeClass('is-valid');
+            $('#advancedEditInput').addClass('is-invalid').removeClass('is-valid');
+            // format: [isValid, parsedJSONConfig]
+            return [false, null];
+        } else {
+            $('#advanced-edit-errors').hide();
+            $('#save-advanced-edit').prop('disabled', false);
+            $('#advancedEditInput').addClass('is-valid').removeClass('is-invalid');
+            // format: [isValid, parsedJSONConfig]
+            return [true, advancedEditConf];
+        }
+    }
+
+    $('#advancedEditInput').on('input', function(event) {
+        validateAdvancedEdit(event.target.value);
+    });
+
+    $('#advanced-edit-conf').on('click', function() {
+        $('#edit-conf-modal').modal('hide');
+        $('#advanced-edit-conf-modal').modal('show');
+    });
+
+    $('#advanced-edit-conf-modal').on('hide.bs.modal', function() {
+        $('#advancedEditInput').val(JSON.stringify(jsonEditor.getValue(), null, 2));
+    });
+
+    $('#save-advanced-edit').on('click', function() {
+        const [isValid, advancedEditConf] =  validateAdvancedEdit($('#advancedEditInput').val());
+        if(isValid) {
+            jsonEditor.setValue(advancedEditConf);
+            configuration = advancedEditConf;
+            $('#json-renderer').jsonViewer(configuration, {rootCollapsable: false, withLinks: false});
+            $('#advanced-edit-conf-modal').modal('hide');
+        }
+    });
 
     $('#antennas-loading').toggle();
     $('.selectpicker').selectpicker();
@@ -227,12 +411,12 @@ $(document).ready(function() {
             }
         }
         let valid = element.checkValidity();
-        $('#submit').prop('disabled', !$('form')[0].checkValidity());
+        $('#submit').prop('disabled', !$('form')[0].checkValidity() || !configuration);
         input.toggleClass('is-valid', valid);
         input.toggleClass('is-invalid', !valid);
     }
 
-    $('input, textarea').each(function(){
+    $('input, textarea').not($('#json-editor-container input, #json-editor-container textarea')).each(function(){
         if(!$(this).hasClass('frequency')){
             check_validity_of_input(this);
         }
@@ -240,6 +424,10 @@ $(document).ready(function() {
 
     // Events related to validation
     $('body').on('input', function(e){
+        // Exlude the inputs if jsonEditor
+        if ($(e.target).closest('#json-editor-container').length || $(e.target).attr('id') === 'advancedEditInput') {
+            return;
+        }
         let input = $(e.target);
         let value = input.val();
         let order = input.data('order');
@@ -530,9 +718,16 @@ $(document).ready(function() {
             form.append('<input type="hidden" name="' + antenna_prefix + '-fr-INITIAL_FORMS" value="' + frequency_ranges_initial + '">');
             form.append('<input type="hidden" name="' + antenna_prefix + '-fr-MAX_NUM_FORMS" value="' + max_frequency_ranges + '">');
         });
+
         form.append('<input type="hidden" name="ant-TOTAL_FORMS" value="' + antennas_total + '">');
         form.append('<input type="hidden" name="ant-INITIAL_FORMS" value="' + antennas_initial + '">');
         form.append('<input type="hidden" name="ant-MAX_NUM_FORMS" value="' + max_antennas + '">');
-    });
 
+        form.append('<input type="hidden" name="lat" value="' + (configuration['Location Configuration'] ? configuration['Location Configuration']['station_lat']: 0) + '">');
+        form.append('<input type="hidden" name="lng" value="' + (configuration['Location Configuration'] ? configuration['Location Configuration']['station_lon']: 0) + '">');
+        form.append('<input type="hidden" name="alt" value="' + (configuration['Location Configuration'] ? configuration['Location Configuration']['station_elev']: 0) + '">');
+        form.append('<input type="hidden" name="schema" value="' + schemaId + '">');
+        form.append('<input id="station-configuration-form-input" type="hidden" name="station_configuration" value="">');
+        $('#station-configuration-form-input').val(JSON.stringify(configuration));
+    });
 });

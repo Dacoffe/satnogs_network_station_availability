@@ -8,6 +8,7 @@
 {% block css %}
   <link rel="stylesheet" href="{% static 'lib/bootstrap-slider/dist/css/bootstrap-slider.min.css' %}">
   <link rel="stylesheet" href="{% static 'lib/maplibre-gl/dist/maplibre-gl.css' %}">
+  <link rel="stylesheet" href="{% static 'lib/jquery.json-viewer/json-viewer/jquery.json-viewer.css' %}">
 {% endblock css %}
 
 {% block content %}
@@ -282,36 +283,12 @@
       <div class="row">
         <div class="card w-100">
           <div class="card-header" data-toggle="collapse" data-target="#basic-config-card-body">
-              <h6>Basic Configuration
+              <h6>{{ station.active_configuration.name }}
               <i class="bi bi-arrows-collapse float-right" aria-hidden="true"></i></h6>
           </div>
-          <div class="card-body text-center collapse in show" id="basic-config-card-body">
-            <div class="row justify-content-start align-item-center">
-              <div class="card border-secondary m-1">
-                <div class="card-header bg-secondary text-white">Soapy RX Device</div>
-                <div class="card-body text-center text-monospace text-nowrap bg-light p-2">
-                  <span>{{ station.satnogs_soapy_rx_device }}</span>
-                </div>
-              </div>
-              <div class="card border-secondary m-1">
-                <div class="card-header bg-secondary text-white">Soapy Antenna</div>
-                <div class="card-body text-center text-monospace text-nowrap bg-light p-2">
-                  <span>{{ station.satnogs_antenna }}</span>
-                </div>
-              </div>
-              <div class="card border-secondary m-1">
-                <div class="card-header bg-secondary text-white">RX Sample Rate</div>
-                <div class="card-body text-center text-monospace text-nowrap bg-light p-2">
-                  <span>{{ station.satnogs_rx_samp_rate }}</span>
-                </div>
-              </div>
-              <div class="card border-secondary m-1">
-                <div class="card-header bg-secondary text-white">RF Gain</div>
-                <div class="card-body text-center text-monospace text-nowrap bg-light p-2">
-                  <span>{{ station.satnogs_rf_gain }}</span>
-                </div>
-              </div>
-            </div>
+          <div class="card-body collapse in show" id="basic-config-card-body">
+            {{ station.active_configuration.configuration|json_script:"station-conf" }}
+            <pre class="mt-3 bg-light border border-secondary" id="json-renderer"></pre>
           </div>
         </div>
       </div>
@@ -505,4 +482,5 @@
   <script src="{% static 'js/station_view.js' %}"></script>
   <script src="{% static 'js/gridsquare.js' %}"></script>
   <script src="{% static 'js/satellite.js' %}"></script>
+  <script src="{% static 'lib/jquery.json-viewer/json-viewer/jquery.json-viewer.js' %}"></script>
 {% endblock javascript %}

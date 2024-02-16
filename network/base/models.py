@@ -214,6 +214,15 @@ class Station(models.Model):
         ordering = ['-status']
         indexes = [models.Index(fields=['-status', 'id'])]
 
+    @property
+    def active_configuration(self):
+        """Returns the currently used configuration of the station"""
+        try:
+            conf = ActiveStationConfiguration.objects.get(station=self)
+        except ActiveStationConfiguration.DoesNotExist:
+            conf = None
+        return conf
+
     def get_image(self):
         """Return the image of the station or the default image if there is a defined one"""
         if self.image and hasattr(self.image, 'url'):

@@ -4,6 +4,13 @@
 $(document).ready(function() {
     'use strict';
 
+    const jsonRenderer = $('#json-renderer');
+    const stationConfigElement = document.getElementById('station-conf');
+    if(jsonRenderer && stationConfigElement) {
+        const stationConfig = JSON.parse(stationConfigElement.textContent);
+        $('#json-renderer').jsonViewer(stationConfig, {rootCollapsable: false, withLinks: false});
+    }
+
     $('.card-body.collapse').on('hide.bs.collapse', function () {
         $(this).parent().find('.card-header i').addClass('bi bi-arrows-expand').removeClass('bi bi-arrows-collapse');
     });

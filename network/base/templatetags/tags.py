@@ -18,6 +18,12 @@ def gravatar_url(email, size=40):
     )
 
 
+@register.filter(name='not_true')
+def not_true(value):
+    """A filter to be used as a not-equals operator"""
+    return not value
+
+
 @register.simple_tag
 def active(request, urls):
     """Returns if this is an active URL"""

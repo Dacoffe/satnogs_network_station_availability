@@ -8,6 +8,7 @@
   <link href="{% static 'lib/bootstrap-select/dist/css/bootstrap-select.min.css' %}" rel="stylesheet" >
   <link href="{% static 'lib/bootstrap-slider/dist/css/bootstrap-slider.min.css' %}" rel="stylesheet" >
   <link href="{% static 'lib/bootstrap-fileinput/css/fileinput.min.css' %}" rel="stylesheet" >
+  <link rel="stylesheet" href="{% static 'lib/jquery.json-viewer/json-viewer/jquery.json-viewer.css' %}">
 {% endblock css %}
 
 {% block content %}
@@ -28,7 +29,7 @@
       <div class="card w-100 my-2">
         <div class="card-header categories" data-toggle="collapse" data-target="#general-card-body">
           <h6 class="card-title">
-            General Info
+            <span style="color: #dc3545;">*</span> General Info
             <i class="bi bi-arrows-collapse float-right" aria-hidden="true"></i>
           </h6>
         </div>
@@ -44,83 +45,119 @@
           </div>
         </div>
       </div>
-
-      <div class="card w-100 my-2">
-        <div class="card-header categories" data-toggle="collapse" data-target="#location-card-body">
-          <h6 class="card-title">
-            Location
-            <i class="bi bi-arrows-collapse float-right" aria-hidden="true"></i>
-          </h6>
-        </div>
-        <div class="card-body collapse in" id="location-card-body">
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="lat" class="control-label">Latitude</label>
-                <input value="{{ station_form.lat.value|default_if_none:"" }}" id="lat" type="number" class="form-control" name="lat" step="0.000001" max="{{ station_form.lat.field.max_value }}" min="{{ station_form.lat.field.min_value }}" placeholder="{{ station_form.lat.help_text }}" required>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="lng" class="control-label">Longtitude</label>
-                <input value="{{ station_form.lng.value|default_if_none:"" }}" id="lng" type="number" class="form-control" name="lng" step="0.000001" max="{{ station_form.lng.field.max_value }}" min="{{ station_form.lng.field.min_value }}" placeholder="{{ station_form.lng.help_text }}" required>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="alt" class="control-label">Altitude (ASL)</label>
-                <input value="{{ station_form.alt.value|default_if_none:"" }}" id="alt" type="number" class="form-control" name="alt" placeholder="{{ station_form.alt.help_text }}" required>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="qthlocator" class="control-label">QTH Locator</label>
-            <input class="form-control"
-                   id="qthlocator"
-                   type="text"
-                   name="qthlocator"
-                   value="{{ station_form.qthlocator.value|default_if_none:"" }}"
-                   readonly>
-          </div>
-        </div>
-      </div>
-
-
-      {% if registered %}
+      
+      {% with station_form.instance.active_configuration as configuration_instance %}
       <div class="card w-100 my-2">
         <div class="card-header categories" data-toggle="collapse" data-target="#configuration-card-body">
           <h6 class="card-title">
-            Configuration
+            <span style="color: #dc3545;">*</span> Configuration
             <i class="bi bi-arrows-collapse float-right" aria-hidden="true"></i>
           </h6>
         </div>
-        <div class="card-body collapse in" id="configuration-card-body">
+        <div class="card-body collapse in" id="configuration-card-body" data-station-id="{% if station_form.instance.id %}{{ station_form.instance.id }}{% else %}0{% endif %}">
           <div class="form-group">
-            <label for="satnogs_soapy_rx_device" class="control-label">Soapy RX Device</label>
-            <input value="{{ station_form.satnogs_soapy_rx_device.value|default_if_none:"" }}" id="soapy-rx-device" type="text" class="form-control" maxlength="{{ station_form.satnogs_soapy_rx_device.field.max_length }}" name="satnogs_soapy_rx_device" required>
+            <label for="station-type-selection">Station Type</label>
+            <select id="station-type-selection" class="form-control selectpicker" data-style="btn" name="station-type" autocomplete="off">
+              <option value="-1" {% if configuration_instance|not_true %}selected{% endif %}>Select a Station type</option>
+              {% for station_type in station_types %}
+              <option value="{{ station_type.id }}" {% if configuration_instance %}{% if configuration_instance.schema.station_type.id == station_type.id %} selected {% endif %}{% endif %}>
+                {{ station_type.name }}
+              </option>
+              {% endfor %}
+            </select>
           </div>
-          <div class="form-group">
-            <label for="satnogs_antenna" class="control-label">Soapy Antenna</label>
-            <input value="{{ station_form.satnogs_antenna.value|default_if_none:"" }}" id="satnogs-antenna" type="text" class="form-control" maxlength="{{ station_form.satnogs_antenna.field.max_length }}" name="satnogs_antenna" required>
-          </div>
-          <div class="row">
-            <div class="col-md-6">
-              <div class="form-group">
-                <label for="satnogs_rx_samp_rate" class="control-label">RX Sample Rate</label>
-                <input value="{{ station_form.satnogs_rx_samp_rate.value|default_if_none:"" }}" id="satnogs-rx-samp-rate" type="number" class="form-control" name="satnogs_rx_samp_rate" step="1" min="0" required>
+
+          {% for schema in conf_schemas %}
+            {{ schema.schema|json_script:schema.id }}
+          {% endfor %}
+          {% if configuration_instance %}
+            {{ configuration_instance.configuration|json_script:"current-configuration" }}
+          {% endif %}
+          
+          <div id="configuration-schema-selection-container" class="form-group">
+            <label for="configuration-schema-selection">Configuration Type</label>
+            <select id="configuration-schema-selection" class="form-control selectpicker" data-style="btn"
+                      name="configuration-schema" autocomplete="off" {% if registered|not_true %}disabled{% endif %}>
+                  {% if registered %}
+                    <option value="-1" {% if configuration_instance|not_true %}selected{% endif %}>Select a Configuration schema</option>
+                    {% for schema in conf_schemas %}
+                      {% comment %} Remove the Unregistered option if the station is registered {% endcomment %}
+                      {% if schema.name != "Unregistered Configuration" %}
+                      <option data-station-type="{{schema.station_type_id}}" value="{{ schema.id }}" {% if configuration_instance %}{% if configuration_instance.schema.id == schema.id%} selected {% endif %}{% endif %}>
+                        {{ schema.name }}
+                      </option>
+                      {% endif %}
+                    {% endfor %}
+                  {% else %}
+                    {% for schema in conf_schemas %}
+                      {% comment %}
+                        If editing an unregistered station, only select the apropriate schema.
+                        If it's a station under creation, select all schemas and let javascript display one for each station type.
+                      {% endcomment %}
+                      {% if schema.name == "Unregistered Configuration" %}
+                      <option data-station-type="{{schema.station_type_id}}" value="{{ schema.id }}" 
+                        {% if configuration_instance|not_true or schema.id == configuration_instance.schema.id %}selected{% endif %}>
+                        {{ schema.name }}
+                      </option>
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
+              </select>
+            </div>
+
+            <div id="conf-controls-container" style="display: none">
+              <label for="json-renderer">Current Configuration</label>
+              <pre class="mt-3 bg-light border border-secondary" id="json-renderer"></pre>
+
+              <button id="advanced-edit-conf" type="button" class="float-right btn btn-sm btn-primary" aria-controls="advanced-edit-conf-modal"><span class="bi bi-pencil-square" aria-hidden="true"></span> Advanced Edit</button>
+              <button id="edit-conf" type="button" class="float-right mr-2 btn btn-sm btn-primary" aria-controls="edit-conf-modal"><span class="bi bi-pencil-square" aria-hidden="true"></span> Edit</button>
+            </div>
+
+            <div class="modal" id="edit-conf-modal" tabindex="-1" role="dialog">
+              <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h3 class="modal-title">Edit Configuration</h3>
+                  </div>
+                  <div class="modal-body">
+                    <div id="json-editor-container">
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
+                    <button type="button" id="modal-save-config" class="btn btn-primary">
+                      Save changes
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="col-md-6">
-              <div class="form-group">
-                <label for="satnogs_rf_gain" class="control-label">RF Gain</label>
-                <input value="{{ station_form.satnogs_rf_gain.value|default_if_none:"" }}" id="satnogs-rf-gain" type="number" class="form-control" name="satnogs_rf_gain" step="0.01" min="0" required>
+
+            <div class="modal" id="advanced-edit-conf-modal" tabindex="-1" role="dialog" aria-labelledby="advanced-edit-modal-title">
+              <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h3 class="modal-title" id="advanced-edit-modal-title">Advanced edit</h3>
+                  </div>
+                  <div class="modal-body">
+                    <div id="advancedEditContainer">
+                      <div class="alert alert-danger" style="display: none" role="alert" id="advanced-edit-errors"></div>
+                      <textarea class="form-control" rows="10" id="advancedEditInput"></textarea>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
+                    <button type="button" id="save-advanced-edit" class="btn btn-primary">
+                      Save changes
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
+
           </div>
-        </div>
       </div>
-      {% endif %}
+      {% endwith %}
 
       <div class="card w-100 my-2">
         <div class="card-header categories" data-toggle="collapse" data-target="#antennas-card-body">
@@ -340,7 +377,6 @@
           </div>
         </div>
       </div>
-
     </div>
 
     <div class='row'>
@@ -357,8 +393,10 @@
 {% block javascript %}
   <script src="{% static 'js/gridsquare.js' %}"></script>
   <script src="{% static 'js/frequency_utils.js' %}"></script>
+  <script src="{% static 'lib/@json-editor/json-editor/dist/jsoneditor.js' %}"></script>
   <script src="{% static 'lib/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
   <script src="{% static 'lib/bootstrap-slider/dist/bootstrap-slider.min.js' %}"></script>
   <script src="{% static 'lib/bootstrap-fileinput/js/fileinput.min.js' %}"></script>
+  <script src="{% static 'lib/jquery.json-viewer/json-viewer/jquery.json-viewer.js' %}"></script>
   <script src="{% static 'js/station_edit.js' %}"></script>
 {% endblock javascript %}
