@@ -341,6 +341,7 @@ def handle_station_edit_post(request, station, registered):
 
     station = station_form.save(commit=False)
     station.owner = request.user
+    station.qthlocator = calculate_qth_locator(station.lat, station.lng)
     if not antenna_formset.is_valid():
         populate_formset_error_messages(messages, request, antenna_formset)
         return render_station_edit_form(
@@ -392,6 +393,34 @@ def handle_station_edit_post(request, station, registered):
     return render_station_edit_form(
         request, station_form, registered, antenna_formset, frequency_range_formsets
     )
+
+
+def calculate_qth_locator(latitude, longitude):
+    """Calculates the qth locator given latitude and longitude"""
+    field_identifiers = [
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
+        'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+    ]
+
+    working_lon = (longitude + 180) % 20
+    lon_field = field_identifiers[int((longitude + 180) / 20)]
+    lon_square = int(working_lon / 2)
+    working_lon = int((working_lon % 2) * 12)
+    lon_subsquare = field_identifiers[working_lon]
+
+    working_lat = (latitude + 90) % 10
+    lat_field = field_identifiers[int((latitude + 90) / 10)]
+    lat_square = int(working_lat)
+    working_lat = int((working_lat - lat_square) * 24)
+    lat_subsquare = field_identifiers[working_lat]
+
+    # Combine all parts to form the QTH locator
+    qthlocator = (
+        f"{lon_field}{lat_field}{lon_square}{lat_square}"
+        f"{lon_subsquare.lower()}{lat_subsquare.lower()}"
+    )
+
+    return qthlocator
 
 
 def render_station_edit_form(
