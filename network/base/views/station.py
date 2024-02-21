@@ -385,7 +385,7 @@ def handle_station_edit_post(request, station, registered):
         messages.error(request, 'Configuration is not valid')
     except DatabaseError:
         messages.error(
-            request, 'Something went worng, if the problem persists'
+            request, 'Something went wrong, if the problem persists'
             ' please contact an administrator'
         )
 
