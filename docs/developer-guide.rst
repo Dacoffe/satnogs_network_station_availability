@@ -88,6 +88,26 @@ When running satnogs-network using the docker container the webserver auto-reloa
 You need to restart the network-web container only when you change something in `settings.py`.
 All the other changes are directly applied with refreshing the page you are currently working on.
 
+
+Activation of the superuser account
+-----------------------------------
+
+Upon installation, a superuser is created. All users, including the superuser, must validate their email
+before the first login.  To do so, try to login with the user credentials configured during installation.
+You will be forwarded to a page named "Verify your E-mail Address" while in the background the
+activation link is generated and sent (if SMTP is configured). To retrieve this link, check the log
+output of the django web service::
+
+   $ docker-compose logs web
+   [...]
+   web-1  | Hello from example.com!
+   web-1  |
+   web-1  | You're receiving this e-mail because user admin has given your e-mail address to register an account on example.com.
+   web-1  |
+   web-1  | To confirm this is correct, go to http://localhost:8000/accounts/confirm-email/MQ:1rdD0r:_Sl3zszZl4MgM1jHCzfbZvNBlVpK7shs3k85FFdCkSY/
+
+Open the confirmation link, done.
+
 Simulating station heartbeats
 -----------------------------
 
