@@ -28,7 +28,8 @@ $(document).ready(function() {
             }
         },
         localization: {
-            format: 'yyyy-MM-dd HH:mm'
+            format: 'yyyy-MM-dd HH:mm',
+            hourCycle: 'h23'
         }
     };
     var start = new tempusDominus.TempusDominus(document.getElementById('datetimepicker-start'), dateConfiguration);

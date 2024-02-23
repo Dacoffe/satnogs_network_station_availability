@@ -15,7 +15,7 @@
         "stylelint": "^13.0.0"
     },
     "dependencies": {
-        "@eonasdan/tempus-dominus": "^6.2.7",
+        "@eonasdan/tempus-dominus": "^6.9.5",
         "@json-editor/json-editor": "^2.14.0",
         "bootstrap": "^4.6.2",
         "bootstrap-fileinput": "^5.5.2",
