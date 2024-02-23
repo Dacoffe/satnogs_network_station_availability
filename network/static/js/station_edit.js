@@ -350,7 +350,7 @@ $(document).ready(function() {
                 continue;
             } else if(max < min){
                 valid_range = false;
-                update_text_input_and_validation(text_input, 'Maximum value is greater than minimum value', false);
+                update_text_input_and_validation(text_input, 'Minimum value is greater than maximum value', false);
                 continue;
             } else if(min < minimum_frequency || max > maximum_frequency){
                 valid_range = false;
