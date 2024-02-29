@@ -75,7 +75,7 @@
              data-toggle="tab">Information
            </a>
         </li>
-        {% if request.user == station.owner and station.client_id %}
+        {% if request.user == station.owner %}
         <li role="presentation" class="nav-item">
           <a class="nav-link" href="#tab-configuration"
              aria-controls="tab-configuration"
@@ -278,19 +278,25 @@
       {% endif %}
     </div>
 
-    {% if request.user == station.owner and station.client_id %}
+    {% if request.user == station.owner %}
     <div role="tabpanel" class="tab-pane fade" id="tab-configuration">
       <div class="row">
+        {% if station.active_configuration %}
         <div class="card w-100">
-          <div class="card-header" data-toggle="collapse" data-target="#basic-config-card-body">
-              <h6>{{ station.active_configuration.name }}
-              <i class="bi bi-arrows-collapse float-right" aria-hidden="true"></i></h6>
+            <div class="card-header" data-toggle="collapse" data-target="#basic-config-card-body">
+                <h6>{{ station.active_configuration.name }}
+                <i class="bi bi-arrows-collapse float-right" aria-hidden="true"></i></h6>
+            </div>
+            <div class="card-body collapse in show" id="basic-config-card-body">
+              {{ station.active_configuration.configuration|json_script:"station-conf" }}
+              <pre class="mt-3 bg-light border border-secondary" id="json-renderer"></pre>
+            </div>
           </div>
-          <div class="card-body collapse in show" id="basic-config-card-body">
-            {{ station.active_configuration.configuration|json_script:"station-conf" }}
-            <pre class="mt-3 bg-light border border-secondary" id="json-renderer"></pre>
+        {% else %}
+          <div class="mx-5 mt-3">
+            <h6>No active configuration</h6>
           </div>
-        </div>
+        {% endif %}
       </div>
     </div>
     {% endif %}

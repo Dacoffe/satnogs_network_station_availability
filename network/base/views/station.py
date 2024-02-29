@@ -1,6 +1,4 @@
 """Django base views for SatNOGS Network"""
-import json
-
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -165,7 +163,6 @@ def station_view(request, station_id):
     return render(
         request, 'base/station_view.html', {
             'station': station,
-            'station_conf': json.dumps(station.active_configuration.configuration),
             'mapbox_id': settings.MAPBOX_MAP_ID,
             'mapbox_token': settings.MAPBOX_TOKEN,
             'can_schedule': can_schedule,
