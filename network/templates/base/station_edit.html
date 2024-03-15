@@ -29,7 +29,7 @@
       <div class="card w-100 my-2">
         <div class="card-header categories" data-toggle="collapse" data-target="#general-card-body">
           <h6 class="card-title">
-            <span style="color: #dc3545;">*</span> General Info
+            <span id="general-info-required" class="{% if station_form.name.value %} d-none {% endif %}" style="color: #dc3545;">*</span> General Info
             <i class="bi bi-arrows-collapse float-right" aria-hidden="true"></i>
           </h6>
         </div>
@@ -50,12 +50,12 @@
       <div class="card w-100 my-2">
         <div class="card-header categories" data-toggle="collapse" data-target="#configuration-card-body">
           <h6 class="card-title">
-            <span style="color: #dc3545;">*</span> Configuration
+            <span class="{% if configuration_instance|not_true %}station-type-invalid{% endif %}" id="config-required-asterisk" style="color: #dc3545;">*</span> Configuration
             <i class="bi bi-arrows-collapse float-right" aria-hidden="true"></i>
           </h6>
         </div>
         <div class="card-body collapse in" id="configuration-card-body" data-station-id="{% if station_form.instance.id %}{{ station_form.instance.id }}{% else %}0{% endif %}">
-          <div class="form-group">
+          <div id="station-type-selection-container" class="form-group {% if configuration_instance|not_true %}is-invalid{% endif %}">
             <label for="station-type-selection">Station Type</label>
             <select id="station-type-selection" class="form-control selectpicker" data-style="btn" name="station-type" autocomplete="off">
               <option value="-1" {% if configuration_instance|not_true %}selected{% endif %}>Select a Station type</option>

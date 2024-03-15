@@ -22,6 +22,9 @@ $(document).ready(function() {
         schemaId = $('#configuration-schema-selection').val();
         if(schemaId !== '-1') { 
             selectSchemaById(schemaId);
+        } else {
+            $('#configuration-schema-selection-container').addClass('is-invalid');
+            $('#config-required-asterisk').addClass('station-type-invalid');
         }
     }
 
@@ -80,11 +83,15 @@ $(document).ready(function() {
     $('#station-type-selection').on('changed.bs.select', function(event) {
         stationType = event.target.value;
         if(stationType == -1) {
+            $('#station-type-selection-container').addClass('is-invalid'); // Add this to parent formgroup to display red border
+            $('#config-required-asterisk').addClass('station-type-invalid'); // Add this to display the red asterisk meaning 'required'
             $('#configuration-schema-selection-container').hide();
             configuration = null;
             $('#submit').prop('disabled', true);
             $('#conf-controls-container').hide();
         } else {
+            $('#station-type-selection-container').removeClass('is-invalid');
+            $('#config-required-asterisk').removeClass('station-type-invalid');
             setSchemaOptionsForStationTypeID(stationType);
             $('#configuration-schema-selection').selectpicker('refresh');
             $('#configuration-schema-selection-container').show();
@@ -93,6 +100,8 @@ $(document).ready(function() {
             schemaId = $('#configuration-schema-selection').val();
             if(schemaId !== '-1') {
                 selectSchemaById(schemaId);
+                $('#configuration-schema-selection-container').removeClass('is-invalid');
+                $('#config-required-asterisk').removeClass('schema-invalid');
             }
         }
     });
@@ -100,6 +109,8 @@ $(document).ready(function() {
     $('#configuration-schema-selection').on('changed.bs.select', function(event) {
         schemaId = event.target.value;
         if(schemaId == -1) {
+            $('#configuration-schema-selection-container').addClass('is-invalid');
+            $('#config-required-asterisk').addClass('schema-invalid');
             $('#conf-controls-container').hide();
             jsonEditor.destroy();
             jsonEditor = null;
@@ -107,6 +118,8 @@ $(document).ready(function() {
             $('#submit').prop('disabled', true);
         } 
         else {
+            $('#configuration-schema-selection-container').removeClass('is-invalid');
+            $('#config-required-asterisk').removeClass('schema-invalid');
             selectSchemaById(schemaId);
         }
     });
@@ -150,8 +163,6 @@ $(document).ready(function() {
             });
             $('#advanced-edit-errors').show();
             $('#save-advanced-edit').prop('disabled', true);
-            console.debug('invalid');
-            // $('advancedEditInput').removeClass('is-valid');
             $('#advancedEditInput').addClass('is-invalid').removeClass('is-valid');
             // format: [isValid, parsedJSONConfig]
             return [false, null];
@@ -411,6 +422,14 @@ $(document).ready(function() {
             }
         }
         let valid = element.checkValidity();
+        // Toggle the 'required' red asterisc in General Info based on 'name' input validity
+        if(element.id === 'station-name') {
+            if(valid) {
+                $('#general-info-required').addClass('d-none');
+            } else {
+                $('#general-info-required').removeClass('d-none');
+            }
+        }
         $('#submit').prop('disabled', !$('form')[0].checkValidity() || !configuration);
         input.toggleClass('is-valid', valid);
         input.toggleClass('is-invalid', !valid);
