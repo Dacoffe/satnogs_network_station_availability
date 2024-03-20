@@ -44,11 +44,11 @@
     }
 }
 
-.form-group.is-invalid .dropdown-toggle.btn{
+.form-group.is-invalid .dropdown-toggle.btn {
     border-color: #dc3545;
-	
+
     &:focus {
-        box-shadow: 0 0 0 .2rem rgba(220,53,69,.25);
+        box-shadow: 0 0 0 .2rem rgba(220, 53, 69, .25);
     }
 }
 
@@ -59,4 +59,3 @@
         display: inline;
     }
 }
-

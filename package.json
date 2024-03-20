@@ -34,7 +34,6 @@
     },
     "assets": [
         "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css",
-        "@eonasdan/tempus-dominus/dist/plugins/customDateFormat.js",
         "@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js",
         "@json-editor/json-editor/dist/jsoneditor.js",
         "@popperjs/core/dist/umd/popper.min.js",
