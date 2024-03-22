@@ -35,7 +35,7 @@ class ObservationView(  # pylint: disable=R0901
         mixins.CreateModelMixin, viewsets.GenericViewSet):
     """SatNOGS Network Observation API view class"""
     filterset_class = filters.ObservationViewFilter
-    pagination_class = pagination.LinkedHeaderPageNumberPagination
+    pagination_class = pagination.ObservationCursorPagination
 
     def get_permissions(self):
         if self.action in ('update', 'create'):

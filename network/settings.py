@@ -413,6 +413,7 @@ SPACE_TRACK_USERNAME = config('SPACE_TRACK_USERNAME', default='')
 SPACE_TRACK_PASSWORD = config('SPACE_TRACK_PASSWORD', default='')
 
 # Observations settings
+OBSERVATION_MAX_QUERY_COUNT = config('OBSERVATION_MAX_QUERY_COUNT', default=10000, cast=int)
 # Datetimes in minutes for scheduling OPTIONS
 OBSERVATION_DATE_MIN_START = config('OBSERVATION_DATE_MIN_START', default=10, cast=int)
 OBSERVATION_DATE_MIN_END = config('OBSERVATION_DATE_MIN_END', default=20, cast=int)

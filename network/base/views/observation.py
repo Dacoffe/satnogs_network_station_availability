@@ -164,6 +164,14 @@ class ObservationListView(ListView):  # pylint: disable=R0901
                 observations = observations.filter(waterfall_status=True)
             elif 'rw0' in rated:
                 observations = observations.filter(waterfall_status=False)
+
+        if (obs_count := observations.count()) > settings.OBSERVATION_MAX_QUERY_COUNT:
+            observations = observations[:settings.OBSERVATION_MAX_QUERY_COUNT]
+            messages.error(
+                self.request, 'Search too wide, truncated results: ' +
+                str(obs_count - settings.OBSERVATION_MAX_QUERY_COUNT) +
+                '. Please change the filters below to narrow down the search results.'
+            )
         return observations
 
     def get_context_data(self, **kwargs):  # pylint: disable=W0221

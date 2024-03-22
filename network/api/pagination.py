@@ -1,7 +1,7 @@
 """
 Custom pagination classes for REST framework
 """
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.pagination import CursorPagination, PageNumberPagination
 from rest_framework.response import Response
 
 
@@ -29,3 +29,11 @@ class LinkedHeaderPageNumberPagination(PageNumberPagination):
         link = link.format(next_url=next_url, previous_url=previous_url)
         headers = {'Link': link} if link else {}
         return Response(data, headers=headers)
+
+
+class ObservationCursorPagination(CursorPagination):
+    """
+    This overrides the default CursorPagination for Observations endpoint
+    """
+    page_size = 25
+    ordering = ['-start', '-end']
