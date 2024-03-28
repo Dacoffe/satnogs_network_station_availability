@@ -5,8 +5,11 @@ from datetime import timedelta
 import pytest
 from django.test import TestCase
 from django.utils.timezone import now
+from requests.utils import parse_header_links
+from rest_framework import status
 from rest_framework.utils.encoders import JSONEncoder
 
+from network.api.pagination import ObservationCursorPagination
 from network.base.tests import AntennaFactory, FrequencyRangeFactory, ObservationFactory, \
     SatelliteFactory, StationFactory
 
@@ -104,3 +107,45 @@ class StationViewApiTest(TestCase):
         response = self.client.get('/api/stations/')
         response_json = json.loads(response.content)
         self.assertEqual(response_json, [station_serialized])
+
+
+class ObservationViewApiTest(TestCase):
+    """
+    Tests the Observation API View
+    """
+    def setUp(self):
+        self.observations = []
+        for _ in range(ObservationCursorPagination.page_size * 2 + 1):
+            self.observations.append(ObservationFactory())
+
+    def test_observations_listview_pagination(self):
+        """
+        Tests the pagination of the observations list view
+        """
+        response = self.client.get('/api/observations/')
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) == ObservationCursorPagination.page_size
+        assert response.get('link')
+        links = parse_header_links(response['link'])
+        assert links
+        next_link = next((link for link in links if link['rel'] == 'next'), None)
+        assert next_link
+        assert next_link.get('url')
+
+        next_response = self.client.get(next_link['url'])
+        assert next_response.status_code == status.HTTP_200_OK
+        data = next_response.json()
+        assert len(data) == ObservationCursorPagination.page_size
+        links = parse_header_links(next_response['link'])
+        assert links
+        prev_link = next((link for link in links if link['rel'] == 'prev'), None)
+        assert prev_link
+        assert prev_link.get('url')
+        assert self.client.get(prev_link['url']).status_code == status.HTTP_200_OK
+
+        next_link = next((link for link in links if link['rel'] == 'next'), None)
+        assert next_link
+        assert next_link.get('url')
+        assert self.client.get(next_link['url']).status_code == status.HTTP_200_OK

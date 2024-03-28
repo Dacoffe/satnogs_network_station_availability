@@ -5,30 +5,30 @@
 
 -r requirements.txt
 Babel==2.14.0
-Faker==22.6.0
+Faker==24.4.0
 Jinja2==3.1.3
-MarkupSafe==2.1.4
+MarkupSafe==2.1.5
 Pygments==2.17.2
 Sphinx==6.2.1
 alabaster==0.7.16
-coverage==7.4.1
+coverage==7.4.4
 distlib==0.3.8
 docutils==0.19
 exceptiongroup==1.2.0
 execnet==2.0.2
 factory-boy==3.2.1
-filelock==3.13.1
+filelock==3.13.3
 imagesize==1.4.1
 iniconfig==2.0.0
 mock==4.0.3
-platformdirs==4.1.0
+platformdirs==4.2.0
 pluggy==1.4.0
 py==1.11.0
 pytest-cov==3.0.0
 pytest-django==4.5.2
 pytest-forked==1.4.0
 pytest-xdist==2.5.0
-pytest==8.0.0
+pytest==8.1.1
 snowballstemmer==2.2.0
 sphinxcontrib-applehelp==1.0.8
 sphinxcontrib-devhelp==1.0.6
@@ -39,4 +39,4 @@ sphinxcontrib-serializinghtml==1.1.10
 toml==0.10.2
 tomli==2.0.1
 tox==3.24.5
-virtualenv==20.25.0
+virtualenv==20.25.1
