@@ -54,7 +54,15 @@
             <i class="bi bi-arrows-collapse float-right" aria-hidden="true"></i>
           </h6>
         </div>
-        <div class="card-body collapse in" id="configuration-card-body" data-station-id="{% if station_form.instance.id %}{{ station_form.instance.id }}{% else %}0{% endif %}">
+        <div class="card-body collapse in" id="configuration-card-body" data-registered="{{ registered }}" data-has-unregistered-configuration="{% if configuration_instance and configuration_instance.schema.name == 'Unregistered Configuration' %}True{% else %}False{% endif %}" data-station-id="{% if station_form.instance.id %}{{ station_form.instance.id }}{% else %}0{% endif %}">
+          {% if not registered %}
+          <div id="station-type-selection-container" class="d-none">
+            <label for="station-type-selection">Station Type</label>
+            <select id="station-type-selection" class="form-control selectpicker" data-style="btn" name="station-type" autocomplete="off" disabled>
+              <option value="{{ station_types.0.id }}" selected>{{ station_types.0.name }}</option>
+            </select>
+          </div>
+          {% else %}
           <div id="station-type-selection-container" class="form-group {% if configuration_instance|not_true %}is-invalid{% endif %}">
             <label for="station-type-selection">Station Type</label>
             <select id="station-type-selection" class="form-control selectpicker" data-style="btn" name="station-type" autocomplete="off">
@@ -66,6 +74,7 @@
               {% endfor %}
             </select>
           </div>
+          {% endif %}
 
           {% for schema in conf_schemas %}
             {{ schema.schema|json_script:schema.id }}
@@ -74,12 +83,12 @@
             {{ configuration_instance.configuration|json_script:"current-configuration" }}
           {% endif %}
           
-          <div id="configuration-schema-selection-container" class="form-group">
+          <div id="configuration-schema-selection-container" class="form-group {% if not registered %}d-none{% endif %}">
             <label for="configuration-schema-selection">Configuration Type</label>
             <select id="configuration-schema-selection" class="form-control selectpicker" data-style="btn"
                       name="configuration-schema" autocomplete="off" {% if registered|not_true %}disabled{% endif %}>
                   {% if registered %}
-                    <option value="-1" {% if configuration_instance|not_true %}selected{% endif %}>Select a Configuration schema</option>
+                    <option value="-1" {% if configuration_instance|not_true or configuration_instance.schema.name == "Unregistered Configuration" %}selected{% endif %}>Select a Configuration schema</option>
                     {% for schema in conf_schemas %}
                       {% comment %} Remove the Unregistered option if the station is registered {% endcomment %}
                       {% if schema.name != "Unregistered Configuration" %}
@@ -142,7 +151,7 @@
                   <div class="modal-body">
                     <div id="advancedEditContainer">
                       <div class="alert alert-danger" style="display: none" role="alert" id="advanced-edit-errors"></div>
-                      <textarea class="form-control" rows="10" id="advancedEditInput"></textarea>
+                      <textarea spellcheck="false" class="form-control" rows="10" id="advancedEditInput"></textarea>
                     </div>
                   </div>
                   <div class="modal-footer">

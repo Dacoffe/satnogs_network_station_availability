@@ -7,22 +7,46 @@ $(document).ready(function() {
     let stationType = -1;
     let schemaId = -1;
     let schema = null;
+    const isStationRegistered = document.getElementById('configuration-card-body').dataset['registered'] === 'True';
+    const hasUnregisteredConfiguration = document.getElementById('configuration-card-body').dataset['hasUnregisteredConfiguration'] === 'True';
     const currentConfigurationScript = document.getElementById('current-configuration');
     let configuration;
+    let earlierConfiguration = null;
+
     if(currentConfigurationScript) {
         configuration = JSON.parse(document.getElementById('current-configuration').textContent);
+        if(isStationRegistered && hasUnregisteredConfiguration) {
+            earlierConfiguration = configuration;
+            configuration = null;
+        }
     } else {
         configuration = null;
     }
 
     const allSchemas = $('#configuration-schema-selection option').clone().toArray();
-    if(!configuration) {
-        $('#configuration-schema-selection-container').hide();
-    } else {
+
+    /* States the station can be in:
+     * 1) Unregistered with default unregistered configuration.
+     * 2) Registered with default unregistered configuration (occurs when in the process of registering an existing unregistered station)
+     * 3) Registered with no configuration (occurs while following the registration process for a new station)
+     * 4) Registered with configuration other than the default unregistered configuration
+     */
+
+    if(!isStationRegistered) {    // Case #1
+        // If there is only one station type, it will be selected by default in the template.
+        // Also, by being unregistered, the unregistered schema will also be selected.
         schemaId = $('#configuration-schema-selection').val();
-        if(schemaId !== '-1') { 
+        $('#configuration-schema-selection-container').removeClass('is-invalid');
+        $('#config-required-asterisk').removeClass('station-type-invalid');
+        $('#config-required-asterisk').removeClass('schema-invalid');
+        selectSchemaById(schemaId);
+    } else if(!configuration && !(isStationRegistered && hasUnregisteredConfiguration)) {   // Case #3
+        $('#configuration-schema-selection-container').hide();
+    } else {    // Cases #2 and #4
+        schemaId = $('#configuration-schema-selection').val();
+        if(schemaId !== '-1') {     // Case #2 because the unregistered configuration is removed from the <select>
             selectSchemaById(schemaId);
-        } else {
+        } else {    // Case #4
             $('#configuration-schema-selection-container').addClass('is-invalid');
             $('#config-required-asterisk').addClass('station-type-invalid');
         }
@@ -44,7 +68,9 @@ $(document).ready(function() {
         jsonEditor = new JSONEditor(document.getElementById('json-editor-container'), {
             theme: 'bootstrap4',
             schema: schema,
-            startval: configuration,
+            // If it's a registered station but hasn't changed the unregistered configuration, 
+            // keep the common settings as startval when moving to another schema
+            startval: earlierConfiguration || configuration,
             show_errors: 'interaction',
             iconlib: 'bootstrap',
             remove_button_labels: true,
@@ -66,6 +92,7 @@ $(document).ready(function() {
             });
 
             $('#json-renderer').jsonViewer(configuration, {rootCollapsable: false, withLinks: false});
+            $('#submit').prop('disabled', !$('form')[0].checkValidity() || !configuration);
         });
         
         jsonEditor.on('change',function() {
@@ -102,6 +129,9 @@ $(document).ready(function() {
                 selectSchemaById(schemaId);
                 $('#configuration-schema-selection-container').removeClass('is-invalid');
                 $('#config-required-asterisk').removeClass('schema-invalid');
+            } else {
+                $('#configuration-schema-selection-container').addClass('is-invalid');
+                $('#config-required-asterisk').addClass('schema-invalid');
             }
         }
     });
