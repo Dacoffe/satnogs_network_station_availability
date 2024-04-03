@@ -26,9 +26,9 @@ from network.base.utils import community_get_discussion_details
 from network.users.models import User
 
 
-def get_two_days_ago():
-    """Helper function to get the datetime 48 hours before as formatted string"""
-    return (now() - timedelta(days=2)).strftime("%Y-%m-%d %H:%M")
+def get_one_day_ago():
+    """Helper function to get the datetime 24 hours before as formatted string"""
+    return (now() - timedelta(days=1)).strftime("%Y-%m-%d %H:%M")
 
 
 class ObservationListView(ListView):  # pylint: disable=R0901
@@ -109,9 +109,9 @@ class ObservationListView(ListView):  # pylint: disable=R0901
             ) or results or rated or filter_dict
         )
 
-        # If user has not filtered the results, display the observations of the last 48 hours
+        # If user has not filtered the results, display the observations of the last 24 hours
         if not self.filtered:
-            filter_dict["start__gt"] = get_two_days_ago()
+            filter_dict["start__gt"] = get_one_day_ago()
 
         # If the user has used the extra filters, display hte extra filter section expaned
         self.more_filtered = (
@@ -168,9 +168,9 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         if (obs_count := observations.count()) > settings.OBSERVATION_MAX_QUERY_COUNT:
             observations = observations[:settings.OBSERVATION_MAX_QUERY_COUNT]
             messages.error(
-                self.request, 'Search too wide, truncated results: ' +
+                self.request, 'Search too wide, ignored ' +
                 str(obs_count - settings.OBSERVATION_MAX_QUERY_COUNT) +
-                '. Please change the filters below to narrow down the search results.'
+                ' observations. Please change the filters below to narrow down the search results.'
             )
         return observations
 
@@ -185,7 +185,7 @@ class ObservationListView(ListView):  # pylint: disable=R0901
         norad_cat_id = self.request.GET.get('norad', None)
         observer = self.request.GET.get('observer', None)
         station = self.request.GET.get('station', None)
-        start = get_two_days_ago() if not self.filtered else self.request.GET.get('start')
+        start = get_one_day_ago() if not self.filtered else self.request.GET.get('start')
         end = self.request.GET.get('end', None)
         transmitter_uuid = self.request.GET.get('transmitter_uuid', None)
         context['display_no_filter_warning'] = not self.filtered

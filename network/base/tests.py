@@ -261,7 +261,7 @@ class ObservationsListViewTest(TestCase):
         """Test for transmitter modes of each observation in observations page"""
         response = self.client.get('/observations/')
         for observation in self.observations:
-            if observation.start > now() - timedelta(days=2):
+            if observation.start > now() - timedelta(days=1):
                 self.assertContains(response, observation.transmitter_mode)
 
     def test_observations_list_select_bad(self):
