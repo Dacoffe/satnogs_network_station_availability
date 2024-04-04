@@ -35,6 +35,7 @@ class ObservationViewFilter(FilterSet):
     ]
 
     start = django_filters.IsoDateTimeFilter(field_name='start', lookup_expr='gte')
+    start__lt = django_filters.IsoDateTimeFilter(field_name='start', lookup_expr='lt')
     end = django_filters.IsoDateTimeFilter(field_name='end', lookup_expr='lte')
     status = django_filters.ChoiceFilter(
         field_name='status', choices=OBSERVATION_STATUS_CHOICES, method='filter_status'
