@@ -31,9 +31,9 @@ def get_one_day_ago():
     return (now() - timedelta(days=1)).strftime("%Y-%m-%d %H:%M")
 
 
-class ObservationListView(ListView):  # pylint: disable=R0901
+class ObservationListBaseView(ListView):  # pylint: disable=R0901
     """
-    Displays a list of observations with pagination
+    Base class for displaying a list of observations
     """
     model = Observation
     context_object_name = "observations"
@@ -165,6 +165,75 @@ class ObservationListView(ListView):  # pylint: disable=R0901
             elif 'rw0' in rated:
                 observations = observations.filter(waterfall_status=False)
 
+        return observations
+
+    def get_context_data(self, **kwargs):  # pylint: disable=W0221
+        """
+        Need to add a list of satellites to the context for the template
+        """
+        context = super().get_context_data(**kwargs)
+        context['satellites'] = Satellite.objects.all()
+        context['authors'] = User.objects.all().order_by('first_name', 'last_name', 'username')
+        context['stations'] = Station.objects.all().order_by('id')
+        norad_cat_id = self.request.GET.get('norad', None)
+        observer = self.request.GET.get('observer', None)
+        station = self.request.GET.get('station', None)
+        start = get_one_day_ago() if not self.filtered else self.request.GET.get('start')
+        end = self.request.GET.get('end', None)
+        transmitter_uuid = self.request.GET.get('transmitter_uuid', None)
+        context['display_no_filter_warning'] = not self.filtered
+        context['future'] = self.request.GET.get('future', '1')
+        context['bad'] = self.request.GET.get('bad', '1')
+        context['good'] = self.request.GET.get('good', '1')
+        context['unknown'] = self.request.GET.get('unknown', '1')
+        context['failed'] = self.request.GET.get('failed', '1')
+        context['results'] = self.request.GET.getlist('results')
+        context['rated'] = self.request.GET.getlist('rated')
+        context['transmitter_mode'] = self.request.GET.get('transmitter_mode', None)
+        cached_transmitters_with_stats = cache.get('transmitters-with-stats')
+        context['transmitter_uuids_info'] = cached_transmitters_with_stats.values(
+        ) if cached_transmitters_with_stats else get_and_refresh_transmitters_with_stats_cache(
+            in_list_form=True
+        )
+        context['more_filtered'] = bool(self.more_filtered)
+        if norad_cat_id is not None and norad_cat_id != '':
+            context['norad'] = int(norad_cat_id)
+        if observer is not None and observer != '':
+            context['observer_id'] = int(observer)
+        if station is not None and station != '':
+            context['station_id'] = int(station)
+        if start is not None and start != '':
+            context['start'] = start
+        if end is not None and end != '':
+            context['end'] = end
+        if 'scheduled' in self.request.session:
+            context['scheduled'] = self.request.session['scheduled']
+            try:
+                del self.request.session['scheduled']
+            except KeyError:
+                pass
+        if transmitter_uuid:
+            context['transmitters_uuid'] = transmitter_uuid
+        context['can_schedule'] = schedule_perms(self.request.user)
+
+        url_query = urlparse(self.request.build_absolute_uri()).query
+        if not url_query:
+            vet_url_query = 'results=w1&start=' + (now() -
+                                                   timedelta(days=2)).strftime("%Y-%m-%d+%H:%M")
+        else:
+            vet_url_query = url_query.replace('results=w0', 'results=w1')
+            if vet_url_query == url_query:  # no 'results' parameter was given
+                vet_url_query += '&results=w1'
+        context['vet_url_query'] = vet_url_query
+        return context
+
+
+class ObservationListView(ObservationListBaseView):  # pylint: disable=R0901
+    """
+    Displays a list of observations with pagination
+    """
+    def get_queryset(self):
+        observations = super().get_queryset()
         if (obs_count := observations.count()) > settings.OBSERVATION_MAX_QUERY_COUNT:
             observations = observations[:settings.OBSERVATION_MAX_QUERY_COUNT]
             messages.error(
@@ -316,7 +385,7 @@ class VetObservationsChunkListView(LoginRequiredMixin, ListView):  # pylint: dis
         return JsonResponse(obs_html, safe=False)
 
 
-class VetObservationsView(LoginRequiredMixin, ObservationListView):  # pylint: disable=R0901
+class VetObservationsView(LoginRequiredMixin, ObservationListBaseView):  # pylint: disable=R0901
     """View for vetting multiple observations"""
     template_name = 'base/vet_observation_container.html'
     object_list = []
@@ -334,7 +403,19 @@ class VetObservationsView(LoginRequiredMixin, ObservationListView):  # pylint: d
                 Q(author=self.request.user)
                 | Q(ground_station__isnull=False, ground_station__owner=self.request.user)
             )
-        return queryset.order_by('-start', '-end')
+
+        if (obs_count := queryset.count()) > settings.OBSERVATION_MAX_QUERY_COUNT:
+            queryset = queryset[:settings.OBSERVATION_MAX_QUERY_COUNT]
+            parsed_url = urlparse(self.request.build_absolute_uri())
+            observation_search_url = reverse('base:observations_list') + '?' + parsed_url.query
+            messages.error(
+                self.request, 'Search too wide, ignored ' +
+                str(obs_count - settings.OBSERVATION_MAX_QUERY_COUNT) +
+                ' observations. Please change the filters in the <a href="' +
+                observation_search_url +
+                '">observation page</a> to narrow down the search results.'
+            )
+        return queryset
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
