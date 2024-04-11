@@ -20,19 +20,19 @@ from network.base.validators import NegativeElevationError, NoTleSetError, \
 
 def get_altitude(observer, satellite, date):
     """Returns altitude of satellite in a specific date for a specific observer"""
-    observer = observer.copy()
-    satellite = satellite.copy()
+    old_date = observer.date
     observer.date = date
     satellite.compute(observer)
+    observer.date = old_date
     return float(format(math.degrees(satellite.alt), '.0f'))
 
 
 def get_azimuth(observer, satellite, date):
     """Returns azimuth of satellite in a specific date for a specific observer"""
-    observer = observer.copy()
-    satellite = satellite.copy()
+    old_date = observer.date
     observer.date = date
     satellite.compute(observer)
+    observer.date = old_date
     return float(format(math.degrees(satellite.az), '.0f'))
 
 
@@ -43,7 +43,7 @@ def over_min_duration(duration):
 
 def recalculate_window_parameters(observer, satellite, window_start, window_end):
     """Finds the maximum altitude of a satellite during a certain observation window"""
-    observer = observer.copy()
+    old_date = observer.date
     satellite = satellite.copy()
     observer.date = window_end
     satellite.compute(observer)
@@ -61,6 +61,7 @@ def recalculate_window_parameters(observer, satellite, window_start, window_end)
         altitude = float(format(math.degrees(satellite.alt), '.0f'))
         max_altitude = max(altitude, max_altitude)
         date = date + timedelta(seconds=interval)
+    observer.date = old_date
 
     return (start_azimuth, end_azimuth, max_altitude)
 
