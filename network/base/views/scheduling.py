@@ -1,6 +1,6 @@
 """Django base views for SatNOGS Network"""
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from operator import itemgetter
 
 from django.conf import settings
@@ -11,7 +11,7 @@ from django.forms import ValidationError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils.timezone import make_aware, now, utc
+from django.utils.timezone import make_aware, now
 from django.views.decorators.http import require_POST
 
 from network.base.db_api import DBConnectionError, get_tle_set_by_norad_id, get_tle_sets, \
@@ -165,8 +165,10 @@ def prediction_windows_parse_parameters(request):
     params = {
         'sat_norad_id': request.POST['satellite'],
         'transmitter': request.POST['transmitter'],
-        'start': make_aware(datetime.strptime(request.POST['start'], '%Y-%m-%d %H:%M'), utc),
-        'end': make_aware(datetime.strptime(request.POST['end'], '%Y-%m-%d %H:%M'), utc),
+        'start': make_aware(
+            datetime.strptime(request.POST['start'], '%Y-%m-%d %H:%M'), timezone.utc
+        ),
+        'end': make_aware(datetime.strptime(request.POST['end'], '%Y-%m-%d %H:%M'), timezone.utc),
         'station_ids': request.POST.getlist('stations[]', []),
         'min_horizon': request.POST.get('min_horizon', None),
         'split_duration': int(
@@ -205,6 +207,7 @@ def prediction_windows(request):
 
     try:
         error_found = True
+        data = []
         # Parse and validate parameters
         params = prediction_windows_parse_parameters(request)
 
@@ -341,13 +344,13 @@ def pass_predictions(request, station_id):
         satellites = satellites.filter(is_frequency_violator='False')
 
     nextpasses = []
-    start = make_aware(datetime.utcnow(), utc)
-    end = make_aware(datetime.utcnow() + timedelta(hours=settings.STATION_UPCOMING_END), utc)
+    start = make_aware(datetime.now(), timezone.utc)
+    end = make_aware(datetime.now() + timedelta(hours=settings.STATION_UPCOMING_END), timezone.utc)
     observation_min_start = (
-        datetime.utcnow() + timedelta(minutes=settings.OBSERVATION_DATE_MIN_START)
+        datetime.now() + timedelta(minutes=settings.OBSERVATION_DATE_MIN_START)
     ).strftime("%Y-%m-%d %H:%M:%S.%f")
     observation_min_end = (
-        datetime.utcnow() + timedelta(minutes=settings.OBSERVATION_DATE_MIN_START) +
+        datetime.now() + timedelta(minutes=settings.OBSERVATION_DATE_MIN_START) +
         timedelta(seconds=settings.OBSERVATION_DURATION_MIN)
     ).strftime("%Y-%m-%d %H:%M:%S.%f")
 

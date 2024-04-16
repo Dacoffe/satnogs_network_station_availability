@@ -64,7 +64,7 @@ class ObservationViewFilter(FilterSet):
     observation_id = NumberInFilter(field_name='id', label="Observation ID(s)")
 
     # see https://django-filter.readthedocs.io/en/master/ref/filters.html for W0613
-    def filter_status(self, queryset, name, value):  # pylint: disable=W0613,R0201
+    def filter_status(self, queryset, name, value):  # pylint: disable=W0613
         """ Returns filtered observations for a given observation status"""
         if value == 'failed':
             observations = queryset.filter(status__lt=-100)
@@ -89,6 +89,7 @@ class ObservationViewFilter(FilterSet):
 
 class StationViewFilter(FilterSet):
     """SatNOGS Network Station API View Filter"""
+
     class Meta:
         model = Station
         fields = ['id', 'name', 'status', 'client_version']

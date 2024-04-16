@@ -126,9 +126,9 @@ def export_as_csv(modeladmin, request, queryset):
         values = []
         for field in field_names:
             try:
-                value = (getattr(row, field))
+                value = getattr(row, field)
             except AttributeError:
-                value = (getattr(modeladmin, field))
+                value = getattr(modeladmin, field)
             if callable(value):
                 try:
                     # get value from model
@@ -181,7 +181,7 @@ def community_get_discussion_details(
             '{}.json'.format(discussion_slug), timeout=settings.COMMUNITY_TIMEOUT
         )
         response.raise_for_status()
-        has_comments = (response.status_code == 200)
+        has_comments = response.status_code == 200
     except RequestException:
         # Community is unreachable
         has_comments = False

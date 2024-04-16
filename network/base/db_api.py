@@ -4,6 +4,7 @@ from django.conf import settings
 
 DB_API_URL = settings.DB_API_ENDPOINT
 DB_API_KEY = settings.DB_API_KEY
+DB_API_TIMEOUT = settings.DB_API_TIMEOUT
 
 
 class DBConnectionError(Exception):
@@ -18,7 +19,7 @@ def satnogs_db_api_request_authed(url):
     if not DB_API_URL:
         raise DBConnectionError('Error in DB API connection. Blank DB API URL!')
     try:
-        request = requests.get(url, headers=headers)
+        request = requests.get(url, headers=headers, timeout=DB_API_TIMEOUT)
         request.raise_for_status()
     except requests.exceptions.RequestException as error:
         raise DBConnectionError('Error in DB API connection. Please try again!') from error
@@ -60,7 +61,7 @@ def satnogs_db_api_request(url):
     if not DB_API_URL:
         raise DBConnectionError('Error in DB API connection. Blank DB API URL!')
     try:
-        request = requests.get(url)
+        request = requests.get(url, timeout=DB_API_TIMEOUT)
     except requests.exceptions.RequestException as error:
         raise DBConnectionError('Error in DB API connection. Please try again!') from error
     return request.json()

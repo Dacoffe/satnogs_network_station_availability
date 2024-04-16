@@ -64,7 +64,7 @@ class ObservationListBaseView(ListView):  # pylint: disable=R0901
 
         for parameter_name in self.flag_filters:
             param = self.request.GET.get(parameter_name, 1)
-            filter_params[parameter_name] = (param != '0')
+            filter_params[parameter_name] = param != '0'
 
         return filter_params
 
@@ -235,6 +235,7 @@ class ObservationListView(ObservationListBaseView):  # pylint: disable=R0901
     """
     Displays a list of observations with pagination
     """
+
     def get_queryset(self):
         observations = super().get_queryset()
         if (obs_count := observations.count()) > settings.OBSERVATION_MAX_QUERY_COUNT:
@@ -359,6 +360,7 @@ def get_observation_demoddata_details(observation, demoddata, demoddata_count):
 
 class VetObservationsChunkListView(LoginRequiredMixin, ListView):  # pylint: disable=R0901
     """View for getting the observations to vet as HTML snippets"""
+
     def get_queryset(self):
         ids = [int(obs_id) for obs_id in self.request.GET.get('obs_ids').split(',')]
         return Observation.objects.filter(id__in=ids).annotate(demoddata_count=Count('demoddata')

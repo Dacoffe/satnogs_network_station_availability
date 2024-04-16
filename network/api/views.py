@@ -241,7 +241,7 @@ class JobView(viewsets.ReadOnlyModelViewSet):  # pylint: disable=R0901
     queryset = Observation.objects.all()
     filterset_class = filters.ObservationViewFilter
     serializer_class = serializers.JobSerializer
-    filterset_fields = ('ground_station')
+    filterset_fields = 'ground_station'
 
     def list(self, request, *args, **kwargs):
         lat = self.request.query_params.get('lat', None)

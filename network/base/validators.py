@@ -1,9 +1,9 @@
 """Django base validators for SatNOGS Network"""
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
-from django.utils.timezone import make_aware, utc
+from django.utils.timezone import make_aware
 
 
 class ObservationOverlapError(Exception):
@@ -32,10 +32,10 @@ class SchedulingLimitError(Exception):
 
 def check_start_datetime(start):
     """Validate start datetime"""
-    if start < make_aware(datetime.now(), utc):
+    if start < make_aware(datetime.now(), timezone.utc):
         raise ValueError("Start datetime should be in the future!")
     if start < make_aware(datetime.now() + timedelta(minutes=settings.OBSERVATION_DATE_MIN_START),
-                          utc):
+                          timezone.utc):
         raise ValueError(
             "Start datetime should be in the future, at least {0} minutes from now".format(
                 settings.OBSERVATION_DATE_MIN_START
@@ -45,10 +45,10 @@ def check_start_datetime(start):
 
 def check_end_datetime(end):
     """Validate end datetime"""
-    if end < make_aware(datetime.now(), utc):
+    if end < make_aware(datetime.now(), timezone.utc):
         raise ValueError("End datetime should be in the future!")
     max_duration = settings.OBSERVATION_DATE_MIN_START + settings.OBSERVATION_DATE_MAX_RANGE
-    if end > make_aware(datetime.now() + timedelta(minutes=max_duration), utc):
+    if end > make_aware(datetime.now() + timedelta(minutes=max_duration), timezone.utc):
         raise ValueError(
             "End datetime should be in the future, at most {0} minutes from now".
             format(max_duration)
@@ -223,7 +223,8 @@ def check_violators_scheduling_limit(violators, observations_per_norad_id):
     observations_limit = settings.OBSERVATIONS_PER_VIOLATOR_SATELLITE
     for satellite in violators:
         for observation in satellite.observations.filter(
-                start__gte=make_aware(datetime.now() - timedelta(seconds=time_limit), utc)):
+                start__gte=make_aware(datetime.now() - timedelta(seconds=time_limit), timezone.utc)
+        ):
             scheduled_observations_per_norad_id[satellite.norad_cat_id].append(observation.start)
         for observation in observations_per_norad_id[satellite.norad_cat_id]:
             fit_observation_into_scheduled_observations(

@@ -12,11 +12,11 @@ class FrequenyRangeAdmin(admin.ModelAdmin):
     """Define Frequency Range view in django admin UI"""
     list_display = ('id', 'min_frequency', 'max_frequency', 'antenna', 'antenna_type', 'station')
 
-    def antenna_type(self, obj):  # pylint: disable=no-self-use
+    def antenna_type(self, obj):
         """Return the antenna type that use this frequency range"""
         return obj.antenna.antenna_type
 
-    def station(self, obj):  # pylint: disable=no-self-use
+    def station(self, obj):
         """Return the antenna station that use this frequency range"""
         return str(obj.antenna.station.id) + ' - ' + obj.antenna.station.name
 
@@ -31,15 +31,15 @@ class AntennaTypeAdmin(admin.ModelAdmin):
     """Define Antenna Type view in django admin UI"""
     list_display = ('id', '__str__', 'antenna_count', 'antenna_list', 'station_list')
 
-    def antenna_count(self, obj):  # pylint: disable=no-self-use
+    def antenna_count(self, obj):
         """Return the number of antennas use this antenna type"""
         return obj.antennas.all().count()
 
-    def antenna_list(self, obj):  # pylint: disable=no-self-use
+    def antenna_list(self, obj):
         """Return antennas that use the antenna type"""
         return ",\n".join([str(s.id) for s in obj.antennas.all().order_by('id')])
 
-    def station_list(self, obj):  # pylint: disable=no-self-use
+    def station_list(self, obj):
         """Return antennas that use the antenna type"""
         return ",\n".join([str(s.station.id) for s in obj.antennas.all().order_by('id')])
 
@@ -51,7 +51,7 @@ class AntennaAdmin(admin.ModelAdmin):
 
     list_filter = ('antenna_type', 'station')
 
-    def ranges_list(self, obj):  # pylint: disable=no-self-use
+    def ranges_list(self, obj):
         """Return frequeny ranges for this antenna"""
         return ",\n".join(
             [
@@ -108,11 +108,11 @@ class StationAdmin(admin.ModelAdmin):
     export_as_csv.short_description = "Export selected as CSV"
     export_station_status.short_description = "Export selected status"
 
-    def created_date(self, obj):  # pylint: disable=no-self-use
+    def created_date(self, obj):
         """Return when the station was created"""
         return obj.created.strftime('%d.%m.%Y, %H:%M')
 
-    def get_email(self, obj):  # pylint: disable=no-self-use
+    def get_email(self, obj):
         """Return station owner email address"""
         if obj.owner:
             return obj.owner.email

@@ -6,6 +6,7 @@ from django.urls import reverse
 
 def staff_required(function):
     """Decorator for requiring admin permission"""
+
     def wrap(request, *args, **kwargs):
         """Wrap function of decorator"""
         if not request.user.is_authenticated:
@@ -19,6 +20,7 @@ def staff_required(function):
 
 def ajax_required(function):
     """Decorator for requiring request to be and ajax one"""
+
     def wrap(request, *args, **kwargs):
         """Wrap function of decorator"""
         # Check if request isn't AJAX one

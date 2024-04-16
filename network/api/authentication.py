@@ -9,6 +9,7 @@ class ClientIDAuthentication(BaseAuthentication):
     """
     Clients should authenticate by passing the Client ID in the "Authorization" HTTP header
     """
+
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
 

@@ -4,7 +4,6 @@ import datetime
 import factory
 import pytest
 from django.test import Client, TestCase
-from django.utils.timezone import utc
 # C0412 below clashes with isort
 from factory import fuzzy  # pylint: disable=C0412
 
@@ -21,8 +20,8 @@ class UserFactory(factory.django.DjangoModelFactory):
     is_staff = False
     is_active = True
     is_superuser = False
-    last_login = datetime.datetime(2012, 1, 1, tzinfo=utc)
-    date_joined = datetime.datetime(2012, 1, 1, tzinfo=utc)
+    last_login = datetime.datetime(2012, 1, 1, tzinfo=datetime.timezone.utc)
+    date_joined = datetime.datetime(2012, 1, 1, tzinfo=datetime.timezone.utc)
     bio = fuzzy.FuzzyText()
 
     class Meta:

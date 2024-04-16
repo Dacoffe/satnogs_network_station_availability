@@ -345,11 +345,9 @@ def handle_station_edit_post(request, station, registered):
             request, station_form, registered, antenna_formset, frequency_range_formsets
         )
 
-    for frequency_range_formset in frequency_range_formsets:
-        if not frequency_range_formsets[frequency_range_formset].is_valid():
-            populate_formset_error_messages(
-                messages, request, frequency_range_formsets[frequency_range_formset]
-            )
+    for frequency_range_formset_value in frequency_range_formsets.values():
+        if not frequency_range_formset_value.is_valid():
+            populate_formset_error_messages(messages, request, frequency_range_formset_value)
             return render_station_edit_form(
                 request, station_form, registered, antenna_formset, frequency_range_formsets
             )
@@ -363,8 +361,8 @@ def handle_station_edit_post(request, station, registered):
             is_station_new = not bool(station.pk)
             station.save()
             antenna_formset.save()
-            for frequency_range_formset in frequency_range_formsets:
-                frequency_range_formsets[frequency_range_formset].save()
+            for frequency_range_formset_value in frequency_range_formsets.values():
+                frequency_range_formset_value.save()
             if not is_station_new:
                 StationConfiguration.objects.filter(
                     station=station, active=True

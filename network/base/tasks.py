@@ -261,20 +261,20 @@ def archive_audio_zip_files(force_archive=False):  # pylint: disable=R0915
                     'SatNOGS Observations</a> with ID from {1} to {2}.</p>'
                 ).format(site.domain, item_from, item_to)
 
-                item_metadata = dict(
-                    collection=settings.ARCHIVE_COLLECTION,
-                    title=title,
-                    mediatype=settings.ARCHIVE_MEDIA_TYPE,
-                    licenseurl=license_url,
-                    description=description
-                )
+                item_metadata = {
+                    'collection': settings.ARCHIVE_COLLECTION,
+                    'title': title,
+                    'mediatype': settings.ARCHIVE_MEDIA_TYPE,
+                    'licenseurl': license_url,
+                    'description': description
+                }
 
                 zip_name = zip_path.split('/')[-1]
-                file_metadata = dict(
-                    name=zip_path,
-                    title=zip_name.replace('.zip', ''),
-                    license_url=license_url,
-                )
+                file_metadata = {
+                    'name': zip_path,
+                    'title': zip_name.replace('.zip', ''),
+                    'license_url': license_url,
+                }
 
                 try:
                     res = upload(
@@ -404,7 +404,7 @@ def fetch_data():
     satellites_url = "{}satellites".format(db_api_url)
 
     LOGGER.info("Fetching Satellites from %s", satellites_url)
-    r_satellites = requests.get(satellites_url)
+    r_satellites = requests.get(satellites_url, timeout=settings.DB_API_TIMEOUT)
 
     # Fetch Satellites
     satellites_added = 0

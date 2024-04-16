@@ -38,6 +38,7 @@ THIRD_PARTY_APPS = (
     'drf_spectacular',
     'django_filters',
     'crispy_forms',
+    'crispy_bootstrap4',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -69,6 +70,7 @@ MIDDLEWARE = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'csp.middleware.CSPMiddleware',
@@ -170,7 +172,7 @@ STATICFILES_FINDERS = (
 MEDIA_ROOT = config('MEDIA_ROOT', default=Path('media').resolve())
 FILE_UPLOAD_TEMP_DIR = config('FILE_UPLOAD_TEMP_DIR', default=Path('/tmp').resolve())
 MEDIA_URL = config('MEDIA_URL', default='/media/')
-CRISPY_TEMPLATE_PACK = 'bootstrap3'
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 STATION_DEFAULT_IMAGE = '/static/img/ground_station_no_image.png'
 SATELLITE_DEFAULT_IMAGE = 'https://db.satnogs.org/static/img/sat.png'
 COMPRESS_ENABLED = config('COMPRESS_ENABLED', default=False, cast=bool)
@@ -223,6 +225,7 @@ else:
     LOGIN_URL = 'account_login'
     LOGOUT_REDIRECT_URL = '/'
 AUTOSLUG_SLUGIFY_FUNCTION = 'slugify.slugify'
+AUTH0_BACKEND_TIMEOUT = config('AUTH0_BACKEND_TIMEOUT', default=2.0, cast=float)
 
 # Logging
 LOGGING = {

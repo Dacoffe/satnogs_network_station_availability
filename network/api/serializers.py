@@ -1,5 +1,4 @@
 """SatNOGS Network API serializers, django rest framework"""
-#  pylint: disable=no-self-use
 from collections import defaultdict
 
 from PIL import Image
@@ -19,6 +18,7 @@ from network.base.validators import ObservationOverlapError, OutOfRangeError, ch
 
 class CreateDemodDataSerializer(serializers.ModelSerializer):
     """SatNOGS Network DemodData API Serializer for creating demoddata."""
+
     class Meta:
         model = DemodData
         fields = (
@@ -67,6 +67,7 @@ class UpdateObservationSerializer(serializers.ModelSerializer):
     """SatNOGS Network Observation API Serializer for uploading audio and waterfall.
     This is Serializer is used temporarily until waterfall_old and payload_old fields are removed.
     """
+
     class Meta:
         model = Observation
         fields = ('id', 'payload', 'waterfall', 'client_metadata', 'client_version')
@@ -478,6 +479,7 @@ class NewObservationSerializer(serializers.Serializer):
 
 class FrequencyRangeSerializer(serializers.ModelSerializer):
     """SatNOGS Network FrequencyRange API Serializer"""
+
     class Meta:
         model = FrequencyRange
         fields = ('min_frequency', 'max_frequency', 'bands')
@@ -566,6 +568,7 @@ class StationSerializer(serializers.ModelSerializer):
 
 class StationConfigurationSerializer(serializers.ModelSerializer):
     """SatNOGS Network Station Configuration API Serializer"""
+
     class Meta:
         model = ActiveStationConfiguration
         fields = ['configuration']

@@ -172,6 +172,7 @@ ObservationFormSet = formset_factory(
 
 class StationRegistrationForm(ModelForm):
     """Model Form class for Station objects for Registration only"""
+
     def clean(self):
         """Validates Client ID"""
         if any(self.errors):
@@ -224,6 +225,7 @@ AntennaInlineFormSet = inlineformset_factory(  # pylint: disable=C0103
 
 class BaseFrequencyRangeInlineFormSet(BaseInlineFormSet):
     """Base InlineFormSet class for FrequencyRange objects forms"""
+
     def clean(self):
         """Validates Observation FormSet data"""
         if any(self.errors):

@@ -12,7 +12,7 @@ class StationSerializer(serializers.ModelSerializer):
         model = Station
         fields = ('name', 'lat', 'lng', 'id', 'status', 'status_display')
 
-    def get_status_display(self, obj):  # pylint: disable=no-self-use
+    def get_status_display(self, obj):
         """Returns the station status"""
         try:
             return obj.get_status_display()

@@ -24,6 +24,7 @@ import yaml
 
 
 class Dumper(yaml.Dumper):
+
     def ignore_aliases(self, data):
         return True
 

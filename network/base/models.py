@@ -147,6 +147,7 @@ class StationConfiguration(models.Model):
 
 class ActiveStationConfigurationManager(models.Manager):  # pylint: disable=R0903
     """Django Manager for ActiveStationConfiguration objects"""
+
     def get_queryset(self):
         """Returns query of StationConfigurations
 

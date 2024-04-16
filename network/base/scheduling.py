@@ -4,11 +4,11 @@
 # pylint: disable=E0237
 import json
 import math
-from datetime import timedelta
+from datetime import timedelta, timezone
 
 import ephem
 from django.conf import settings
-from django.utils.timezone import make_aware, now, utc
+from django.utils.timezone import make_aware, now
 
 from network.base.db_api import DBConnectionError, get_tle_set_by_norad_id
 from network.base.models import Observation, Satellite
@@ -300,9 +300,9 @@ def next_pass(observer, satellite, singlepass=True):
         satellite, singlepass
     )
     # Convert output of pyephems.next_pass into processible values
-    pass_start = make_aware(ephem.Date(rise_time).datetime(), utc)
-    pass_end = make_aware(ephem.Date(set_time).datetime(), utc)
-    pass_tca = make_aware(ephem.Date(tca_time).datetime(), utc)
+    pass_start = make_aware(ephem.Date(rise_time).datetime(), timezone.utc)
+    pass_end = make_aware(ephem.Date(set_time).datetime(), timezone.utc)
+    pass_tca = make_aware(ephem.Date(tca_time).datetime(), timezone.utc)
     pass_azr = float(format(math.degrees(rise_az), '.0f'))
     pass_azs = float(format(math.degrees(set_az), '.0f'))
     pass_altitude = float(format(math.degrees(tca_alt), '.0f'))

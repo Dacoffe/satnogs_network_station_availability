@@ -113,6 +113,7 @@ class ObservationViewApiTest(TestCase):
     """
     Tests the Observation API View
     """
+
     def setUp(self):
         self.observations = []
         for _ in range(ObservationCursorPagination.page_size * 2 + 1):

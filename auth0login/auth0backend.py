@@ -29,7 +29,7 @@ class Auth0(BaseOAuth2):
     def get_user_details(self, response):
         url = 'https://' + self.setting('DOMAIN') + '/userinfo'
         headers = {'authorization': 'Bearer ' + response['access_token']}
-        resp = requests.get(url, headers=headers)
+        resp = requests.get(url, headers=headers, timeout=self.setting('AUTH0_BACKEND_TIMEOUT'))
         userinfo = resp.json()
 
         return {

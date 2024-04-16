@@ -70,6 +70,7 @@ class StationFactory(factory.django.DjangoModelFactory):
 
 class StationConfigurationFactory(factory.django.DjangoModelFactory):
     """Station configuration model factory."""
+
     class Meta:
         model = StationConfiguration
 
@@ -182,6 +183,7 @@ class HomeViewTest(TestCase):
     """
     Simple test to make sure the home page is working
     """
+
     def test_home_page(self):
         """Test for string in home page"""
         response = self.client.get('/')
@@ -193,6 +195,7 @@ class AboutViewTest(TestCase):
     """
     Simple test to make sure the about page is working
     """
+
     def test_about_page(self):
         """Test for string in about page"""
         response = self.client.get('/about/')
