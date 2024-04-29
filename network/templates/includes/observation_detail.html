@@ -329,6 +329,62 @@
             </div>
           </td>
         </tr>
+        <tr>
+          <td>
+            <span class="badge badge-secondary">TLE fetched from</span>
+          </td>
+          <td>
+            {% if observation.tle_source == "" %}
+
+            {% elif observation.tle_source == "SatNOGS" %}
+                SatNOGS
+            {% else %}
+                {{ observation.tle_source }}
+             {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span class="badge badge-secondary">TLE fetch time</span>
+          </td>
+          <td>
+            <span data-toggle="tooltip" data-placement="bottom" title="{{ observation.tle_updated|naturaltime }}">
+              <span class="datetime-date">{{ observation.tle_updated|date:"Y-m-d" }}</span>
+              <span class="datetime-time">{{ observation.tle_updated|date:"H:i:s" }}</span><br>
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span class="badge badge-secondary" style="text-align: left;">Observation start <br>since TLE fetch time </span><br>
+          </td>
+          <td>
+           <span data-toggle="tooltip" data-placement="bottom" title="{{ fetch_difference|date:"Y-m-d H:i:s" }}">
+            <span class="datetime-date">{{ observation.tle_updated|timesince:observation.start}}</span><br>
+          </span>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span class="badge badge-secondary">TLE epoch time</span>
+          </td>
+          <td>
+            <span data-toggle="tooltip" data-placement="bottom" title="{{ tle_datetime|naturaltime }}">
+              <span class="datetime-date">{{ tle_datetime|date:"Y-m-d" }}</span>
+              <span class="datetime-time">{{ tle_datetime|date:"H:i:s" }}</span><br>
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span class="badge badge-secondary" style="text-align: left;">Observation start <br>since TLE epoch</span>
+          </td>
+          <td>
+          <span data-toggle="tooltip" data-placement="bottom" title="{{ epoch_difference|date:"Y-m-d H:i:s" }}">
+            {{ tle_datetime|timesince:observation.start}}
+          </span><br>
+          </td>
+        </tr>
         {% if observation.has_audio or observation.has_waterfall or observation.has_artifact %}
           <tr>
             <td>
@@ -587,23 +643,6 @@
   <hr>
 
   <div class="row justify-content-center">
-    <div class="col-12 text-center">
-      <h5>
-        TLE used
-        <small class="text-muted">
-          {% if observation.tle_source == "" %}
-            fetched/computed
-          {% elif observation.tle_source == "SatNOGS" %}
-            computed by SatNOGS
-          {% else %}
-            fetched from {{ observation.tle_source }}
-          {% endif %}
-          <span data-toggle="tooltip" data-placement="bottom" title="{{ observation.tle_updated|date:"Y-m-d H:i:s" }}">
-            {{ observation.tle_updated|naturaltime }}
-          </span>
-        </small>
-      </h5>
-    </div>
     <div class="col-">
       <pre class="p-2 bg-light border border-secondary">{{ observation.tle_line_1 }}<br>{{ observation.tle_line_2 }}</pre>
     </div>

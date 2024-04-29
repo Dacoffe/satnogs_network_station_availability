@@ -1,6 +1,8 @@
 """Django base views for SatNOGS Network"""
+from datetime import datetime
 from urllib.parse import urlparse
 
+import ephem
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -12,6 +14,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.context_processors import csrf
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.timezone import now, timedelta
 from django.views.generic import ListView
 
@@ -370,6 +373,7 @@ class VetObservationsChunkListView(LoginRequiredMixin, ListView):  # pylint: dis
             )
 
             context = {
+                "tle_datetime": calculate_datetime_from_tle(obs.id),
                 "observation": obs,
                 "from_vetting": True,
                 "can_vet": True,
@@ -468,6 +472,7 @@ def observation_view(request, observation_id):
     return render(
         request, 'base/observation_view.html', {
             'observation': observation,
+            'tle_datetime': calculate_datetime_from_tle(observation.id),
             'demoddata_count': demoddata_count,
             'demoddata_details': demoddata_details,
             'show_hex_to_ascii_button': show_hex_to_ascii_button,
@@ -478,6 +483,25 @@ def observation_view(request, observation_id):
             'discuss_slug': discuss_slug
         }
     )
+
+
+def calculate_datetime_from_tle(observation_id):
+    """Converts TLE epoch to datetime object"""
+    observation = get_object_or_404(Observation, id=observation_id)
+
+    # Parse the TLE data to create an ephem EarthSatellite object
+    tle = ephem.readtle(observation.tle_line_0, observation.tle_line_1, observation.tle_line_2)
+
+    # Get the TLE epoch time as an ephem.Date object
+    epoch_date = tle.epoch
+
+    # Convert the epoch time to a datetime object
+    epoch_datetime = datetime.strptime(str(epoch_date), "%Y/%m/%d %H:%M:%S")
+
+    # Make epoch_datetime timezone-aware
+    tle_datetime = timezone.make_aware(epoch_datetime)
+
+    return tle_datetime
 
 
 @login_required
