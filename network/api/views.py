@@ -12,6 +12,8 @@ from django.db.models.query import QuerySet
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -197,6 +199,37 @@ class StationConfigurationView(viewsets.ReadOnlyModelViewSet):
         return Response(configuration.configuration)
 
 
+@extend_schema(
+    operation_id="station_register",
+    request={
+        "application/json": {
+            "type": "object",
+            "properties": {
+                "client_id": {
+                    "type": "string"
+                },
+            },
+            "required": ["client_id"]
+        }
+    },
+    responses={
+        status.HTTP_200_OK: inline_serializer(
+            name='RegistrationSuccessResponse',
+            fields={'url': str},
+        ),
+        status.HTTP_400_BAD_REQUEST: inline_serializer(
+            name='ErrorResponse',
+            fields={'detail': str},
+        ),
+        status.HTTP_302_FOUND: None
+    },
+    summary="Register a new station or connect to an existing one",
+    description=(
+        "API endpoint for receiving client_id and return url for registering new"
+        " station or connecting client_id to an existing one."
+    ),
+    tags=["Station Registration"],
+)
 @api_view(['POST'])
 @permission_classes((AllowAny, ))
 def station_register_view(request):
@@ -216,6 +249,20 @@ def station_register_view(request):
     return HttpResponseRedirect(redirect_to='/api/')
 
 
+@extend_schema(
+    methods=['GET'],
+    operation_id="transmitters_detail",
+    description="Gets details of a single transmitter along with its statistics",
+    parameters=[
+        OpenApiParameter(
+            name="transmitter_uuid",
+            type=OpenApiTypes.UUID,
+            location=OpenApiParameter.PATH,
+            required=True
+        ),
+    ],
+    responses=serializers.TransmitterSerializer,
+)
 @api_view(['GET'])
 @permission_classes((AllowAny, ))
 def transmitter_detail_view(request, transmitter_uuid):
@@ -227,6 +274,17 @@ def transmitter_detail_view(request, transmitter_uuid):
     return Response(serializer.data)
 
 
+@extend_schema(
+    methods=['GET'],
+    operation_id="transmitters_list",
+    description="Gets details of a transmitter along with its statistics",
+    parameters=[
+        OpenApiParameter(
+            name="uuid", type=OpenApiTypes.UUID, location=OpenApiParameter.QUERY, required=False
+        ),
+    ],
+    responses=serializers.TransmitterSerializer
+)
 @api_view(['GET'])
 @permission_classes((AllowAny, ))
 def transmitters_view(request):

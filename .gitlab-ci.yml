@@ -29,7 +29,7 @@ schema:
       ./manage.py spectacular
       --file satnogs-network-api-client/openapi.yml
       --validate
-#      --fail-on-warn
+      --fail-on-warn
   artifacts:
     expire_in: 1 week
     when: always

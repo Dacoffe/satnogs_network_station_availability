@@ -1,6 +1,8 @@
 """SatNOGS Network API serializers, django rest framework"""
 from collections import defaultdict
 
+from django.core.validators import MaxValueValidator, MinValueValidator
+from drf_spectacular.utils import extend_schema_field, inline_serializer
 from PIL import Image
 from rest_framework import serializers
 
@@ -53,6 +55,7 @@ class DemodDataSerializer(serializers.ModelSerializer):
         model = DemodData
         fields = ('payload_demod', )
 
+    @extend_schema_field(serializers.URLField())
     def get_payload_demod(self, obj):
         """Returns DemodData Link"""
         request = self.context.get("request")
@@ -133,6 +136,7 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
         super().update(instance, validated_data)
         return instance
 
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_observation_frequency(self, obj):
         """Returns observation center frequency"""
         frequency = obj.center_frequency or obj.transmitter_downlink_low
@@ -141,10 +145,12 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
             return frequency
         return int(round(frequency + ((frequency * frequency_drift) / 1e9)))
 
+    @extend_schema_field(serializers.BooleanField(allow_null=True))
     def get_transmitter_unconfirmed(self, obj):
         """Returns whether the transmitter was unconfirmed at the time of observation"""
         return obj.transmitter_unconfirmed
 
+    @extend_schema_field(serializers.ChoiceField(choices=["active", "inactive", "unknown"]))
     def get_transmitter_status(self, obj):
         """Returns the status of the transmitter at the time of observation"""
         if obj.transmitter_status:
@@ -153,10 +159,12 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
             return "inactive"
         return "unknown"
 
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_center_frequency(self, obj):
         """Returns observation center frequency"""
         return obj.center_frequency
 
+    @extend_schema_field(str)
     def get_transmitter(self, obj):
         """Returns Transmitter UUID"""
         try:
@@ -164,17 +172,20 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
         except AttributeError:
             return ''
 
+    @extend_schema_field(serializers.DateTimeField(allow_null=True))
     def get_transmitter_updated(self, obj):
         """Returns Transmitter last update date"""
         try:
             return obj.transmitter_created
         except AttributeError:
-            return ''
+            return None
 
+    @extend_schema_field(int)
     def get_norad_cat_id(self, obj):
         """Returns Satellite NORAD ID"""
         return obj.satellite.norad_cat_id
 
+    @extend_schema_field(serializers.URLField())
     def get_payload(self, obj):
         """Returns Audio Link"""
         request = self.context.get("request")
@@ -184,6 +195,7 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
             return request.build_absolute_uri(obj.payload.url)
         return None
 
+    @extend_schema_field(serializers.URLField())
     def get_waterfall(self, obj):
         """Returns Watefall Link"""
         request = self.context.get("request")
@@ -193,6 +205,7 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
             return request.build_absolute_uri(obj.waterfall.url)
         return None
 
+    @extend_schema_field(str)
     def get_station_name(self, obj):
         """Returns Station name"""
         try:
@@ -200,6 +213,11 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
         except AttributeError:
             return None
 
+    @extend_schema_field(
+        serializers.FloatField(
+            validators=[MaxValueValidator(90), MinValueValidator(-90)]
+        )
+    )
     def get_station_lat(self, obj):
         """Returns Station latitude"""
         try:
@@ -207,6 +225,11 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
         except AttributeError:
             return None
 
+    @extend_schema_field(
+        serializers.FloatField(
+            validators=[MaxValueValidator(180), MinValueValidator(-180)]
+        )
+    )
     def get_station_lng(self, obj):
         """Returns Station longitude"""
         try:
@@ -214,6 +237,7 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
         except AttributeError:
             return None
 
+    @extend_schema_field(serializers.IntegerField(validators=[MinValueValidator(1)]))
     def get_station_alt(self, obj):
         """Returns Station elevation"""
         try:
@@ -221,42 +245,55 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
         except AttributeError:
             return None
 
+    @extend_schema_field(
+        serializers.ChoiceField(choices=["future", "failed", "bad", "unknown", "good"])
+    )
     def get_status(self, obj):
         """Returns Observation status"""
         return obj.status_badge
 
+    @extend_schema_field(
+        serializers.ChoiceField(choices=["unknown", "with-signal", "without-signal"])
+    )
     def get_waterfall_status(self, obj):
         """Returns Observation status"""
         return obj.waterfall_status_badge
 
+    @extend_schema_field(str)
     def get_vetted_status(self, obj):
         """DEPRECATED: Returns vetted status"""
         if obj.status_badge == 'future':
             return 'unknown'
         return obj.status_badge
 
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_vetted_user(self, obj):
         """DEPRECATED: Returns vetted user"""
         if obj.waterfall_status_user:
             return obj.waterfall_status_user.pk
         return None
 
+    @extend_schema_field(serializers.DateTimeField())
     def get_vetted_datetime(self, obj):
         """DEPRECATED: Returns vetted datetime"""
         return obj.waterfall_status_datetime
 
+    @extend_schema_field(str)
     def get_tle0(self, obj):
         """Returns tle0"""
         return obj.tle_line_0
 
+    @extend_schema_field(str)
     def get_tle1(self, obj):
         """Returns tle1"""
         return obj.tle_line_1
 
+    @extend_schema_field(str)
     def get_tle2(self, obj):
         """Returns tle2"""
         return obj.tle_line_2
 
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_observer(self, obj):
         """Returns the author of the observation"""
         if obj.author:
@@ -516,18 +553,46 @@ class StationSerializer(serializers.ModelSerializer):
             'target_utilization', 'future_observations', 'image', 'success_rate', 'owner'
         )
 
+    @extend_schema_field(serializers.IntegerField(validators=[MinValueValidator(1)]))
     def get_success_rate(self, obj):
         """Returns the success rate of the station"""
         return obj.success_rate
-    
+
+    @extend_schema_field(str)
     def get_image(self, obj):
         """Returns the url of the station image"""
         return obj.get_image()
 
+    @extend_schema_field(serializers.IntegerField(validators=[MinValueValidator(1)]))
     def get_min_horizon(self, obj):
         """Returns Station minimum horizon"""
         return obj.horizon
 
+    @extend_schema_field(
+        {
+            'type': 'array',
+            'items': {
+                'type': 'object',
+                'properties': {
+                    'frequency': {
+                        'type': 'number'
+                    },
+                    'frequency_max': {
+                        'type': 'number'
+                    },
+                    'band': {
+                        'type': 'string'
+                    },
+                    'antenna_type': {
+                        'type': 'string'
+                    },
+                    'antenna_type_name': {
+                        'type': 'string'
+                    },
+                },
+            },
+        }
+    )
     def get_antenna(self, obj):
         """Returns Station antenna list"""
 
@@ -565,10 +630,12 @@ class StationSerializer(serializers.ModelSerializer):
                 )
         return antennas
 
+    @extend_schema_field(serializers.IntegerField(validators=[MinValueValidator(1)]))
     def get_observations(self, obj):
         """Returns Station observations number"""
         return obj.total_obs
 
+    @extend_schema_field(str)
     def get_status(self, obj):
         """Returns Station status"""
         try:
@@ -602,18 +669,22 @@ class JobSerializer(serializers.ModelSerializer):
             'transmitter', 'baud'
         )
 
+    @extend_schema_field(str)
     def get_tle0(self, obj):
         """Returns tle0"""
         return obj.tle_line_0
 
+    @extend_schema_field(str)
     def get_tle1(self, obj):
         """Returns tle1"""
         return obj.tle_line_1
 
+    @extend_schema_field(str)
     def get_tle2(self, obj):
         """Returns tle2"""
         return obj.tle_line_2
 
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_frequency(self, obj):
         """Returns Observation frequency"""
         frequency = obj.center_frequency or obj.transmitter_downlink_low
@@ -622,10 +693,12 @@ class JobSerializer(serializers.ModelSerializer):
             return frequency
         return int(round(frequency + ((frequency * frequency_drift) / 1e9)))
 
+    @extend_schema_field(str)
     def get_transmitter(self, obj):
         """Returns Transmitter UUID"""
         return obj.transmitter_uuid
 
+    @extend_schema_field(str)
     def get_mode(self, obj):
         """Returns Transmitter mode"""
         try:
@@ -633,6 +706,7 @@ class JobSerializer(serializers.ModelSerializer):
         except AttributeError:
             return ''
 
+    @extend_schema_field(serializers.FloatField())
     def get_baud(self, obj):
         """Returns Transmitter baudrate"""
         return obj.transmitter_baud
@@ -643,10 +717,27 @@ class TransmitterSerializer(serializers.Serializer):
     uuid = serializers.SerializerMethodField()
     stats = serializers.SerializerMethodField()
 
+    @extend_schema_field(serializers.UUIDField())
     def get_uuid(self, obj):
         """Returns Transmitter UUID"""
         return obj['transmitter_uuid']
 
+    @extend_schema_field(
+        inline_serializer(
+            name='TransmitterStats',
+            fields={
+                'total_count': serializers.IntegerField(),
+                'unknown_count': serializers.IntegerField(),
+                'future_count': serializers.IntegerField(),
+                'good_count': serializers.IntegerField(),
+                'bad_count': serializers.IntegerField(),
+                'unknown_rate': serializers.FloatField(),
+                'future_rate': serializers.FloatField(),
+                'success_rate': serializers.FloatField(),
+                'bad_rate': serializers.FloatField()
+            }
+        )
+    )
     def get_stats(self, obj):
         """Returns Transmitter statistics"""
         return obj['stats']

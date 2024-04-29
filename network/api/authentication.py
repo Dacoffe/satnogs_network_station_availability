@@ -1,4 +1,5 @@
 """SatNOGS Network API authentication, django rest framework"""
+from drf_spectacular.extensions import OpenApiAuthenticationExtension
 from rest_framework import exceptions
 from rest_framework.authentication import BaseAuthentication, get_authorization_header
 
@@ -32,3 +33,20 @@ class ClientIDAuthentication(BaseAuthentication):
             raise exceptions.AuthenticationFailed('Invalid Client ID.')  # pylint: disable=W0707
 
         return (station.owner, client_id)
+
+
+class ClientIDAuthenticationExtension(OpenApiAuthenticationExtension):
+    """Extension for OpenAPI to support Client ID based authentication."""
+    target_class = 'network.api.authentication.ClientIDAuthentication'
+    name = 'ClientIDAuth'
+
+    def get_security_definition(self, auto_schema):
+        return {
+            "type": "apiKey",
+            "in": "header",
+            "name": "Authorization",
+            "description": (
+                "Clients should authenticate by passing the"
+                " Client ID in the 'Authorization' HTTP header"
+            )
+        }
