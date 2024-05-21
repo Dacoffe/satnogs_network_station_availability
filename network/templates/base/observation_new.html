@@ -162,89 +162,133 @@
         </div>
       </div>
       <div class="col-md-12">
-      <button type="button" id="advanced-options" class="btn btn-link" data-toggle="collapse"
-              data-target=".collapse-option" aria-expanded="false" aria-controls="collapse-option">
-        <span class="bi bi-chevron-down"></span> Show Advanced Options
-      </button>
+        <ul class="nav nav-tabs" id="advancedSettingsTab" role="tablist">
+          <li class="nav-item">
+             <a class="nav-link" id="advanced-options" data-toggle="tab" role="tab" href="#options-tabpane" aria-selected="false" aria-controls="options-tabpane">
+                Advanced Options
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="advanced-filters" data-toggle="tab" role="tab" href="#filters-tabpane" aria-selected="false" aria-controls="filters-tabpane">
+                Advanced Filters
+            </a>
+          </li>
+        </ul>
       </div>
-      <div class="col-md-6 collapse collapse-option">
-        <div class="form-group row align-items-center">
-          <label class="col-sm-3 col-form-label">Station Horizon</label>
-          <div class="col-sm-9" id="horizon-status">
-            <div class="btn-group btn-group-toggle d-flex" role="group" data-toggle="buttons">
-              <label class="btn btn-outline-dark active" id="default-horizon">
-                <input type="radio" name="horizon" value="default" autocomplete="off" checked>
-                  Minimum of each Station
-                </input>
-              </label>
-              <label class="btn btn-outline-dark" id="custom-horizon">
-                <input type="radio" name="horizon" value="custom" autocomplete="off">
-                  Custom
-                </input>
-              </label>
+      <div class="row tab-content">
+        <div class="tab-pane" id="options-tabpane" role="tabpanel" aria-labelledby="advanced-options">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group row align-items-center">
+                <label class="col-sm-3 col-form-label">Station Horizon</label>
+                <div class="col-sm-9" id="horizon-status">
+                  <div class="btn-group btn-group-toggle d-flex" role="group" data-toggle="buttons">
+                    <label class="btn btn-outline-dark active" id="default-horizon">
+                      <input type="radio" name="horizon" value="default" autocomplete="off" checked>
+                        Minimum of each Station
+                      </input>
+                    </label>
+                    <label class="btn btn-outline-dark" id="custom-horizon">
+                      <input type="radio" name="horizon" value="custom" autocomplete="off">
+                        Custom
+                      </input>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group row align-items-center">
+                <label class="col-sm-3 col-form-label">Overlapped</label>
+                <div class="col-sm-9" id="overlapped">
+                  <div class="btn-group btn-group-toggle d-flex" role="group" data-toggle="buttons">
+                    <label class="btn btn-outline-dark active" id="hide-overlapped">
+                      <input type="radio" name="overlapped" value="hide-overlapped" autocomplete="off" checked>
+                        Hide
+                      </input>
+                    </label>
+                    <label class="btn btn-outline-dark" id="truncate-overlapped">
+                      <input type="radio" name="overlapped" value="truncate-overlapped" autocomplete="off">
+                        Show Truncated
+                      </input>
+                    </label>
+                    <label class="btn btn-outline-dark" id="custom-overlapped" disabled>
+                      <input type="radio" name="overlapped" value="show-overlapped" autocomplete="off">
+                        <span data-toggle="tooltip" title="Not supported yet!">Show Overlapped</span>
+                      </input>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div id="split-duration-formgroup" class="form-group row align-items-center">
+                <label class="col-sm-3 col-form-label">Split Duration</label>
+                <div class="col-sm-9" id="split-duration-status">
+                  <div class="btn-group btn-group-toggle d-flex" role="group" data-toggle="buttons">
+                    <label class="btn btn-outline-dark active" id="default-split-duration">
+                      <input type="radio" name="split_duration" value="{{ split.duration }}" data-min="{{ obs_min_duration }}" autocomplete="off" checked>
+                        Default({{ split.duration }}sec)
+                      </input>
+                    </label>
+                    <label class="btn btn-outline-dark" id="custom-split-duration">
+                      <input type="radio" name="split_duration" value="custom" autocomplete="off">
+                        Custom
+                      </input>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group row align-items-center">
+                <label class="col-sm-3 col-form-label">Break Duration</label>
+                <div class="col-sm-9" id="break-duration-status">
+                  <div class="btn-group btn-group-toggle d-flex" role="group" data-toggle="buttons">
+                    <label class="btn btn-outline-dark active" id="default-break-duration">
+                      <input type="radio" name="break_duration" value="{{ split.break }}" autocomplete="off" checked>
+                        Default({{ split.break }}sec)
+                      </input>
+                    </label>
+                    <label class="btn btn-outline-dark" id="custom-break-duration">
+                      <input type="radio" name="break_duration" value="custom" autocomplete="off">
+                        Custom
+                      </input>
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="col-md-6 collapse collapse-option">
-        <div class="form-group row align-items-center">
-          <label class="col-sm-3 col-form-label">Overlapped</label>
-          <div class="col-sm-9" id="overlapped">
-            <div class="btn-group btn-group-toggle d-flex" role="group" data-toggle="buttons">
-              <label class="btn btn-outline-dark active" id="hide-overlapped">
-                <input type="radio" name="overlapped" value="hide-overlapped" autocomplete="off" checked>
-                  Hide
-                </input>
-              </label>
-              <label class="btn btn-outline-dark" id="truncate-overlapped">
-                <input type="radio" name="overlapped" value="truncate-overlapped" autocomplete="off">
-                  Show Truncated
-                </input>
-              </label>
-              <label class="btn btn-outline-dark" id="custom-overlapped" disabled>
-                <input type="radio" name="overlapped" value="show-overlapped" autocomplete="off">
-                  <span data-toggle="tooltip" title="Not supported yet!">Show Overlapped</span>
-                </input>
-              </label>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-6 collapse collapse-option">
-        <div id="split-duration-formgroup" class="form-group row align-items-center">
-          <label class="col-sm-3 col-form-label">Split Duration</label>
-          <div class="col-sm-9" id="split-duration-status">
-            <div class="btn-group btn-group-toggle d-flex" role="group" data-toggle="buttons">
-              <label class="btn btn-outline-dark active" id="default-split-duration">
-                <input type="radio" name="split_duration" value="{{ split.duration }}" data-min="{{ obs_min_duration }}" autocomplete="off" checked>
-                  Default({{ split.duration }}sec)
-                </input>
-              </label>
-              <label class="btn btn-outline-dark" id="custom-split-duration">
-                <input type="radio" name="split_duration" value="custom" autocomplete="off">
-                  Custom
-                </input>
-              </label>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-6 collapse collapse-option">
-        <div class="form-group row align-items-center">
-          <label class="col-sm-3 col-form-label">Break Duration</label>
-          <div class="col-sm-9" id="break-duration-status">
-            <div class="btn-group btn-group-toggle d-flex" role="group" data-toggle="buttons">
-              <label class="btn btn-outline-dark active" id="default-break-duration">
-                <input type="radio" name="break_duration" value="{{ split.break }}" autocomplete="off" checked>
-                  Default({{ split.break }}sec)
-                </input>
-              </label>
-              <label class="btn btn-outline-dark" id="custom-break-duration">
-                <input type="radio" name="break_duration" value="custom" autocomplete="off">
-                  Custom
-                </input>
-              </label>
-            </div>
+        <div class="col-md-12 tab-pane" id="filters-tabpane" role="tabpanel" aria-labelledby="advanced-filters">
+          <div id="location-formgroup" class="form-group row align-items-center card filter-section no-gutters">
+              <div id="location-status" class="form-group col-md-12 row">
+                  <label class="col-sm-12">Station Location</label>
+                <div class="form-group col-md-6 row align-items-center" id="lat-status">
+                  <label id="custom-lat" class="col-sm-3">Latitude</label>
+                    <input placeholder="Latitude" type="number" name="lat_custom" id="lat-custom" min="-90" max="90" step="0.001" value="" class="col-sm-9 input-group form-control">
+                </div>
+                <div class="form-group col-md-6 row align-items-center" id="lng-status">
+                  <label id="custom-lng" class="col-sm-3">Longitude</label>
+                    <input placeholder="Longitude" type="number" name="lng_custom" id="lng-custom" min="-180" max="180" step="0.001" value="" class="col-sm-9 input-group form-control">
+                </div>
+                <div class="form-group col-md-6 row align-items-center" id="radius-status">
+                  <label id="custom-radius" class="col-sm-3">Radius in Km</label>
+                    <input placeholder="Radius" type="number" name="radius_custom" id="radius-custom" min="0" step="0.001" value="" class="col-sm-9 input-group form-control">
+                </div>
+              </div>
+
+              <div class="form-group col-md-12 text-center">
+                <button type="button" id="apply-filters" class="btn btn-success" disabled="">
+                  <i class="bi " aria-hidden="true"></i>
+                    Apply Filters
+                </button>
+                <button type="button" id="reset-filters" class="btn btn-primary">
+                  <i class="bi " aria-hidden="true"></i>
+                    Reset Filters
+                </button>
+              </div>
           </div>
         </div>
       </div>

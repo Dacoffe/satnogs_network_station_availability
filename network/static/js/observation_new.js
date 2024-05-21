@@ -2,13 +2,30 @@
 
 $(document).ready( function(){
 
+    checkInputs();
+
     $('.selectpicker').selectpicker();
 
     $('#advanced-options').click(function(){
-        if($('button span').hasClass('bi-chevron-down')) {
-            $(this).html('<span class="bi bi-chevron-up"></span> Hide Advanced Options');
-        } else {
-            $(this).html('<span class="bi bi-chevron-down"></span> Show Advanced Options');
+
+        if ($('#options-tabpane').hasClass('active')) {
+            $('#options-tabpane').removeClass('active');
+        }
+        else {
+            $('#options-tabpane').addClass('active');
+            $('#filters-tabpane').removeClass('active');
+
+        }
+    });
+
+    $('#advanced-filters').click(function () {
+        if ($('#filters-tabpane').hasClass('active')) {
+            $('#filters-tabpane').removeClass('active');
+        }
+        else
+        {
+            $('#filters-tabpane').addClass('active');
+            $('#options-tabpane').removeClass('active');
         }
     });
 
@@ -43,12 +60,14 @@ $(document).ready( function(){
         reset_split_duration();
     });
 
-    function get_errors(code, min_val) {
+    function get_errors(code, min_val, max_val) {
         switch(code) {
         case 1:
             return 'Value is not a number.';
         case 2:
             return 'Enter a value equal or greater than ' + min_val + '.';
+        case 3:
+            return 'Enter a value equal or lesser than ' + max_val + '.';
         default:
             return 'Invalid input.';
         }
@@ -74,7 +93,7 @@ $(document).ready( function(){
                     $('#split-duration-span').addClass('alert-error');
                     $('#calculate-observation').prop('disabled', true);
                     $('#schedule-observation').prop('disabled', true);
-                    $('#split-duration-span').html(get_errors(has_error, min_value));
+                    $('#split-duration-span').html(get_errors(has_error, min_value, null));
                 } else {
                     custom_split_formgroup.removeClass('has-error');
                     $('#split-duration-span').removeClass('alert-error');
@@ -95,6 +114,138 @@ $(document).ready( function(){
             var value = $('#default-break-duration input')[0].value;
             $('#break-duration-status').append('<input type="number" name="break_duration_custom" id="break-duration-custom" class="duration-number-input form-control" min="0" step="1" value="' + value +'"/>');
         }
+    });
+
+    var latitude;
+    var longitude;
+    var radius;
+
+    $('#lat-custom').val(null);
+    $('#lng-custom').val(null);
+    $('#radius-custom').val(null);
+    checkInputs();
+
+    $('#lat-custom').click(function() {
+        $('#lat-status').append('<span id="lat-span"></span>');
+        const lat_custom = $('#lat-custom');
+        var min_value = -90;
+        var max_value = 90;
+        lat_custom.on('input', function () {
+            var has_error = 0;
+            if(isNaN(lat_custom.val()) || lat_custom.val() == '') {
+                has_error = 1;
+            } else if(parseFloat(lat_custom.val()) < min_value) {
+                has_error = 2;
+            }else if(parseFloat(lat_custom.val()) > max_value) {
+                has_error = 3;
+            }
+
+            if(has_error) {
+                $('#location-formgroup').addClass('has-error');
+                $('#lat-span').addClass('alert-error');
+                $('#apply-filters').prop('disabled', true);
+                $('#lat-span').html(get_errors(has_error, min_value, max_value));
+            } else {
+                $('#location-formgroup').removeClass('has-error');
+                $('#lat-span').removeClass('alert-error');
+                $('#lat-span').html('');
+            }
+            checkInputs();
+        });
+    });
+
+    $('#lng-custom').click(function() {
+        $('#lng-status').append('<span id="lng-span"></span>');
+        const lng_custom = $('#lng-custom');
+        var min_value = -180;
+        var max_value = 180;
+        lng_custom.on('input', function () {
+            var has_error = 0;
+            if(isNaN(lng_custom.val()) || lng_custom.val() == '') {
+                has_error = 1;
+            } else if(parseFloat(lng_custom.val()) < min_value) {
+                has_error = 2;
+            }else if(parseFloat(lng_custom.val()) > max_value) {
+                has_error = 3;
+            }
+
+            if(has_error) {
+                $('#location-formgroup').addClass('has-error');
+                $('#lng-span').addClass('alert-error');
+                $('#apply-filters').prop('disabled', true);
+                $('#lng-span').html(get_errors(has_error, min_value, max_value));
+            } else {
+                $('#location-formgroup').removeClass('has-error');
+                $('#lng-span').removeClass('alert-error');
+                $('#lng-span').html('');
+            }
+            checkInputs();
+        });
+    });
+
+    $('#radius-custom').click(function() {
+        $('#radius-status').append('<span id="radius-span"></span>');
+        const radius_custom = $('#radius-custom');
+        var min_value = 0;
+        var max_value = null;
+        radius_custom.on('input', function () {
+            var has_error = 0;
+            if(isNaN(radius_custom.val()) || radius_custom.val() == '') {
+                has_error = 1;
+            } else if(parseFloat(radius_custom.val()) <= min_value) {
+                has_error = 2;
+            }
+
+            if(has_error) {
+                $('#location-formgroup').addClass('has-error');
+                $('#radius-span').addClass('alert-error');
+                $('#apply-filters').prop('disabled', true);
+                $('#radius-span').html(get_errors(has_error, min_value, max_value));
+            } else {
+                $('#location-formgroup').removeClass('has-error');
+                $('#radius-span').removeClass('alert-error');
+                $('#radius-span').html('');
+            }
+            checkInputs();
+        });
+    });
+
+    function checkInputs() {
+        if ($('#lat-span').hasClass('alert-error') ||
+            $('#lng-span').hasClass('alert-error') ||
+            $('#radius-span').hasClass('alert-error') ||
+            $('#lat-custom').val() === '' ||
+            $('#lng-custom').val() === '' ||
+            $('#radius-custom').val() === '' ||
+            isNaN(parseFloat($('#lat-custom').val())) ||
+            isNaN(parseFloat($('#lng-custom').val())) ||
+            isNaN(parseFloat($('#radius-custom').val()))) {
+            $('#apply-filters').prop('disabled', true);
+        }
+        else {
+            $('#apply-filters').prop('disabled', false);
+        }
+    }
+
+    $('#apply-filters').click(function() {
+        latitude = parseFloat($('#lat-custom').val());
+        longitude = parseFloat($('#lng-custom').val());
+        radius = parseFloat($('#radius-custom').val());
+        search_for_stations(transmitter_selection.find(':selected'));
+    });
+
+    $('#reset-filters').click(function() {
+        $('#lat-span').html('');
+        $('#lng-span').html('');
+        $('#radius-span').html('');
+        $('#apply-filters').prop('disabled', true);
+        latitude = null;
+        longitude = null;
+        radius = null;
+        $('#lat-custom').val(null);
+        $('#lng-custom').val(null);
+        $('#radius-custom').val(null);
+        search_for_stations(transmitter_selection.find(':selected'));
     });
 
     function create_station_option(station){
@@ -120,6 +271,15 @@ $(document).ready( function(){
         }
         if (filters.center_frequency) {
             data.center_frequency = filters.center_frequency;
+        }
+        if (filters.latitude){
+            data.latitude = filters.latitude;
+        }
+        if (filters.longitude){
+            data.longitude = filters.longitude;
+        }
+        if (filters.radius){
+            data.radius = filters.radius;
         }
         $.ajax({
             type: 'POST',
@@ -597,7 +757,7 @@ $(document).ready( function(){
                 }
             }
         });
-    
+
         end.subscribe(tempusDominus.Namespace.events.error, (e) => {
             let date = moment(e.value, otherValidFormats, true);
             if (date.isValid()){
@@ -658,10 +818,14 @@ $(document).ready( function(){
         var downlink_low = transmitter_object.data('downlink-low');
         var station = $('#form-obs').data('obs-filter-station');
         var center_frequency = (frequency_input.data('is-valid')) ? frequency_input.val() : downlink_low;
+
         select_proper_stations({
             transmitter: transmitter,
             station: station,
-            center_frequency: center_frequency
+            center_frequency: center_frequency,
+            latitude: latitude,
+            longitude: longitude,
+            radius: radius
         }, function() {
             if (obs_filter && obs_filter_dates && obs_filter_station && obs_filter_satellite) {
                 $('#obs-selection-tools').hide();
@@ -741,6 +905,7 @@ $(document).ready( function(){
             frequency_input.data('is-valid', false);
             $('#center-frequency-formgroup').fadeOut('fast');
         }
+
         search_for_stations(transmitter_object);
     });
 
@@ -838,7 +1003,8 @@ $(document).ready( function(){
                         var starting_time = moment.utc(n.start).valueOf();
                         var ending_time = moment.utc(n.end).valueOf();
                         var selected = false;
-                        if(k.status !== 1 || obs_filter_station){
+
+                        if (k.status !== 1 || obs_filter_station) {
                             selected = true;
                         }
                         selectedAll = selectedAll && selected;
@@ -857,6 +1023,7 @@ $(document).ready( function(){
                         });
 
                         dc = dc + 1;
+
                     });
                     if(times.length > 0){
                         suggested_data.push({

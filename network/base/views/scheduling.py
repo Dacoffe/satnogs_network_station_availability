@@ -1,4 +1,5 @@
 """Django base views for SatNOGS Network"""
+import math
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from operator import itemgetter
@@ -432,10 +433,28 @@ def pass_predictions(request, station_id):
     return JsonResponse(data, safe=False)
 
 
+def calculate_distance(lat1, lon1, lat2, lon2):
+    """Calculate distance based on the given coordinates"""
+    earth_radius_km = 6371  # Mean radius of the Earth in kilometers
+    d_lat = math.radians(lat2 - lat1)
+    d_lon = math.radians(lon2 - lon1)
+    a = (
+        math.sin(d_lat / 2) * math.sin(d_lat / 2) + math.cos(math.radians(lat1)) *
+        math.cos(math.radians(lat2)) * math.sin(d_lon / 2) * math.sin(d_lon / 2)
+    )
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    distance = earth_radius_km * c
+
+    return distance
+
+
 @ajax_required
 def scheduling_stations(request):  # pylint: disable=too-many-return-statements
     """Returns json with stations on which user has permissions to schedule"""
     uuid = request.POST.get('transmitter', None)
+    lat = request.POST.get('latitude', 0)
+    lng = request.POST.get('longitude', 0)
+    radius = request.POST.get('radius', None)
     if uuid is None:
         data = [{'error': 'You should select a Transmitter.'}]
         return JsonResponse(data, safe=False)
@@ -466,13 +485,36 @@ def scheduling_stations(request):  # pylint: disable=too-many-return-statements
     except ValueError:
         data = {'error': 'Center frequency value is invalid'}
         return JsonResponse(data, safe=False)
+    if lat is not None and lng is not None and radius is not None:
+        try:
+            lat = float(lat)
+            lng = float(lng)
+            radius = float(radius)
+        except ValueError:
+            data = {'error': 'Latitude, longitude, or radius value is invalid'}
+            return JsonResponse(data, safe=False)
 
-    available_stations = get_available_stations(
-        stations, center_frequency, request.user, satellite
-    )
+        available_stations = get_available_stations(
+            stations, center_frequency, request.user, satellite
+        )
+
+        filtered_stations = []
+        for station in available_stations:
+            station_lat = round(station.lat, 3)
+            station_lng = round(station.lng, 3)
+            distance = calculate_distance(lat, lng, station_lat, station_lng)
+            if distance <= radius:
+                filtered_stations.append(station)
+
+        available_stations = filtered_stations
+    else:
+        available_stations = get_available_stations(
+            stations, center_frequency, request.user, satellite
+        )
     data = {
         'stations': StationSerializer(available_stations, many=True).data,
     }
+
     return JsonResponse(data, safe=False)
 
 

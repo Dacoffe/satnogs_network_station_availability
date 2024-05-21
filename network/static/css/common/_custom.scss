@@ -81,6 +81,15 @@ span.datetime-time {
     float: right;
 }
 
+#location-status {
+    border-bottom: 1px solid rgba(0, 0, 0, .1);
+}
+
+#advancedSettingsTab {
+    margin-bottom: 10px;
+    font-size: 15px;
+}
+
 // Filters Observations and Stations
 
 .filter-section {
