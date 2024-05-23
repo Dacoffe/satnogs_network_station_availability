@@ -23,7 +23,7 @@
         <a href="#legend" class="btn btn-outline-dark" role="button" data-toggle="modal" data-target="#LegendModal">
           <span class="bi bi-info-circle" aria-hidden="true"></span>
         </a>
-      	{% if can_schedule %}
+        {% if can_schedule %}
           <a class="btn btn-primary" role="button" href="{% url 'base:observation_new' %}">
             <span class="bi bi-plus" aria-hidden="true"></span> Schedule Observations
           </a>

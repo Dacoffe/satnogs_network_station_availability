@@ -95,6 +95,11 @@ span.datetime-time {
     background-color: #e7e7e7;
 }
 
+.dropdown-item.active,
+.dropdown-item:hover {
+    background-color: #e7e7e7;
+    color: black;
+}
 // Progress Bar colors
 
 .pb-info {

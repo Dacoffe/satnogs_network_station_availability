@@ -48,8 +48,17 @@
             <li class="nav-item {% active request 'base:about' %}">
               <a class="nav-link" href="{% url 'base:about' %}">About</a>
             </li>
-            <li class="nav-item {% active request 'base:observations_list' %}">
-              <a class="nav-link" href="{% url 'base:observations_list' %}">Observations</a>
+            <li class="nav-item dropdown {% active request 'base:observations_list' %} {% active request 'base:observation_new' %}">
+              <a class="nav-link dropdown-toggle" href="#" id="observationsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Observations
+              </a>
+              <div class="dropdown-menu bg-light p-0" aria-labelledby="observationsDropdown">
+                <a class="dropdown-item btn-sm {% active request 'base:observations_list' %}" href="{% url 'base:observations_list' %}" role="button">Browse</a>
+                <div class="dropdown-divider m-0"></div>
+                <a class="dropdown-item btn-sm {% active request 'base:observation_new' %}" href="{% url 'base:observation_new' %}" role="button">
+                  Schedule
+                </a>
+              </div>
             </li>
             <li class="nav-item {% active request 'base:stations_list' %}">
               <a class="nav-link" href="{% url 'base:stations_list' %}">Ground Stations</a>
