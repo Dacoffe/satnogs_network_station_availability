@@ -171,7 +171,12 @@ class Station(models.Model):
     )
     name = models.CharField(max_length=45)
     image = models.ImageField(upload_to='ground_stations', blank=True, validators=[validate_image])
-    alt = models.PositiveIntegerField(null=True, blank=True, help_text='In meters above sea level')
+    alt = models.IntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(-500)],
+        help_text='In meters above sea level'
+    )
     lat = models.FloatField(
         null=True,
         blank=True,
