@@ -34,7 +34,7 @@ def get_one_day_ago():
     return (now() - timedelta(days=1)).strftime("%Y-%m-%d %H:%M")
 
 
-class ObservationListBaseView(ListView):  # pylint: disable=R0901
+class ObservationListBaseView(ListView):
     """
     Base class for displaying a list of observations
     """
@@ -243,7 +243,7 @@ class ObservationListBaseView(ListView):  # pylint: disable=R0901
         return context
 
 
-class ObservationListView(ObservationListBaseView):  # pylint: disable=R0901
+class ObservationListView(ObservationListBaseView):
     """
     Displays a list of observations with pagination
     """
@@ -357,7 +357,7 @@ def get_observation_demoddata_details(observation, demoddata, demoddata_count):
     return demoddata_details, show_hex_to_ascii_button
 
 
-class VetObservationsChunkListView(LoginRequiredMixin, ListView):  # pylint: disable=R0901
+class VetObservationsChunkListView(LoginRequiredMixin, ListView):
     """View for getting the observations to vet as HTML snippets"""
 
     def get_queryset(self):
@@ -390,7 +390,7 @@ class VetObservationsChunkListView(LoginRequiredMixin, ListView):  # pylint: dis
         return JsonResponse(obs_html, safe=False)
 
 
-class VetObservationsView(LoginRequiredMixin, ObservationListBaseView):  # pylint: disable=R0901
+class VetObservationsView(LoginRequiredMixin, ObservationListBaseView):
     """View for vetting multiple observations"""
     template_name = 'base/vet_observation_container.html'
     object_list = []

@@ -31,7 +31,7 @@ def station_all_view(request):
     return JsonResponse(data, safe=False)
 
 
-class StationListView(ListView):  # pylint: disable=R0901
+class StationListView(ListView):
     """Displays a list of stations with pagination"""
     model = Station
     context_object_name = "stations"

@@ -30,9 +30,8 @@ from network.base.validators import NegativeElevationError, NoTleSetError, \
     ObservationOverlapError, SchedulingLimitError, SinglePassError
 
 
-class ObservationView(  # pylint: disable=R0901
-        mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
-        mixins.CreateModelMixin, viewsets.GenericViewSet):
+class ObservationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
+                      mixins.CreateModelMixin, viewsets.GenericViewSet):
     """SatNOGS Network Observation API view class"""
     filterset_class = filters.ObservationViewFilter
     pagination_class = pagination.ObservationCursorPagination
@@ -144,8 +143,7 @@ class ObservationView(  # pylint: disable=R0901
         return Response(status=status.HTTP_200_OK)
 
 
-class StationView(  # pylint: disable=R0901
-        mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class StationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """SatNOGS Network Station API view class"""
     queryset = Station.objects.annotate(
         total_obs=Count('observations'),
@@ -157,7 +155,7 @@ class StationView(  # pylint: disable=R0901
     pagination_class = pagination.LinkedHeaderPageNumberPagination
 
 
-class StationConfigurationView(viewsets.ReadOnlyModelViewSet):  # pylint: disable=R0901
+class StationConfigurationView(viewsets.ReadOnlyModelViewSet):
     """SatNOGS Network Station Configuration API view class"""
     queryset = ActiveStationConfiguration.objects.all()
     serializer_class = serializers.StationConfigurationSerializer
@@ -236,7 +234,7 @@ def transmitters_view(request):
     return Response(serializer.data)
 
 
-class JobView(viewsets.ReadOnlyModelViewSet):  # pylint: disable=R0901
+class JobView(viewsets.ReadOnlyModelViewSet):
     """SatNOGS Network Job API view class"""
     queryset = Observation.objects.all()
     filterset_class = filters.ObservationViewFilter

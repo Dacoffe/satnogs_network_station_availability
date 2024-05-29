@@ -23,7 +23,7 @@ class UserRedirectView(LoginRequiredMixin, RedirectView):
         return reverse("users:view_user", kwargs={"username": self.request.user.username})
 
 
-class UserUpdateView(LoginRequiredMixin, UpdateView):  # pylint: disable=R0901
+class UserUpdateView(LoginRequiredMixin, UpdateView):
     """View for user update"""
     form_class = UserForm
 

@@ -11,3 +11,4 @@ disable=
     R0913, # too-many-arguments
     R0914, # too-many-locals
     C0209, # consider-using-f-string
+    R0901, # too-many-ancestors
