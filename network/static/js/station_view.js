@@ -166,11 +166,20 @@ $(document).ready(function() {
         $.ajax({
             url: '/pass_predictions/' + $('#station-info').attr('data-id') + '/',
             cache: false,
-            error: function(){
+            error: function(jqXHR){
+                let errorMessage;
+                if(jqXHR.status === 0) {
+                    errorMessage = 'Connection error. Check your internet connection.';
+                } else if(jqXHR.status === 404) {
+                    errorMessage = 'The station could not be found. Make sure that the station exists and its location is defined! If the error persists please contact the site administator.';
+                } else {
+                    errorMessage = 'An error occured, please try again later. If the error persists please contact the site administator.';
+                }
+
                 $('#pass-predictions-results').append(`
                   <tr id="error-pass-predictions">
                     <td colspan="7" class="danger text-center">
-                      An error occured, make sure that station exists and its location is defined! If the error persists please contact the site administator.
+                      ${errorMessage}
                     </td>
                   </tr>`
                 );
