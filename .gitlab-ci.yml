@@ -1,6 +1,6 @@
 variables:
   GITLAB_CI_IMAGE_ALPINE: 'alpine:3.11'
-  GITLAB_CI_IMAGE_DOCKER: 'docker:20.10.6'
+  GITLAB_CI_IMAGE_DOCKER: 'docker:20.10.24'
   GITLAB_CI_IMAGE_NODE: 'node:13.12'
   GITLAB_CI_IMAGE_PYTHON: 'python:3.11.9'
   GITLAB_CI_IMAGE_OPENAPI_GENERATOR_CLI: 'openapitools/openapi-generator-cli:v5.3.0'
