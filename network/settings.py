@@ -198,6 +198,8 @@ AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID', default='')
 AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY', default='')
 AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME', default='')
 AWS_S3_ENDPOINT_URL = config('AWS_S3_ENDPOINT_URL', default='')
+AWS_S3_CUSTOM_DOMAIN = config('AWS_S3_CUSTOM_DOMAIN', default='')
+AWS_S3_URL_PROTOCOL = config('AWS_S3_URL_PROTOCOL', default='https:')
 AWS_QUERYSTRING_AUTH = config('AWS_QUERYSTRING_AUTH', default=False, cast=bool)
 
 # App conf
@@ -361,13 +363,13 @@ SECURE_PROXY_SSL_HEADER = config(
 ) or None
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost', cast=Csv())
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
+CSP_DEFAULT_SRC_DEFAULT = "'self',https://*.mapbox.com,https://archive.org,https://*.archive.org"
+if ENVIRONMENT == 'dev':
+    CSP_DEFAULT_SRC_DEFAULT += ',http://localhost:9000,'  # minio instance for development
 CSP_DEFAULT_SRC = config(
     'CSP_DEFAULT_SRC',
     cast=lambda v: tuple(s.strip() for s in v.split(',')),
-    default="'self',"
-    'https://*.mapbox.com,'
-    'https://archive.org,'
-    'https://*.archive.org'
+    default=CSP_DEFAULT_SRC_DEFAULT
 )
 CSP_SCRIPT_SRC = config(
     'CSP_SCRIPT_SRC',
@@ -375,15 +377,16 @@ CSP_SCRIPT_SRC = config(
     default="'self',"
     "'unsafe-eval'"
 )
+CSP_IMG_SRC_DEFAULT = (
+    "'self',https://*.gravatar.com,https://*.mapbox.com,"
+    "https://*.satnogs.org,data:,blob:"
+)
+if ENVIRONMENT == 'dev':
+    CSP_IMG_SRC_DEFAULT += ',http://localhost:9000,'  # minio instance for development
 CSP_IMG_SRC = config(
     'CSP_IMG_SRC',
     cast=lambda v: tuple(s.strip() for s in v.split(',')),
-    default="'self',"
-    'https://*.gravatar.com,'
-    'https://*.mapbox.com,'
-    'https://*.satnogs.org,'
-    'data:,'
-    'blob:'
+    default=CSP_IMG_SRC_DEFAULT
 )
 CSP_STYLE_SRC = config(
     'CSP_STYLE_SRC',

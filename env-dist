@@ -23,6 +23,18 @@
 # SPACE_TRACK_USERNAME=your_spacetrack.org_username
 # SPACE_TRACK_PASSWORD=your_spacetrack.org_password
 
+# Minio local S3 storage
+# USE_S3_STORAGE_FOR_AUDIO=True
+# USE_S3_STORAGE_FOR_WATERFALL=True
+# USE_S3_STORAGE_FOR_DATA=True
+# AWS_ACCESS_KEY_ID=the_access_key_id
+# AWS_SECRET_ACCESS_KEY=the_access_key
+# AWS_STORAGE_BUCKET_NAME=the_bucket_name
+# AWS_S3_ENDPOINT_URL='http://minio:9000'
+# AWS_S3_CUSTOM_DOMAIN = 'localhost:9000/the_bucket_name'
+# AWS_S3_URL_PROTOCOL ='http:'
+# AWS_QUERYSTRING_AUTH=False
+
 # Debugging
 #USE_DEBUGPY=1
 #PYTHONUNBUFFERED=1

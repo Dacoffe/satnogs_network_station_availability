@@ -71,8 +71,24 @@ services:
       - type: 'volume'
         source: 'media'
         target: '/var/lib/satnogs-network/media'
+  minio:
+    image: minio/minio
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_DEFAULT_BUCKETS: network-local
+    command: server /data --console-address ":9001"
+    profiles:
+      - minio
+
 volumes:
   db:
   redis:
   static:
   media:
+  minio_data:
