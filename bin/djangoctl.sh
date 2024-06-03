@@ -86,7 +86,12 @@ develop() {
 		install_editable "$1"
 	fi
 	prepare
-	exec "$MANAGE_CMD" runserver 0.0.0.0:8000
+	if [ "$USE_DEBUGPY" = "1" ]; then
+		exec python3 -m debugpy --listen 0.0.0.0:5678 /usr/local/src/satnogs-network/manage.py runserver 0.0.0.0:8000
+	else
+		exec "$MANAGE_CMD" runserver 0.0.0.0:8000
+	fi
+
 }
 
 develop_celery() {

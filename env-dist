@@ -22,3 +22,7 @@
 # SpaceTrack.org Credentials
 # SPACE_TRACK_USERNAME=your_spacetrack.org_username
 # SPACE_TRACK_PASSWORD=your_spacetrack.org_password
+
+# Debugging
+#USE_DEBUGPY=1
+#PYTHONUNBUFFERED=1

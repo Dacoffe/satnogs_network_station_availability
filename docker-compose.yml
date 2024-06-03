@@ -46,9 +46,12 @@ services:
     image: 'satnogs-network'
     ports:
       - '8000:8000'
+      - "5678:5678"
     depends_on:
       - 'db'
       - 'redis'
+    env_file:
+      - .env
     environment:
       PYTHONDONTWRITEBYTECODE: '1'
       DATABASE_URL: 'mysql://satnogsnetwork:satnogsnetwork@db/satnogsnetwork'

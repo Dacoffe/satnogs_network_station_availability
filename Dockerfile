@@ -31,3 +31,4 @@ RUN rm -rf /usr/local/src/satnogs-network
 ENV DJANGO_SETTINGS_MODULE network.settings
 
 EXPOSE 8000
+EXPOSE 5678
