@@ -504,14 +504,25 @@ class StationSerializer(serializers.ModelSerializer):
     observations = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
     altitude = serializers.IntegerField(min_value=0, source='alt')
+    image = serializers.SerializerMethodField()
+    success_rate = serializers.SerializerMethodField()
+    future_observations = serializers.IntegerField(read_only=True, source='future_obs')
 
     class Meta:
         model = Station
         fields = (
             'id', 'name', 'altitude', 'min_horizon', 'lat', 'lng', 'qthlocator', 'antenna',
             'created', 'last_seen', 'status', 'observations', 'description', 'client_version',
-            'target_utilization'
+            'target_utilization', 'future_observations', 'image', 'success_rate', 'owner'
         )
+
+    def get_success_rate(self, obj):
+        """Returns the success rate of the station"""
+        return obj.success_rate
+    
+    def get_image(self, obj):
+        """Returns the url of the station image"""
+        return obj.get_image()
 
     def get_min_horizon(self, obj):
         """Returns Station minimum horizon"""

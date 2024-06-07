@@ -102,6 +102,10 @@ class StationViewApiTest(TestCase):
             'qthlocator': self.station.qthlocator,
             'target_utilization': self.station.target_utilization,
             'status': self.station.get_status_display(),
+            'future_observations': 0,    # No observation scheduled in the test
+            'image': self.station.get_image(),
+            'success_rate': self.station.success_rate,
+            'owner': self.station.owner.id
         }
 
         response = self.client.get('/api/stations/')
