@@ -46,52 +46,55 @@
     <div class="filter-section card">
       <form method="get" action="{% url 'base:observations_list' %}">
         <div class="col-12 row">
+          {% for error in filter_errors %}
+          <div class="alert alert-danger" role="alert">{{error}}</div>
+          {% endfor %}
           <div class="form-group status-filter col-md-4 col-lg-3">
             <label for="status-selector">Status</label>
             <div id="status-selector" class="btn-group-toggle" role="group" aria-label="Group of status filters" data-toggle="buttons">
-              <label class="btn btn-future btn-sm {% if future == '0' %}active btn-inactive{% endif %}"
+              <label class="btn btn-future btn-sm {% if future is False %}active btn-inactive{% endif %}"
                      aria-expanded="true"
                      aria-controls="future"
                      data-toggle="tooltip"
                      data-placement="bottom"
                      title="Future">
-                <input type="checkbox" name="future" value="0" {% if future == '0' %}checked{% endif %} autocomplete="off">
+                <input type="checkbox" name="future" value="0" {% if future is False %}checked{% endif %} autocomplete="off">
                 <span class="bi bi-clock" aria-hidden="true"></span>
               </label>
-              <label class="btn btn-good btn-sm {% if good == '0' %}active btn-inactive{% endif %}"
+              <label class="btn btn-good btn-sm {% if good is False %}active btn-inactive{% endif %}"
                      aria-expanded="true"
                      aria-controls="good"
                      data-toggle="tooltip"
                      data-placement="bottom"
                      title="Good">
-                <input type="checkbox" name="good" value="0" {% if good == '0' %}checked{% endif %} autocomplete="off">
+                <input type="checkbox" name="good" value="0" {% if good is False %}checked{% endif %} autocomplete="off">
                 <span class="bi bi-check" aria-hidden="true"></span>
               </label>
-              <label class="btn btn-bad btn-sm {% if bad == '0' %}active btn-inactive{% endif %}"
+              <label class="btn btn-bad btn-sm {% if bad is False %}active btn-inactive{% endif %}"
                      aria-expanded="true"
                      aria-controls="bad"
                      data-toggle="tooltip"
                      data-placement="bottom"
                      title="Bad">
-                <input type="checkbox" name="bad" value="0" {% if bad == '0' %}checked{% endif %} autocomplete="off">
+                <input type="checkbox" name="bad" value="0" {% if bad is False %}checked{% endif %} autocomplete="off">
                 <span class="bi bi-x" aria-hidden="true"></span>
               </label>
-              <label class="btn btn-unknown btn-sm {% if unknown == '0' %}active btn-inactive{% endif %}"
+              <label class="btn btn-unknown btn-sm {% if unknown is False %}active btn-inactive{% endif %}"
                      aria-expanded="true"
                      aria-controls="unknown"
                      data-toggle="tooltip"
                      data-placement="bottom"
                      title="Unknown">
-                <input type="checkbox" name="unknown" value="0" {% if unknown == '0' %}checked{% endif %} autocomplete="off">
+                <input type="checkbox" name="unknown" value="0" {% if unknown is False %}checked{% endif %} autocomplete="off">
                 <span class="bi bi-question-circle" aria-hidden="true"></span>
               </label>
-              <label class="btn btn-failed btn-sm {% if failed == '0' %}active btn-inactive{% endif %}"
+              <label class="btn btn-failed btn-sm {% if failed is False %}active btn-inactive{% endif %}"
                      aria-expanded="true"
                      aria-controls="failed"
                      data-toggle="tooltip"
                      data-placement="bottom"
                      title="Failed">
-                <input type="checkbox" name="failed" value="0" {% if failed == '0' %}checked{% endif %} autocomplete="off">
+                <input type="checkbox" name="failed" value="0" {% if failed is False %}checked{% endif %} autocomplete="off">
                 <span class="bi bi-exclamation-triangle" aria-hidden="true"></span>
               </label>
             </div>
@@ -162,7 +165,7 @@
               <option value="" selected>All</option>
               {% for author in authors %}
                 <option data-author="{{ author.id }}" value="{{ author.id }}"
-                        {% if author.id == observer_id %}selected{% endif %}>
+                        {% if author.id == observer %}selected{% endif %}>
                   {{ author.displayname }}
                 </option>
               {% endfor %}
@@ -172,10 +175,10 @@
             <label for="station-selection">Station</label>
             <select class="form-control selectpicker" data-style="btn" name="station" autocomplete="off" id="station-selection" data-live-search="true">
               <option value="" selected>All</option>
-              {% for station in stations %}
-                <option data-station="{{ station }}" value="{{ station.id }}"
-                        {% if station.id == station_id %}selected{% endif %}>
-                  {{ station.id }} - {{ station.name }}
+              {% for station_obj in stations %}
+                <option data-station="{{ station_obj }}" value="{{ station_obj.id }}"
+                        {% if station_obj.id == station %}selected{% endif %}>
+                  {{ station_obj.id }} - {{ station_obj.name }}
                 </option>
               {% endfor %}
             </select>

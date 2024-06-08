@@ -48,6 +48,7 @@ class ObservationListBaseView(ListView):  # pylint: disable=R0901
     flag_filters = ['bad', 'good', 'unknown', 'future', 'failed']
     filtered = None
     more_filtered = None  # Filtered by filters hidden by default
+    filter_errors = []
 
     def get_filter_params(self):
         """
@@ -59,8 +60,21 @@ class ObservationListBaseView(ListView):  # pylint: disable=R0901
         Returns a dict, filter_name is the key, the parsed parameter is the value.
         """
         filter_params = {}
+        self.filter_errors = []
         for parameter_name in self.str_filters:
             filter_params[parameter_name] = self.request.GET.get(parameter_name, '')
+            if parameter_name in {'norad', 'observer', 'station'
+                                  } and filter_params[parameter_name] != '':
+                filter_norad = filter_params[parameter_name]
+                try:
+                    filter_norad = int(filter_norad)
+                    if filter_norad < 0:
+                        self.filter_errors.append(parameter_name + ': Value cannot be less than 0')
+
+                    filter_params[parameter_name] = filter_norad
+                except ValueError:
+                    self.filter_errors.append(parameter_name + ": Invalid value")
+                    filter_params[parameter_name] = ''
 
         for parameter_name in self.flag_filters:
             param = self.request.GET.get(parameter_name, 1)
@@ -175,21 +189,14 @@ class ObservationListBaseView(ListView):  # pylint: disable=R0901
         Need to add a list of satellites to the context for the template
         """
         context = super().get_context_data(**kwargs)
+        context.update(self.get_filter_params())
         context['satellites'] = Satellite.objects.all()
         context['authors'] = User.objects.all().order_by('first_name', 'last_name', 'username')
         context['stations'] = Station.objects.all().order_by('id')
-        norad_cat_id = self.request.GET.get('norad', None)
-        observer = self.request.GET.get('observer', None)
-        station = self.request.GET.get('station', None)
         start = get_one_day_ago() if not self.filtered else self.request.GET.get('start')
         end = self.request.GET.get('end', None)
         transmitter_uuid = self.request.GET.get('transmitter_uuid', None)
         context['display_no_filter_warning'] = not self.filtered
-        context['future'] = self.request.GET.get('future', '1')
-        context['bad'] = self.request.GET.get('bad', '1')
-        context['good'] = self.request.GET.get('good', '1')
-        context['unknown'] = self.request.GET.get('unknown', '1')
-        context['failed'] = self.request.GET.get('failed', '1')
         context['results'] = self.request.GET.getlist('results')
         context['rated'] = self.request.GET.getlist('rated')
         context['transmitter_mode'] = self.request.GET.get('transmitter_mode', None)
@@ -199,12 +206,6 @@ class ObservationListBaseView(ListView):  # pylint: disable=R0901
             in_list_form=True
         )
         context['more_filtered'] = bool(self.more_filtered)
-        if norad_cat_id is not None and norad_cat_id != '':
-            context['norad'] = int(norad_cat_id)
-        if observer is not None and observer != '':
-            context['observer_id'] = int(observer)
-        if station is not None and station != '':
-            context['station_id'] = int(station)
         if start is not None and start != '':
             context['start'] = start
         if end is not None and end != '':
@@ -218,6 +219,7 @@ class ObservationListBaseView(ListView):  # pylint: disable=R0901
         if transmitter_uuid:
             context['transmitters_uuid'] = transmitter_uuid
         context['can_schedule'] = schedule_perms(self.request.user)
+        context["filter_errors"] = self.filter_errors
 
         url_query = urlparse(self.request.build_absolute_uri()).query
         if not url_query:
@@ -252,21 +254,14 @@ class ObservationListView(ObservationListBaseView):  # pylint: disable=R0901
         Need to add a list of satellites to the context for the template
         """
         context = super().get_context_data(**kwargs)
+        context.update(self.get_filter_params())
         context['satellites'] = Satellite.objects.all()
         context['authors'] = User.objects.all().order_by('first_name', 'last_name', 'username')
         context['stations'] = Station.objects.all().order_by('id')
-        norad_cat_id = self.request.GET.get('norad', None)
-        observer = self.request.GET.get('observer', None)
-        station = self.request.GET.get('station', None)
         start = get_one_day_ago() if not self.filtered else self.request.GET.get('start')
         end = self.request.GET.get('end', None)
         transmitter_uuid = self.request.GET.get('transmitter_uuid', None)
         context['display_no_filter_warning'] = not self.filtered
-        context['future'] = self.request.GET.get('future', '1')
-        context['bad'] = self.request.GET.get('bad', '1')
-        context['good'] = self.request.GET.get('good', '1')
-        context['unknown'] = self.request.GET.get('unknown', '1')
-        context['failed'] = self.request.GET.get('failed', '1')
         context['results'] = self.request.GET.getlist('results')
         context['rated'] = self.request.GET.getlist('rated')
         context['transmitter_mode'] = self.request.GET.get('transmitter_mode', None)
@@ -276,12 +271,6 @@ class ObservationListView(ObservationListBaseView):  # pylint: disable=R0901
             in_list_form=True
         )
         context['more_filtered'] = bool(self.more_filtered)
-        if norad_cat_id is not None and norad_cat_id != '':
-            context['norad'] = int(norad_cat_id)
-        if observer is not None and observer != '':
-            context['observer_id'] = int(observer)
-        if station is not None and station != '':
-            context['station_id'] = int(station)
         if start is not None and start != '':
             context['start'] = start
         if end is not None and end != '':
@@ -295,6 +284,7 @@ class ObservationListView(ObservationListBaseView):  # pylint: disable=R0901
         if transmitter_uuid:
             context['transmitters_uuid'] = transmitter_uuid
         context['can_schedule'] = schedule_perms(self.request.user)
+        context["filter_errors"] = self.filter_errors
 
         url_query = urlparse(self.request.build_absolute_uri()).query
         if not url_query:
