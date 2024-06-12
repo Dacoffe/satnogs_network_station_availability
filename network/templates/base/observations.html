@@ -46,9 +46,6 @@
     <div class="filter-section card">
       <form method="get" action="{% url 'base:observations_list' %}">
         <div class="col-12 row">
-          {% for error in filter_errors %}
-          <div class="alert alert-danger" role="alert">{{error}}</div>
-          {% endfor %}
           <div class="form-group status-filter col-md-4 col-lg-3">
             <label for="status-selector">Status</label>
             <div id="status-selector" class="btn-group-toggle" role="group" aria-label="Group of status filters" data-toggle="buttons">

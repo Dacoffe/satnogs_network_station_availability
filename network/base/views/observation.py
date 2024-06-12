@@ -48,9 +48,10 @@ class ObservationListBaseView(ListView):  # pylint: disable=R0901
     flag_filters = ['bad', 'good', 'unknown', 'future', 'failed']
     filtered = None
     more_filtered = None  # Filtered by filters hidden by default
+    filter_params = {}
     filter_errors = []
 
-    def get_filter_params(self):
+    def parse_filter_params(self):
         """
         Get the parsed filter parameters from the HTTP GET parameters
 
@@ -59,35 +60,42 @@ class ObservationListBaseView(ListView):  # pylint: disable=R0901
 
         Returns a dict, filter_name is the key, the parsed parameter is the value.
         """
-        filter_params = {}
+        self.filter_params = {}
         self.filter_errors = []
         for parameter_name in self.str_filters:
-            filter_params[parameter_name] = self.request.GET.get(parameter_name, '')
+            self.filter_params[parameter_name] = self.request.GET.get(parameter_name, '')
             if parameter_name in {'norad', 'observer', 'station'
-                                  } and filter_params[parameter_name] != '':
-                filter_norad = filter_params[parameter_name]
+                                  } and self.filter_params[parameter_name] != '':
+                filter_param = self.filter_params[parameter_name]
                 try:
-                    filter_norad = int(filter_norad)
-                    if filter_norad < 0:
-                        self.filter_errors.append(parameter_name + ': Value cannot be less than 0')
-
-                    filter_params[parameter_name] = filter_norad
+                    filter_param = int(filter_param)
+                    if filter_param < 0:
+                        self.filter_errors.append(
+                            'Filter "' + parameter_name +
+                            '" is ignored due to error: Value cannot be less than 0'
+                        )
+                        filter_param = ''
                 except ValueError:
-                    self.filter_errors.append(parameter_name + ": Invalid value")
-                    filter_params[parameter_name] = ''
+                    self.filter_errors.append(
+                        'Filter "' + parameter_name + '" is ignored due to error: Invalid value'
+                    )
+                    filter_param = ''
+                self.filter_params[parameter_name] = filter_param
 
         for parameter_name in self.flag_filters:
             param = self.request.GET.get(parameter_name, 1)
-            filter_params[parameter_name] = param != '0'
+            self.filter_params[parameter_name] = param != '0'
 
-        return filter_params
+        if self.filter_errors:
+            for error in self.filter_errors:
+                messages.error(self.request, error)
 
     def get_queryset(self):
         """
         Optionally filter based on norad get argument
         Optionally filter based on future/good/bad/unknown/failed
         """
-        filter_params = self.get_filter_params()
+        self.parse_filter_params()
 
         results = self.request.GET.getlist('results')
         rated = self.request.GET.getlist('rated')
@@ -110,17 +118,18 @@ class ObservationListBaseView(ListView):  # pylint: disable=R0901
         # Create observations filter based on the received HTTP POST parameters
         filter_dict = {}
         for parameter_key, filter_key in parameter_filter_mapping.items():
-            if filter_params[parameter_key] == '':
+            if self.filter_params[parameter_key] == '':
                 continue
 
-            filter_dict[filter_key] = filter_params[parameter_key]
+            filter_dict[filter_key] = self.filter_params[parameter_key]
 
         self.filtered = bool(
             (
                 not all(
                     [
-                        filter_params['bad'], filter_params['good'], filter_params['unknown'],
-                        filter_params['future'], filter_params['failed']
+                        self.filter_params['bad'], self.filter_params['good'],
+                        self.filter_params['unknown'], self.filter_params['future'],
+                        self.filter_params['failed']
                     ]
                 )
             ) or results or rated or filter_dict
@@ -139,15 +148,15 @@ class ObservationListBaseView(ListView):  # pylint: disable=R0901
 
         observations = observations.filter(**filter_dict)
 
-        if not filter_params['failed']:
+        if not self.filter_params['failed']:
             observations = observations.exclude(status__lt=-100)
-        if not filter_params['bad']:
+        if not self.filter_params['bad']:
             observations = observations.exclude(status__range=(-100, -1))
-        if not filter_params['unknown']:
+        if not self.filter_params['unknown']:
             observations = observations.exclude(status__range=(0, 99), end__lte=now())
-        if not filter_params['future']:
+        if not self.filter_params['future']:
             observations = observations.exclude(end__gt=now())
-        if not filter_params['good']:
+        if not self.filter_params['good']:
             observations = observations.exclude(status__gte=100)
 
         if results:
@@ -182,6 +191,8 @@ class ObservationListBaseView(ListView):  # pylint: disable=R0901
             elif 'rw0' in rated:
                 observations = observations.filter(waterfall_status=False)
 
+        print(observations, flush=True)
+
         return observations
 
     def get_context_data(self, **kwargs):  # pylint: disable=W0221
@@ -189,7 +200,7 @@ class ObservationListBaseView(ListView):  # pylint: disable=R0901
         Need to add a list of satellites to the context for the template
         """
         context = super().get_context_data(**kwargs)
-        context.update(self.get_filter_params())
+        context.update(self.filter_params)
         context['satellites'] = Satellite.objects.all()
         context['authors'] = User.objects.all().order_by('first_name', 'last_name', 'username')
         context['stations'] = Station.objects.all().order_by('id')
@@ -219,7 +230,6 @@ class ObservationListBaseView(ListView):  # pylint: disable=R0901
         if transmitter_uuid:
             context['transmitters_uuid'] = transmitter_uuid
         context['can_schedule'] = schedule_perms(self.request.user)
-        context["filter_errors"] = self.filter_errors
 
         url_query = urlparse(self.request.build_absolute_uri()).query
         if not url_query:
@@ -254,7 +264,7 @@ class ObservationListView(ObservationListBaseView):  # pylint: disable=R0901
         Need to add a list of satellites to the context for the template
         """
         context = super().get_context_data(**kwargs)
-        context.update(self.get_filter_params())
+        context.update(self.filter_params)
         context['satellites'] = Satellite.objects.all()
         context['authors'] = User.objects.all().order_by('first_name', 'last_name', 'username')
         context['stations'] = Station.objects.all().order_by('id')
@@ -284,7 +294,6 @@ class ObservationListView(ObservationListBaseView):  # pylint: disable=R0901
         if transmitter_uuid:
             context['transmitters_uuid'] = transmitter_uuid
         context['can_schedule'] = schedule_perms(self.request.user)
-        context["filter_errors"] = self.filter_errors
 
         url_query = urlparse(self.request.build_absolute_uri()).query
         if not url_query:
