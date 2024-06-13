@@ -217,27 +217,18 @@
             </td>
           </tr>
         {% endif %}
+        {% if observation.transmitter_downlink_drift or observation.center_frequency %}
         <tr>
           <td>
             <span class="badge badge-secondary">Observation Frequency</span>
           </td>
           <td>
-            {% if observation.center_frequency %}
-              <span title="{{ observation.center_frequency|intcomma }}Hz">
-                {{ observation.center_frequency|frq }}
-              </span>
-            {% elif observation.transmitter_downlink_drift %}
-              {% drifted_frq observation.transmitter_downlink_low observation.transmitter_downlink_drift as drifted_frequency %}
-              <span title="{{ drifted_frequency|intcomma }}Hz">
-                {{ drifted_frequency|frq }}
-              </span>
-            {% else %}
-              <span title="{{ observation.transmitter_downlink_low|intcomma }}Hz">
-                {{ observation.transmitter_downlink_low|frq }}
-              </span>
-            {% endif %}
+            <span title="{{ observation.observation_frequency|intcomma }}Hz">
+              {{ observation.observation_frequency|frq }}
+            </span>
           </td>
         </tr>
+        {% endif %}
         <tr>
           <td>
             <span class="badge badge-secondary"> Transmitter Mode</span>
