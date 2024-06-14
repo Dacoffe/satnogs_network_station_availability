@@ -293,12 +293,12 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
         """Returns tle2"""
         return obj.tle_line_2
 
-    @extend_schema_field(serializers.IntegerField(allow_null=True))
+    @extend_schema_field(str)
     def get_observer(self, obj):
         """Returns the author of the observation"""
         if obj.author:
-            return obj.author.pk
-        return None
+            return obj.author.username
+        return ""
 
 
 class NewObservationListSerializer(serializers.ListSerializer):
@@ -544,6 +544,7 @@ class StationSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     success_rate = serializers.SerializerMethodField()
     future_observations = serializers.IntegerField(read_only=True, source='future_obs')
+    owner = serializers.SerializerMethodField()
 
     class Meta:
         model = Station
@@ -552,6 +553,13 @@ class StationSerializer(serializers.ModelSerializer):
             'created', 'last_seen', 'status', 'observations', 'description', 'client_version',
             'target_utilization', 'future_observations', 'image', 'success_rate', 'owner'
         )
+
+    @extend_schema_field(str)
+    def get_owner(self, obj):
+        """Returns the username of the station's owner"""
+        if obj.owner:
+            return obj.owner.username
+        return ""
 
     @extend_schema_field(serializers.IntegerField(validators=[MinValueValidator(1)]))
     def get_success_rate(self, obj):

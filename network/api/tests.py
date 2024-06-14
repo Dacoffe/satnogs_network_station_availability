@@ -105,7 +105,7 @@ class StationViewApiTest(TestCase):
             'future_observations': 0,  # No observation scheduled in the test
             'image': self.station.get_image(),
             'success_rate': self.station.success_rate,
-            'owner': self.station.owner.id
+            'owner': self.station.owner.username
         }
 
         response = self.client.get('/api/stations/')
