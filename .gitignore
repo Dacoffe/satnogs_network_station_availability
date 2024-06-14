@@ -15,3 +15,4 @@
 /satnogs_network.egg-info
 /staticfiles
 __pycache__
+openapi.yml
