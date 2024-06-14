@@ -29,20 +29,20 @@ def format_frequency(value, append_unit=True):
     except (TypeError, ValueError):
         return '-'
     if to_format >= 1000000000000:
-        formatted = format(to_format / 1000000000000, '.3f')
-        formatted = formatted + (' THz' if append_unit else '')
+        formatted = format(to_format / 1000000000000, '.4f')
+        formatted += ' THz' if append_unit else ''
     elif to_format >= 1000000000:
-        formatted = format(to_format / 1000000000, '.3f')
-        formatted = formatted + (' GHz' if append_unit else '')
+        formatted = format(to_format / 1000000000, '.4f')
+        formatted += ' GHz' if append_unit else ''
     elif to_format >= 1000000:
-        formatted = format(to_format / 1000000, '.3f')
-        formatted = formatted + (' MHz' if append_unit else '')
+        formatted = format(to_format / 1000000, '.4f')
+        formatted += ' MHz' if append_unit else ''
     elif to_format >= 1000:
-        formatted = format(to_format / 1000, '.3f')
-        formatted = formatted + (' KHz' if append_unit else '')
+        formatted = format(to_format / 1000, '.4f')
+        formatted += ' kHz' if append_unit else ''
     else:
-        formatted = format(to_format, '.3f')
-        formatted = formatted + (' Hz' if append_unit else '')
+        formatted = format(to_format, '.4f')
+        formatted += ' Hz' if append_unit else ''
     return formatted
 
 

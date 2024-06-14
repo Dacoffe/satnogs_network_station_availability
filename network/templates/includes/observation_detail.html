@@ -197,7 +197,7 @@
           </td>
           <td>
             {% if observation.transmitter_downlink_high %}
-              <span title="{{ observation.transmitter_downlink_low|intcomma }}Hz - {{ observation.transmitter_downlink_hign|intcomma }}Hz">
+              <span title="{{ observation.transmitter_downlink_low|intcomma }}Hz - {{ observation.transmitter_downlink_high|intcomma }}Hz">
                   {{ observation.transmitter_downlink_low|frq }} - {{ observation.transmitter_downlink_high|frq }}
               </span>
             {% else %}
