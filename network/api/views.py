@@ -23,6 +23,8 @@ from rest_framework.serializers import ValidationError
 
 from network.api import authentication, filters, pagination, serializers
 from network.api.perms import StationOwnerPermission
+from network.api.throttling import GetObservationAnononymousRateThrottle, \
+    GetStationAnononymousRateThrottle
 from network.base.models import ActiveStationConfiguration, Observation, Station
 from network.base.rating_tasks import rate_observation
 from network.base.stats import get_transmitter_with_stats_by_uuid
@@ -43,6 +45,12 @@ class ObservationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.U
         if self.action in ('update', 'create'):
             self.permission_classes = [StationOwnerPermission]
         return super().get_permissions()
+
+    def get_throttles(self):
+        self.throttle_classes = []
+        if self.action == 'list':
+            self.throttle_classes.append(GetObservationAnononymousRateThrottle)
+        return super().get_throttles()
 
     def get_queryset(self):
         if self.action == 'update':
@@ -151,6 +159,12 @@ class StationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
     serializer_class = serializers.StationSerializer
     filterset_class = filters.StationViewFilter
     pagination_class = pagination.LinkedHeaderPageNumberPagination
+
+    def get_throttles(self):
+        self.throttle_classes = []
+        if self.action == 'list':
+            self.throttle_classes.append(GetStationAnononymousRateThrottle)
+        return super().get_throttles()
 
     def get_queryset(self):
         """Queryset for station model in the API"""

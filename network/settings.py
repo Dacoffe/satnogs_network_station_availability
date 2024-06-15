@@ -305,6 +305,12 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ('rest_framework.authentication.TokenAuthentication', ),
     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend', ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_THROTTLE_RATES': {
+        'get_observation_anon': config(
+            'DEFAULT_THROTTLE_RATE_GET_OBSERVATION_ANON', default='60/hour'
+        ),
+        'get_station_anon': config('DEFAULT_THROTTLE_RATE_GET_STATION_ANON', default='256/hour'),
+    },
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
         'network.api.renderers.BrowsableAPIRendererWithoutForms',
