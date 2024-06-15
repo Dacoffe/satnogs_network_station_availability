@@ -72,6 +72,22 @@ class ObservationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.U
             return serializers.UpdateObservationSerializer
         return serializers.ObservationSerializer
 
+    def list(self, request, *args, **kwargs):
+        if request.GET.get('page'):
+            data = [
+                {
+                    'error': (
+                        'Parameter \'page\' is now deprecated, please use \'Link\' header for'
+                        ' getting URLs for next/previous pages.'
+                    )
+                }
+            ]
+            response = Response(data, status=status.HTTP_400_BAD_REQUEST)
+            response.exception = True
+            return response
+
+        return super().list(request, *args, **kwargs)
+
     def create(self, request, *args, **kwargs):
         """Creates observations from a list of observation data"""
         serializer = self.get_serializer(data=request.data, many=True, allow_empty=False)
