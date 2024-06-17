@@ -11,7 +11,9 @@ from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
 from django.utils.timezone import now
+from django.views.decorators.cache import cache_page
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import mixins, status, viewsets
@@ -174,7 +176,6 @@ class StationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
     """SatNOGS Network Station API view class"""
     serializer_class = serializers.StationSerializer
     filterset_class = filters.StationViewFilter
-    pagination_class = pagination.LinkedHeaderPageNumberPagination
 
     def get_throttles(self):
         self.throttle_classes = []
@@ -196,6 +197,10 @@ class StationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
         ).order_by('-status', 'id')
 
         return stations
+
+    @method_decorator(cache_page(60 * 60))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 class StationConfigurationView(viewsets.ReadOnlyModelViewSet):
