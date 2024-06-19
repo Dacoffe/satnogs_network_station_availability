@@ -6,26 +6,23 @@ $(document).ready( function(){
 
     $('.selectpicker').selectpicker();
 
-    $('#advanced-options').click(function(){
-
-        if ($('#options-tabpane').hasClass('active')) {
+    // Return false in case the tab is already active, to stop propagation and prevent the default behaviour
+    $('#advanced-options').on('click', function() {
+        if ($(this).hasClass('active')) {
             $('#options-tabpane').removeClass('active');
-        }
-        else {
-            $('#options-tabpane').addClass('active');
-            $('#filters-tabpane').removeClass('active');
-
+            $('#advanced-options').removeClass('active');
+            $('#advanced-options').attr('aria-selected', 'false');
+            return false;
         }
     });
 
-    $('#advanced-filters').click(function () {
-        if ($('#filters-tabpane').hasClass('active')) {
+    // Return false in case the tab is already active, to stop propagation and prevent the default behaviour
+    $('#advanced-filters').on('click', function() {
+        if ($(this).hasClass('active')) {
             $('#filters-tabpane').removeClass('active');
-        }
-        else
-        {
-            $('#filters-tabpane').addClass('active');
-            $('#options-tabpane').removeClass('active');
+            $('#advanced-filters').removeClass('active');
+            $('#advanced-filters').attr('aria-selected', 'false');
+            return false;
         }
     });
 
@@ -126,7 +123,7 @@ $(document).ready( function(){
     checkInputs();
 
     $('#lat-custom').click(function() {
-        $('#lat-status').append('<span id="lat-span"></span>');
+        $('#lat-status > div').append('<span id="lat-span"></span>');
         const lat_custom = $('#lat-custom');
         var min_value = -90;
         var max_value = 90;
@@ -155,7 +152,7 @@ $(document).ready( function(){
     });
 
     $('#lng-custom').click(function() {
-        $('#lng-status').append('<span id="lng-span"></span>');
+        $('#lng-status > div').append('<span id="lng-span"></span>');
         const lng_custom = $('#lng-custom');
         var min_value = -180;
         var max_value = 180;
@@ -184,7 +181,7 @@ $(document).ready( function(){
     });
 
     $('#radius-custom').click(function() {
-        $('#radius-status').append('<span id="radius-span"></span>');
+        $('#radius-status > div').append('<span id="radius-span"></span>');
         const radius_custom = $('#radius-custom');
         var min_value = 0;
         var max_value = null;

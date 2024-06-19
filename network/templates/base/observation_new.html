@@ -162,14 +162,14 @@
         </div>
       </div>
       <div class="col-md-12">
-        <ul class="nav nav-tabs" id="advancedSettingsTab" role="tablist">
+        <ul class="nav nav-tabs" id="advanced-settings-tab" role="tablist">
           <li class="nav-item">
-             <a class="nav-link" id="advanced-options" data-toggle="tab" role="tab" href="#options-tabpane" aria-selected="false" aria-controls="options-tabpane">
+             <a class="nav-link" id="advanced-options" data-toggle="tab" role="tab" type=button href="#options-tabpane" aria-selected="false" aria-controls="options-tabpane">
                 Advanced Options
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" id="advanced-filters" data-toggle="tab" role="tab" href="#filters-tabpane" aria-selected="false" aria-controls="filters-tabpane">
+            <a class="nav-link" id="advanced-filters" data-toggle="tab" role="tab" type=button href="#filters-tabpane" aria-selected="false" aria-controls="filters-tabpane">
                 Advanced Filters
             </a>
           </li>
@@ -267,15 +267,21 @@
                   <label class="col-sm-12">Station Location</label>
                 <div class="form-group col-md-6 row align-items-center" id="lat-status">
                   <label id="custom-lat" class="col-sm-3">Latitude</label>
-                    <input placeholder="Latitude" type="number" name="lat_custom" id="lat-custom" min="-90" max="90" step="0.001" value="" class="col-sm-9 input-group form-control">
+                  <div class="col-sm-9">
+                    <input placeholder="Latitude" type="number" name="lat_custom" id="lat-custom" min="-90" max="90" step="0.001" value="" class="input-group form-control">
+                  </div>
                 </div>
                 <div class="form-group col-md-6 row align-items-center" id="lng-status">
                   <label id="custom-lng" class="col-sm-3">Longitude</label>
-                    <input placeholder="Longitude" type="number" name="lng_custom" id="lng-custom" min="-180" max="180" step="0.001" value="" class="col-sm-9 input-group form-control">
+                  <div class="col-sm-9">
+                    <input placeholder="Longitude" type="number" name="lng_custom" id="lng-custom" min="-180" max="180" step="0.001" value="" class="input-group form-control">
+                  </div>
                 </div>
                 <div class="form-group col-md-6 row align-items-center" id="radius-status">
                   <label id="custom-radius" class="col-sm-3">Radius in Km</label>
-                    <input placeholder="Radius" type="number" name="radius_custom" id="radius-custom" min="0" step="0.001" value="" class="col-sm-9 input-group form-control">
+                  <div class="col-sm-9">
+                    <input placeholder="Radius" type="number" name="radius_custom" id="radius-custom" min="0" step="0.001" value="" class="input-group form-control">
+                  </div>
                 </div>
               </div>
 

@@ -452,8 +452,8 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 def scheduling_stations(request):  # pylint: disable=too-many-return-statements
     """Returns json with stations on which user has permissions to schedule"""
     uuid = request.POST.get('transmitter', None)
-    lat = request.POST.get('latitude', 0)
-    lng = request.POST.get('longitude', 0)
+    lat = request.POST.get('latitude', None)
+    lng = request.POST.get('longitude', None)
     radius = request.POST.get('radius', None)
     if uuid is None:
         data = [{'error': 'You should select a Transmitter.'}]
