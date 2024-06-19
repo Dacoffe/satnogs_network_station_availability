@@ -539,19 +539,19 @@ class StationSerializer(serializers.ModelSerializer):
     antenna = serializers.SerializerMethodField()
     min_horizon = serializers.SerializerMethodField()
     observations = serializers.SerializerMethodField()
+    future_observations = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
     altitude = serializers.IntegerField(min_value=0, source='alt')
     image = serializers.SerializerMethodField()
     success_rate = serializers.SerializerMethodField()
-    future_observations = serializers.IntegerField(read_only=True, source='future_obs')
     owner = serializers.SerializerMethodField()
 
     class Meta:
         model = Station
         fields = (
             'id', 'name', 'altitude', 'min_horizon', 'lat', 'lng', 'qthlocator', 'antenna',
-            'created', 'last_seen', 'status', 'observations', 'description', 'client_version',
-            'target_utilization', 'future_observations', 'image', 'success_rate', 'owner'
+            'created', 'last_seen', 'status', 'observations', 'future_observations', 'description',
+            'client_version', 'target_utilization', 'image', 'success_rate', 'owner'
         )
 
     @extend_schema_field(str)
@@ -641,7 +641,12 @@ class StationSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.IntegerField(validators=[MinValueValidator(1)]))
     def get_observations(self, obj):
         """Returns Station observations number"""
-        return obj.total_obs
+        return obj.observations_stats['total']
+
+    @extend_schema_field(serializers.IntegerField(validators=[MinValueValidator(1)]))
+    def get_future_observations(self, obj):
+        """Returns Station future observations number"""
+        return obj.observations_stats['future']
 
     @extend_schema_field(str)
     def get_status(self, obj):

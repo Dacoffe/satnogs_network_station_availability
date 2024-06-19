@@ -32,7 +32,7 @@
     <div class="col d-none d-lg-flex justify-content-end align-items-center">
       <span class="station-actions">
         {% if can_modify_delete_station %}
-          {% if station.future_obs %}
+          {% if station.observations_stats.future %}
             <a class="btn btn-danger delete-future-modal-reveal"  role="button" data-toggle="modal" data-target="#delete-future-modal">
               <span class="bi bi-trash" aria-hidden="true"></span>
               Delete future observations
@@ -202,14 +202,14 @@
                   </td>
                 </tr>
               {% endif %}
-              {% if station.total_obs %}
+              {% if station.observations_stats.total %}
                 <tr>
                   <td>
                     <span class="badge badge-secondary">Observations</span>
                   </td>
                   <td>
                     <a class="btn btn-sm btn-outline-dark" role="button"
-                       href="{% url 'base:observations_list' %}?station={{ station.id }}">{{ station.total_obs }}</a>
+                       href="{% url 'base:observations_list' %}?station={{ station.id }}">{{ station.observations_stats.total }}</a>
                   </td>
                 </tr>
               {% endif %}
@@ -468,7 +468,7 @@
         </div>
         <div class="modal-footer justify-content-between">
           <a class="btn btn-danger" id="station-future-delete" href="{% url 'base:station_delete_future_observations' station_id=station.id %}">
-            <span class="bi bi-x-lg" aria-hidden="true"></span> Irreversible Delete {{ station.future_obs }} Observations
+            <span class="bi bi-x-lg" aria-hidden="true"></span> Irreversible Delete {{ station.observation_stats.future }} Observations
           </a>
           <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Cancel</button>
         </div>

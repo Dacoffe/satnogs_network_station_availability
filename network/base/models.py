@@ -289,6 +289,23 @@ class Station(models.Model):
             return "%d - %s" % (self.pk, self.name)
         return "%s" % (self.name)
 
+    @property
+    def observations_stats(self):
+        """ Return and objects with total and future observations of the station.
+           For the total we cache the results for 6 hours and for future observations for 1 hour.
+       """
+        total_counter = cache.get('station-{0}-obs-total-stats'.format(self.id))
+        if total_counter is None:
+            total_counter = self.observations.count()
+            cache.set('station-{0}-obs-total-stats'.format(self.id), total_counter, 60 * 60 * 6)
+
+        future_counter = cache.get('station-{0}-obs-future-stats'.format(self.id))
+        if future_counter is None:
+            future_counter = self.observations.filter(end__gt=now()).count()
+            cache.set('station-{0}-obs-future-stats'.format(self.id), future_counter, 60 * 60)
+
+        return {'total': total_counter, 'future': future_counter}
+
     def clean(self):
         if re.search('[^\x20-\x7E\xA0-\xFF]', self.name, re.IGNORECASE):
             raise ValidationError(

@@ -2,7 +2,6 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.timezone import now
@@ -59,9 +58,8 @@ def view_user(request, username):
         author=user
     )[0:10].prefetch_related('satellite', 'ground_station')
 
-    stations = Station.objects.filter(owner=user).annotate(
-        total_obs=Count('observations'),
-        future_obs=Count('pk', filter=Q(observations__end__gt=now())),
+    stations = Station.objects.filter(
+        owner=user
     ).prefetch_related('antennas', 'antennas__antenna_type', 'antennas__frequency_ranges')
     token = ''
     can_schedule = False

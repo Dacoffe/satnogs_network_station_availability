@@ -6,8 +6,6 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models import Count, IntegerField, OuterRef, Subquery
-from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -185,14 +183,8 @@ class StationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
 
     def get_queryset(self):
         """Queryset for station model in the API"""
-        future_obs_subquery = Observation.objects.filter(
-            ground_station_id=OuterRef('id'), end__gt=now()
-        ).values('ground_station_id').annotate(c=Count('id')).values('c')
 
-        stations = Station.objects.annotate(
-            total_obs=Count('observations'),
-            future_obs=Coalesce(Subquery(future_obs_subquery, output_field=IntegerField()), 0)
-        ).select_related('owner').prefetch_related(
+        stations = Station.objects.select_related('owner').prefetch_related(
             'antennas', 'antennas__antenna_type', 'antennas__frequency_ranges'
         ).order_by('-status', 'id')
 

@@ -4,19 +4,17 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.db import DatabaseError, transaction
-from django.db.models import Count, IntegerField, OuterRef, Q, Subquery
-from django.db.models.functions import Coalesce
+from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils.timezone import now
 from django.views.generic import ListView
 from jsonschema import Draft202012Validator, ValidationError
 
 from network.base.decorators import ajax_required
 from network.base.forms import AntennaInlineFormSet, FrequencyRangeInlineFormSet, StationForm, \
     StationRegistrationForm
-from network.base.models import AntennaType, Observation, Station, StationConfiguration, \
+from network.base.models import AntennaType, Station, StationConfiguration, \
     StationConfigurationSchema, StationStatusLog, StationType
 from network.base.perms import modify_delete_station_perms, schedule_station_perms
 from network.base.serializers import StationSerializer
@@ -70,14 +68,7 @@ class StationListView(ListView):
         return filter_params
 
     def get_queryset(self):
-        future_obs_subquery = Observation.objects.filter(
-            ground_station_id=OuterRef('id'), end__gt=now()
-        ).values('ground_station_id').annotate(c=Count('id')).values('c')
-
-        stations = Station.objects.annotate(
-            total_obs=Count('observations'),
-            future_obs=Coalesce(Subquery(future_obs_subquery, output_field=IntegerField()), 0)
-        ).select_related('owner').prefetch_related(
+        stations = Station.objects.select_related('owner').prefetch_related(
             'antennas', 'antennas__antenna_type', 'antennas__frequency_ranges'
         ).order_by('-status', 'id')
 
@@ -113,10 +104,7 @@ class StationListView(ListView):
 def station_view(request, station_id):
     """View for single station page."""
     station = get_object_or_404(
-        Station.objects.annotate(
-            total_obs=Count('observations'),
-            future_obs=Count('pk', filter=Q(observations__end__gt=now())),
-        ).prefetch_related(
+        Station.objects.prefetch_related(
             'owner', 'antennas', 'antennas__antenna_type', 'antennas__frequency_ranges'
         ),
         id=station_id
