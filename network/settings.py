@@ -57,9 +57,9 @@ if DEBUG:
         'SHOW_TOOLBAR_CALLBACK': lambda request: request.environ.get('SERVER_NAME', None) !=
         'testserver',
     }
+
 if AUTH0:
     THIRD_PARTY_APPS += ('social_django', )
-    LOCAL_APPS += ('auth0login', )
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -209,7 +209,7 @@ TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 # Auth
 AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend', )
 if AUTH0:
-    AUTHENTICATION_BACKENDS += ('auth0login.auth0backend.Auth0', )
+    AUTHENTICATION_BACKENDS += ('social_core.backends.auth0.Auth0OAuth2', )
 
 ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
 ACCOUNT_AUTHENTICATION_METHOD = 'username'
@@ -225,7 +225,6 @@ else:
     LOGIN_URL = 'account_login'
     LOGOUT_REDIRECT_URL = '/'
 AUTOSLUG_SLUGIFY_FUNCTION = 'slugify.slugify'
-AUTH0_BACKEND_TIMEOUT = config('AUTH0_BACKEND_TIMEOUT', default=2.0, cast=float)
 
 # Logging
 LOGGING = {
@@ -316,6 +315,7 @@ REST_FRAMEWORK = {
         'network.api.renderers.BrowsableAPIRendererWithoutForms',
     ]
 }
+
 SPECTACULAR_DEFAULTS = {
     'SCHEMA_PATH_PREFIX': r'/api',
     'DEFAULT_GENERATOR_CLASS': 'drf_spectacular.generators.SchemaGenerator',
@@ -544,7 +544,6 @@ if AUTH0:
     SOCIAL_AUTH_AUTH0_DOMAIN = config('SOCIAL_AUTH_AUTH0_DOMAIN', default='YOUR_AUTH0_DOMAIN')
     SOCIAL_AUTH_AUTH0_KEY = config('SOCIAL_AUTH_AUTH0_KEY', default='YOUR_CLIENT_ID')
     SOCIAL_AUTH_AUTH0_SECRET = config('SOCIAL_AUTH_AUTH0_SECRET', default='YOUR_CLIENT_SECRET')
-    SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
     SOCIAL_AUTH_PROTECTED_USER_FIELDS = ['email', 'first_name', 'last_name']
 
     SOCIAL_AUTH_PIPELINE = (
