@@ -27,6 +27,7 @@ from network.base.models import DemodData, Observation, Satellite, Station
 from network.base.rating_tasks import rate_observation
 from network.base.signals import _station_post_save
 from network.base.utils import format_frequency, format_frequency_range, sync_demoddata_to_db
+from network.base.validators import is_transmitter_in_station_range
 
 LOGGER = logging.getLogger('db')
 
@@ -358,7 +359,9 @@ def update_future_observations_with_new_tle_sets():
 def update_future_observations_with_new_transmitter_details():
     """ Update future observations with latest Transmitter details"""
     start = now() + timedelta(minutes=10)
-    future_observations = Observation.objects.filter(start__gt=start)
+    future_observations = Observation.objects.select_related('ground_station').filter(
+        start__gt=start
+    )
     uuid_set = set(future_observations.values_list('transmitter_uuid', flat=True))
 
     try:
@@ -373,21 +376,45 @@ def update_future_observations_with_new_transmitter_details():
         transmitter = transmitters_set[uuid]
         transmitter_updated = datetime.strptime(transmitter['updated'], "%Y-%m-%dT%H:%M:%S.%f%z")
 
-        future_observations.filter(
+        checked_stations = {}
+        obs_to_update = future_observations.filter(
             transmitter_uuid=uuid, transmitter_created__lt=transmitter_updated
-        ).update(
-            transmitter_description=transmitter['description'],
-            transmitter_type=transmitter['type'],
-            transmitter_uplink_low=transmitter['uplink_low'],
-            transmitter_uplink_high=transmitter['uplink_high'],
-            transmitter_uplink_drift=transmitter['uplink_drift'],
-            transmitter_downlink_low=transmitter['downlink_low'],
-            transmitter_downlink_high=transmitter['downlink_high'],
-            transmitter_downlink_drift=transmitter['downlink_drift'],
-            transmitter_mode=transmitter['mode'],
-            transmitter_invert=transmitter['invert'],
-            transmitter_baud=transmitter['baud'],
-            transmitter_created=transmitter['updated'],
+        )
+        for obs in obs_to_update:
+            freq_supported = checked_stations.get(obs.ground_station.id)
+            if freq_supported is None:
+                freq_supported = is_transmitter_in_station_range(
+                    transmitter, obs.ground_station, center_frequency=obs.center_frequency
+                )
+                checked_stations[obs.ground_station.id] = freq_supported
+            if freq_supported:
+                obs.transmitter_description = transmitter['description']
+                obs.transmitter_type = transmitter['type']
+                obs.transmitter_uplink_low = transmitter['uplink_low']
+                obs.transmitter_uplink_high = transmitter['uplink_high']
+                obs.transmitter_uplink_drift = transmitter['uplink_drift']
+                obs.transmitter_downlink_low = transmitter['downlink_low']
+                obs.transmitter_downlink_high = transmitter['downlink_high']
+                obs.transmitter_downlink_drift = transmitter['downlink_drift']
+                obs.transmitter_mode = transmitter['mode']
+                obs.transmitter_invert = transmitter['invert']
+                obs.transmitter_baud = transmitter['baud']
+                obs.transmitter_created = transmitter['updated']
+        Observation.objects.bulk_update(
+            obs_to_update, [
+                'transmitter_description',
+                'transmitter_type',
+                'transmitter_uplink_low',
+                'transmitter_uplink_high',
+                'transmitter_uplink_drift',
+                'transmitter_downlink_low',
+                'transmitter_downlink_high',
+                'transmitter_downlink_drift',
+                'transmitter_mode',
+                'transmitter_invert',
+                'transmitter_baud',
+                'transmitter_created',
+            ]
         )
 
 

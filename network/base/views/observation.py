@@ -191,8 +191,6 @@ class ObservationListBaseView(ListView):
             elif 'rw0' in rated:
                 observations = observations.filter(waterfall_status=False)
 
-        print(observations, flush=True)
-
         return observations
 
     def get_context_data(self, **kwargs):  # pylint: disable=W0221
