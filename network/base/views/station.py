@@ -70,7 +70,7 @@ class StationListView(ListView):
     def get_queryset(self):
         stations = Station.objects.select_related('owner').prefetch_related(
             'antennas', 'antennas__antenna_type', 'antennas__frequency_ranges'
-        ).order_by('-status', 'id')
+        )
 
         filter_params = self.get_filter_params()
 

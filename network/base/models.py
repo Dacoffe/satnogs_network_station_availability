@@ -212,7 +212,7 @@ class Station(models.Model):
     client_id = models.CharField(max_length=128, blank=True)
 
     class Meta:
-        ordering = ['-status']
+        ordering = ['-status', 'id']
         indexes = [models.Index(fields=['-status', 'id'])]
 
     @property

@@ -186,7 +186,7 @@ class StationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
 
         stations = Station.objects.select_related('owner').prefetch_related(
             'antennas', 'antennas__antenna_type', 'antennas__frequency_ranges'
-        ).order_by('-status', 'id')
+        )
 
         return stations
 
