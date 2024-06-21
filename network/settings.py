@@ -75,6 +75,17 @@ MIDDLEWARE = (
     'csp.middleware.CSPMiddleware',
 )
 
+if AUTH0:
+    MIDDLEWARE = (
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.middleware.common.CommonMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+        'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        'csp.middleware.CSPMiddleware',
+    )
+
 if DEBUG:
     MIDDLEWARE = ('debug_toolbar.middleware.DebugToolbarMiddleware', ) + MIDDLEWARE
 
@@ -215,7 +226,7 @@ ACCOUNT_AUTHENTICATION_METHOD = 'username'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 AUTH_USER_MODEL = 'users.User'
-LOGIN_REDIRECT_URL = 'home'
+LOGIN_REDIRECT_URL = 'users:redirect_user'
 if AUTH0:
     LOGIN_URL = '/login/auth0'
     LOGOUT_REDIRECT_URL = 'https://' + config('SOCIAL_AUTH_AUTH0_DOMAIN') + \
