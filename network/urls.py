@@ -20,10 +20,7 @@ urlpatterns = [
 
 # Auth0
 if settings.AUTH0:
-    urlpatterns += [
-        path('', include(('django.contrib.auth.urls', 'auth'), namespace='auth')),
-        path('', include(('social_django.urls', 'social'), namespace='social'))
-    ]
+    urlpatterns += [path('', include('auth0login.urls'))]
 
 if settings.DEBUG:
     import debug_toolbar
