@@ -1,4 +1,4 @@
-/*global human_frequency, bands_from_range, JSONEditor*/
+/*global human_frequency, bands_from_range, JSONEditor, renderConfigurationAsTable*/
 /*eslint no-control-regex: 0*/
 $(document).ready(function() {
     'use strict';
@@ -15,10 +15,7 @@ $(document).ready(function() {
 
     if(currentConfigurationScript) {
         configuration = JSON.parse(document.getElementById('current-configuration').textContent);
-        if(isStationRegistered && hasUnregisteredConfiguration) {
-            earlierConfiguration = configuration;
-            configuration = null;
-        }
+        earlierConfiguration = configuration;
     } else {
         configuration = null;
     }
@@ -60,27 +57,60 @@ $(document).ready(function() {
         $('#configuration-schema-selection').append(schemaOptions);
     }
 
+    function combineConfigurations(earlierConfiguration, configuration) {
+        /*  Sets the common properties of previous configuration to current configuration.
+         *  Used to keep values of common properties when changing schema.
+         */
+
+        if (!earlierConfiguration) {
+            return configuration;
+        }
+
+        if (!configuration) {
+            return null;
+        }
+
+        function updateLeafProperties(earlierConfiguration, configuration) {
+            for (let key in earlierConfiguration) {
+                if (Object.hasOwn(configuration, key)) {
+                    if (typeof configuration[key] === 'object' && !Array.isArray(configuration[key])) {
+                        updateLeafProperties(earlierConfiguration[key], configuration[key]);
+                    } else {
+                        configuration[key] = earlierConfiguration[key];
+                    }
+                }
+            }
+        }
+
+        updateLeafProperties(earlierConfiguration, configuration);
+        return configuration;
+    }
+
     function selectSchemaById(currentSchemaId) {
         schema = JSON.parse(document.getElementById(currentSchemaId).textContent);
         if(jsonEditor) {
             jsonEditor.destroy();
         }
-        jsonEditor = new JSONEditor(document.getElementById('json-editor-container'), {
+        let jsonEditorSettings = {
             theme: 'bootstrap4',
             schema: schema,
             // If it's a registered station but hasn't changed the unregistered configuration, 
             // keep the common settings as startval when moving to another schema
-            startval: earlierConfiguration || configuration,
             show_errors: 'interaction',
             iconlib: 'bootstrap',
             remove_button_labels: true,
             disable_properties: true,
             disable_edit_json: true,
-            display_required_only: true
-        });
+            // no_additional_properties: true
+        };
+        jsonEditor = new JSONEditor(document.getElementById('json-editor-container'), jsonEditorSettings );
         jsonEditor.on('ready',() => {
-            $('#advancedEditInput').val(JSON.stringify(jsonEditor.getValue(), null, 2));
             configuration = jsonEditor.getValue();
+
+            if(earlierConfiguration) {
+                jsonEditor.setValue(combineConfigurations(earlierConfiguration, configuration));
+            }
+            $('#advancedEditInput').val(JSON.stringify(configuration, null, 2));
 
             // Hack to trigger validation on each keystroke
             $('#json-editor-container').find('input').on('input', function() {
@@ -91,7 +121,7 @@ $(document).ready(function() {
                 this.dispatchEvent(event);
             });
 
-            $('#json-renderer').jsonViewer(configuration, {rootCollapsable: false, withLinks: false});
+            renderConfigurationAsTable('json-renderer', configuration, schema);
             $('#submit').prop('disabled', !$('form')[0].checkValidity() || !configuration);
         });
         
@@ -106,6 +136,18 @@ $(document).ready(function() {
         $('#conf-controls-container').show();
         $('#submit').prop('disabled', !$('form')[0].checkValidity());
     }
+
+    const exportConfButton = document.getElementById('export-configuration-btn');
+    exportConfButton.addEventListener('click', function() {
+        const buttonContent = exportConfButton.innerHTML;
+        navigator.clipboard.writeText(JSON.stringify(configuration, null, 2))
+            .then(() => {
+                exportConfButton.innerHTML = 'Configuration Copied!';
+                setTimeout(() => {
+                    exportConfButton.innerHTML = buttonContent;
+                }, 2000);
+            });
+    });
 
     $('#station-type-selection').on('changed.bs.select', function(event) {
         stationType = event.target.value;
@@ -165,8 +207,9 @@ $(document).ready(function() {
         const errors = jsonEditor.validate(nonValidatedConfiguration);
         if(!errors.length) {
             configuration = nonValidatedConfiguration;
+            earlierConfiguration = configuration;    // Prevent settings from previous schema from overwriting changes
             $('#advancedEditInput').val(JSON.stringify(jsonEditor.getValue(), null, 2));
-            $('#json-renderer').jsonViewer(configuration, {rootCollapsable: false, withLinks: false});
+            renderConfigurationAsTable('json-renderer', configuration, schema);
             $('#edit-conf-modal').modal('hide');
         }
     });
@@ -223,7 +266,8 @@ $(document).ready(function() {
         if(isValid) {
             jsonEditor.setValue(advancedEditConf);
             configuration = advancedEditConf;
-            $('#json-renderer').jsonViewer(configuration, {rootCollapsable: false, withLinks: false});
+            earlierConfiguration = configuration;
+            renderConfigurationAsTable('json-renderer', configuration, schema);
             $('#advanced-edit-conf-modal').modal('hide');
         }
     });
@@ -772,9 +816,9 @@ $(document).ready(function() {
         form.append('<input type="hidden" name="ant-INITIAL_FORMS" value="' + antennas_initial + '">');
         form.append('<input type="hidden" name="ant-MAX_NUM_FORMS" value="' + max_antennas + '">');
 
-        form.append('<input type="hidden" name="lat" value="' + (configuration['Location Configuration'] ? configuration['Location Configuration']['station_lat']: 0) + '">');
-        form.append('<input type="hidden" name="lng" value="' + (configuration['Location Configuration'] ? configuration['Location Configuration']['station_lon']: 0) + '">');
-        form.append('<input type="hidden" name="alt" value="' + (configuration['Location Configuration'] ? configuration['Location Configuration']['station_elev']: 0) + '">');
+        form.append('<input type="hidden" name="lat" value="' + (configuration['Location Configuration'] ? configuration['Location Configuration']['satnogs_station_lat']: 0) + '">');
+        form.append('<input type="hidden" name="lng" value="' + (configuration['Location Configuration'] ? configuration['Location Configuration']['satnogs_station_lon']: 0) + '">');
+        form.append('<input type="hidden" name="alt" value="' + (configuration['Location Configuration'] ? configuration['Location Configuration']['satnogs_station_elev']: 0) + '">');
         form.append('<input type="hidden" name="schema" value="' + schemaId + '">');
         form.append('<input id="station-configuration-form-input" type="hidden" name="station_configuration" value="">');
         $('#station-configuration-form-input').val(JSON.stringify(configuration));

@@ -619,7 +619,7 @@
           </div>
           <div role="tabpanel" class="tab-pane tab-metadata" id="tab-metadata">
             {% if observation.client_metadata %}
-              <pre class="mt-3 bg-light border border-secondary" id="json-renderer" data-json="{{ observation.client_metadata }}"></pre>
+              <pre class="mt-3 bg-light border border-secondary" id="json-metadata" data-json="{{ observation.client_metadata }}"></pre>
             {% else %}
               <div class="notice">
                 Waiting for metadata

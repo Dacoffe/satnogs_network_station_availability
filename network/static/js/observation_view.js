@@ -219,9 +219,9 @@ function observationView() {
         vet_waterfall(id, vet_status);
     });
 
-    //JSON pretty renderer
-    var metadata = $('#json-renderer').data('json');
-    $('#json-renderer').jsonViewer(metadata, {rootCollapsable: false, withLinks: false});
+    //JSON pretty metadata
+    var metadata = $('#json-metadata').data('json');
+    $('#json-metadata').jsonViewer(metadata, {rootCollapsable: false, withLinks: false});
 
     // Draw orbit in polar plot
     var tleLine1 = $('svg#polar').data('tle1');

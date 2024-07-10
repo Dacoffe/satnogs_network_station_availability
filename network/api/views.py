@@ -202,28 +202,45 @@ class StationConfigurationView(viewsets.ReadOnlyModelViewSet):
     authentication_classes = [authentication.ClientIDAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def format_config_response(self, config_obj):
+        """Formats the response in the way satnogs-ansible expects it."""
+
+        config = config_obj.configuration
+
+        def _flatten_config(config, flat_config, parent_key=''):
+            """Removes the categories in the config, constructs a flat configuration."""
+            for key, val in config.items():
+                new_key = f"{parent_key}.{key}" if parent_key else key
+                if isinstance(val, dict):
+                    _flatten_config(val, flat_config, new_key)
+                else:
+                    flat_config[key] = val
+
+        flat_config = {}
+        _flatten_config(config, flat_config)
+        flat_config.update(
+            {
+                "satnogs_station_id": config_obj.station.pk,
+                "satnogs_network_api_url": get_api_url(),
+                "satnogs_api_token": config_obj.station.owner.auth_token.key
+            }
+        )
+        return {'id': config_obj.pk, 'configuration': flat_config}
+
     def list(self, request, *args, **kwargs):
         configuration = get_object_or_404(
             ActiveStationConfiguration, station__client_id=request.auth
         )
-        configuration.configuration['Network Configuration'] = {
-            "station_id": configuration.station.pk,
-            "api_url": get_api_url(),
-            "api_token": configuration.station.owner.auth_token.key
-        }
-        return Response(configuration.configuration)
+
+        return Response(self.format_config_response(configuration))
 
     def retrieve(self, request, *args, **kwargs):
         pk = kwargs['pk'] if kwargs['pk'].isdigit() else None  # pylint: disable=C0103
         configuration = get_object_or_404(
             ActiveStationConfiguration, pk=pk, station__client_id=request.auth
         )
-        configuration.configuration['Network Configuration'] = {
-            "station_id": configuration.station.pk,
-            "api_url": get_api_url(),
-            "api_token": configuration.station.owner.auth_token.key
-        }
-        return Response(configuration.configuration)
+
+        return Response(self.format_config_response(configuration))
 
 
 @extend_schema(

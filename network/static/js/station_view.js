@@ -1,4 +1,4 @@
-/* global maplibregl, moment, Slider, calcPolarPlotSVG  */
+/* global maplibregl, moment, Slider, calcPolarPlotSVG, renderConfigurationAsTable*/
 /* jshint esversion: 6 */
 
 $(document).ready(function() {
@@ -6,10 +6,29 @@ $(document).ready(function() {
 
     const jsonRenderer = $('#json-renderer');
     const stationConfigElement = document.getElementById('station-conf');
+    const stationSchemaElement = document.getElementById('station-schema');
+    let stationConfig;
+    let stationSchema;
     if(jsonRenderer && stationConfigElement) {
-        const stationConfig = JSON.parse(stationConfigElement.textContent);
-        $('#json-renderer').jsonViewer(stationConfig, {rootCollapsable: false, withLinks: false});
+        stationConfig = JSON.parse(stationConfigElement.textContent);
+        stationSchema = JSON.parse(stationSchemaElement.textContent);
+        renderConfigurationAsTable('json-renderer', stationConfig, stationSchema);
     }
+
+    if(stationConfig) {
+        const exportConfButton = document.getElementById('export-configuration-btn');
+        exportConfButton.addEventListener('click', function() {
+            const buttonContent = exportConfButton.innerHTML;
+            navigator.clipboard.writeText(JSON.stringify(stationConfig, null, 2))
+                .then(() => {
+                    exportConfButton.innerHTML = 'Configuration Copied!';
+                    setTimeout(() => {
+                        exportConfButton.innerHTML = buttonContent;
+                    }, 2000);
+                });
+        });
+    }
+   
 
     $('.card-body.collapse').on('hide.bs.collapse', function () {
         $(this).parent().find('.card-header i').addClass('bi bi-arrows-expand').removeClass('bi bi-arrows-collapse');
