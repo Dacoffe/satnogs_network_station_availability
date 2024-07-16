@@ -139,6 +139,7 @@ class StationConfiguration(models.Model):
     schema = models.ForeignKey('StationConfigurationSchema', on_delete=models.CASCADE)
     configuration = models.JSONField(default=get_default_station_configuration)
     active = models.BooleanField(default=True)
+    applied = models.DateTimeField(blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -210,6 +211,7 @@ class Station(models.Model):
         blank=True
     )
     client_id = models.CharField(max_length=128, blank=True)
+    active_configuration_changed = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         ordering = ['-status', 'id']

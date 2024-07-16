@@ -20,12 +20,14 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.serializers import ValidationError
+from rest_framework.views import APIView
 
 from network.api import authentication, filters, pagination, serializers
 from network.api.perms import StationOwnerPermission
 from network.api.throttling import GetObservationAnononymousRateThrottle, \
     GetStationAnononymousRateThrottle
-from network.base.models import ActiveStationConfiguration, Observation, Station
+from network.base.models import ActiveStationConfiguration, Observation, Station, \
+    StationConfiguration
 from network.base.rating_tasks import rate_observation
 from network.base.stats import get_transmitter_with_stats_by_uuid
 from network.base.tasks import delay_task_with_lock, \
@@ -193,6 +195,90 @@ class StationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
     @method_decorator(cache_page(60 * 60))
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+
+
+@extend_schema(
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'config_id': {
+                    'type': 'integer'
+                },
+            },
+            'required': ['config_id'],
+        },
+    },
+    responses={
+        200: {
+            'type': 'object',
+            'properties': {
+                'message': {
+                    'type': 'string'
+                },
+            },
+        },
+        400: {
+            'type': 'object',
+            'properties': {
+                'error': {
+                    'type': 'string'
+                },
+            },
+        },
+        401: {
+            'type': 'object',
+            'properties': {
+                'error': {
+                    'type': 'string'
+                },
+            },
+        },
+        404: {
+            'type': 'object',
+            'properties': {
+                'error': {
+                    'type': 'string'
+                },
+            },
+        },
+    },
+)
+class StationConfigurationAppliedView(APIView):
+    """A view for the client to notify the network when it applies a configuration to a station"""
+    authentication_classes = [authentication.ClientIDAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        """Receives a client_id and a config_id and sets the applied timestamp
+            in the configuration instance"""
+
+        client_id = request.auth
+        config_id = request.data.get('config_id')
+
+        if not config_id:
+            return Response(
+                {'error': 'Bad Request: config_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            config = StationConfiguration.objects.select_related('station').get(pk=config_id)
+        except StationConfiguration.DoesNotExist:
+            return Response({'error': 'Configuration not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if config.station.client_id != client_id:
+            return Response({'error': 'Invalid client_id'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        current_active_conf = config.station.active_configuration
+        if not current_active_conf.pk == config_id:
+            current_active_conf.active = False
+            current_active_conf.save()
+            config.active = True
+        config.applied = now()
+        config.save()
+
+        return Response({'message': 'Success'}, status=status.HTTP_200_OK)
 
 
 class StationConfigurationView(viewsets.ReadOnlyModelViewSet):

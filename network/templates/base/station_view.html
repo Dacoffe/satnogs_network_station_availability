@@ -292,8 +292,11 @@
               {{ station.active_configuration.schema.schema|json_script:"station-schema" }}
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <div>
-                  <label for="json-renderer">Current Configuration</label>
-                  <span>(Non-default values)</span>
+                  <div>
+                    <label for="json-renderer"><h6><b>Current Configuration</b> (Non-default values)</h6></label>
+                  </div>
+                  <p class="m-0"><b>Changed:</b> {{ station.active_configuration_changed }}</p>
+                  <p class="m-0"><b>Applied to Station:</b> {{ station.active_configuration.applied|default:'pending...' }}</p>
                 </div>
                 <button id="export-configuration-btn" type="button" class="btn btn-primary btn-sm"><span class="bi bi-clipboard"></span> Export Configuration</button>
               </div>

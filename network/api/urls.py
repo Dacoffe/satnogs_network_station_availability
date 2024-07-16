@@ -17,5 +17,6 @@ SIMPLE_ROUTER.register(r'configuration', views.StationConfigurationView, basenam
 API_URLPATTERNS = DEFAULT_ROUTER.urls + SIMPLE_ROUTER.urls + [
     path('transmitters/', views.transmitters_view),
     path('transmitters/<str:transmitter_uuid>', views.transmitter_detail_view),
-    path('station/register', views.station_register_view)
+    path('station/register', views.station_register_view),
+    path('configuration/applied', views.StationConfigurationAppliedView.as_view())
 ]

@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.timezone import now
 from django.views.generic import ListView
 from jsonschema import Draft202012Validator, ValidationError
 
@@ -344,24 +345,38 @@ def handle_station_edit_post(request, station, registered):
         schema_instance = StationConfigurationSchema.objects.select_related('station_type').get(
             id=schema_id
         )
-        Draft202012Validator(schema_instance.schema).validate(station_configuration)
+        current_active_conf = station.active_configuration
+        if (current_active_conf and schema_id == current_active_conf.schema_id
+                and station_configuration == current_active_conf.configuration):
+            conf_changed = False
+        else:
+            conf_changed = True
+
+        if conf_changed:
+            Draft202012Validator(schema_instance.schema).validate(station_configuration)
         with transaction.atomic():
             is_station_new = not bool(station.pk)
+            if conf_changed:
+                station.active_configuration_changed = now()
             station.save()
             antenna_formset.save()
             for frequency_range_formset_value in frequency_range_formsets.values():
                 frequency_range_formset_value.save()
-            if not is_station_new:
-                StationConfiguration.objects.filter(
-                    station=station, active=True
-                ).update(active=False)
-            StationConfiguration.objects.create(
-                name=f"{schema_instance.station_type.name} - {schema_instance.name}",
-                station=station,
-                schema=schema_instance,
-                configuration=station_configuration
-            )
-        messages.success(request, 'Ground Station {0} saved successfully.'.format(station.id))
+            if conf_changed:
+                if not is_station_new:
+                    StationConfiguration.objects.filter(
+                        station=station, active=True
+                    ).update(active=False)
+                StationConfiguration.objects.create(
+                    name=f"{schema_instance.station_type.name} - {schema_instance.name}",
+                    station=station,
+                    schema=schema_instance,
+                    configuration=station_configuration
+                )
+        success_message = f'Ground Station {station.id} saved successfully.'
+        if conf_changed:
+            success_message += ' Configuration changes will be applied soon.'
+        messages.success(request, success_message)
         return redirect(reverse('base:station_view', kwargs={'station_id': station.id}))
     except StationConfigurationSchema.DoesNotExist:
         messages.error(request, 'Cannot find schema')
