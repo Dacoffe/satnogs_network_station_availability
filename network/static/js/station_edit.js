@@ -1,4 +1,4 @@
-/*global human_frequency, bands_from_range, JSONEditor, renderConfigurationAsTable*/
+/*global human_frequency, bands_from_range, JSONEditor, renderConfigurationAsTable, getConfigurationDefaults*/
 /*eslint no-control-regex: 0*/
 $(document).ready(function() {
     'use strict';
@@ -270,6 +270,15 @@ $(document).ready(function() {
             renderConfigurationAsTable('json-renderer', configuration, schema);
             $('#advanced-edit-conf-modal').modal('hide');
         }
+    });
+
+    $('#reset-conf').on('click', function() {
+        const defaultConf = getConfigurationDefaults(schema);
+        jsonEditor.setValue(defaultConf);
+        $('#advancedEditInput').val(JSON.stringify(jsonEditor.getValue(), null, 2));
+        renderConfigurationAsTable('json-renderer', defaultConf, schema);
+        configuration = defaultConf;
+        earlierConfiguration = defaultConf;
     });
 
     $('#antennas-loading').toggle();

@@ -41,6 +41,26 @@ function compareWithDefaults(data, schema, path = '') {
     return nonDefaultValues;
 }
 
+/* eslint-disable-next-line no-unused-vars */
+function getConfigurationDefaults(schema) {
+    let defaultValues = {};
+
+    if (schema.type === 'object') {
+        for (let key in schema.properties) {
+            let valueSchema = schema.properties[key];
+            if (valueSchema.type === 'object') {
+                defaultValues[key] = getConfigurationDefaults(valueSchema);
+            } else if (Object.hasOwn(valueSchema, 'default')) {
+                defaultValues[key] = valueSchema.default;
+            } else {
+                defaultValues[key] = getImplicitDefault(valueSchema.type);
+            }
+        }
+    }
+
+    return defaultValues;
+}
+
 function getSchemaTitle(path, schema) {
     const keys = path.split('.');
     let currentSchema = schema;
