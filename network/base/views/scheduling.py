@@ -128,7 +128,7 @@ def observation_new(request):
         return observation_new_post(request)
 
     try:
-        satellites = {k: v for k, v in fetch_satellites().items() if v['status'] == 'alive'}
+        satellites = {k: v for k, v in fetch_satellites().items() if v['status'] == 'in orbit'}
     except DBConnectionError:
         try:
             satellites = get_satellites()
@@ -235,9 +235,9 @@ def prediction_windows(request):
         # Parse and validate parameters
         params = prediction_windows_parse_parameters(request)
         sat_id = params['sat_id']
-        # Check the selected satellite exists and is alive
+        # Check the selected satellite exists and is in orbit
         satellite = get_satellites()[sat_id]
-        if not satellite or satellite['status'] != 'alive':
+        if not satellite or satellite['status'] != 'in orbit':
             raise ValueError('You should select a Satellite first.')
         # Get TLE set if there is one available for this satellite
         tle = get_tle_set_if_available(satellite['sat_id'])
@@ -358,7 +358,7 @@ def pass_predictions(request, station_id):
 
     satellites = [
         sat for sat in get_satellites().values()
-        if sat['status'] == 'alive' and 'merged_into' not in sat
+        if sat['status'] == 'in orbit' and 'merged_into' not in sat
     ]
     if not has_perm_to_schedule_violators_on_station(request.user, station):
         satellites = [sat for sat in satellites if not sat['is_frequency_violator']]

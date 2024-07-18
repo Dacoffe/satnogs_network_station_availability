@@ -35,7 +35,7 @@ STATION_VIOLATOR_SCHEDULING_CHOICES = (
     (1, 'Only Operators'),
     (2, 'Everyone'),
 )
-SATELLITE_STATUS = ['alive', 'dead', 'future', 're-entered']
+SATELLITE_STATUS = ['in orbit', 'future', 're-entered']
 TRANSMITTER_STATUS = ['active', 'inactive', 'invalid']
 TRANSMITTER_TYPE = ['Transmitter', 'Transceiver', 'Transponder']
 
