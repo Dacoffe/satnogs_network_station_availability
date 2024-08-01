@@ -483,6 +483,7 @@ class Observation(models.Model):
     satellite = models.ForeignKey(
         Satellite, related_name='observations', on_delete=models.SET_NULL, null=True, blank=True
     )
+    sat_id = models.CharField(max_length=24)
     tle_line_0 = models.CharField(
         max_length=69, blank=True, validators=[MinLengthValidator(1),
                                                MaxLengthValidator(69)]
@@ -723,6 +724,11 @@ class Observation(models.Model):
 
     def __str__(self):
         return str(self.id)
+
+    def save(self, *args, **kwargs):
+        if self.pk is None:
+            self.sat_id = self.satellite.sat_id or '' if self.satellite else ''
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         """Return absolute url of the model object"""
