@@ -439,7 +439,6 @@ def fetch_data():
     for satellite in r_satellites.json():
         if satellite['norad_cat_id']:
             norad_cat_id = satellite['norad_cat_id']
-            satellite.pop('sat_id', None)
             satellite.pop('decayed', None)
             satellite.pop('launched', None)
             satellite.pop('deployed', None)
