@@ -12,6 +12,16 @@ class GetObservationAnononymousRateThrottle(throttling.AnonRateThrottle):
         return super().allow_request(request, view)
 
 
+class GetObservationAuthenticatedRateThrottle(throttling.UserRateThrottle):
+    """Authenticated GET Throttling for Observation API endpoint"""
+    scope = 'get_observation_auth'
+
+    def allow_request(self, request, view):
+        if request.method in ('POST', 'PUT'):
+            return True
+        return super().allow_request(request, view)
+
+
 class GetStationAnononymousRateThrottle(throttling.AnonRateThrottle):
     """Anonymous GET Throttling for Observation API endpoint"""
     scope = 'get_station_anon'

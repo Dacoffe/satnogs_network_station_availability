@@ -309,6 +309,9 @@ REST_FRAMEWORK = {
         'get_observation_anon': config(
             'DEFAULT_THROTTLE_RATE_GET_OBSERVATION_ANON', default='60/hour'
         ),
+        'get_observation_auth': config(
+            'DEFAULT_THROTTLE_RATE_GET_OBSERVATION_AUTH', default='240/hour'
+        ),
         'get_station_anon': config('DEFAULT_THROTTLE_RATE_GET_STATION_ANON', default='256/hour'),
     },
     'DEFAULT_RENDERER_CLASSES': [

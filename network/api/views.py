@@ -25,7 +25,7 @@ from rest_framework.views import APIView
 from network.api import authentication, filters, pagination, serializers
 from network.api.perms import StationOwnerPermission
 from network.api.throttling import GetObservationAnononymousRateThrottle, \
-    GetStationAnononymousRateThrottle
+    GetObservationAuthenticatedRateThrottle, GetStationAnononymousRateThrottle
 from network.base.models import ActiveStationConfiguration, Observation, Station, \
     StationConfiguration
 from network.base.rating_tasks import rate_observation
@@ -52,6 +52,7 @@ class ObservationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.U
         self.throttle_classes = []
         if self.action == 'list':
             self.throttle_classes.append(GetObservationAnononymousRateThrottle)
+            self.throttle_classes.append(GetObservationAuthenticatedRateThrottle)
         return super().get_throttles()
 
     def get_queryset(self):
