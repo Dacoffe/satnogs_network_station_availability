@@ -670,12 +670,13 @@ class JobSerializer(serializers.ModelSerializer):
     tle0 = serializers.SerializerMethodField()
     tle1 = serializers.SerializerMethodField()
     tle2 = serializers.SerializerMethodField()
+    norad_cat_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Observation
         fields = (
             'id', 'start', 'end', 'ground_station', 'tle0', 'tle1', 'tle2', 'frequency', 'mode',
-            'transmitter', 'baud'
+            'transmitter', 'baud', 'max_altitude', 'norad_cat_id'
         )
 
     @extend_schema_field(str)
@@ -719,6 +720,11 @@ class JobSerializer(serializers.ModelSerializer):
     def get_baud(self, obj):
         """Returns Transmitter baudrate"""
         return obj.transmitter_baud
+
+    @extend_schema_field(int)
+    def get_norad_cat_id(self, obj):
+        """Returns Satellite NORAD ID"""
+        return obj.satellite.norad_cat_id
 
 
 class TransmitterSerializer(serializers.Serializer):
