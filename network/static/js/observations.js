@@ -153,6 +153,14 @@ $(document).ready(function() {
 
     $('#satellite-selection').on('changed.bs.select',  function() {
         const selectedSatelliteNorad = $(this).val();
+
+        filterTransmitters(selectedSatelliteNorad);
+    });
+
+    const selectedSatelliteNorad = $('#satellite-selection').val();
+    filterTransmitters(selectedSatelliteNorad);
+
+    function filterTransmitters(selectedSatelliteNorad) {
         const options = document.querySelectorAll('#transmitter-uuid-selection option');
         
         options.forEach(option => {
@@ -164,5 +172,6 @@ $(document).ready(function() {
         });
     
         $('#transmitter-uuid-selection').selectpicker('refresh');
-    });
+    }
+
 });
