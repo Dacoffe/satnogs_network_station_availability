@@ -39,7 +39,14 @@
         <div class="form-group row align-items-center">
           <label class="col-sm-3 col-form-label">Satellite</label>
           <div class="col-sm-9">
-            {% if obs_filter.norad %}
+            {% if not satellites %}
+                <select id="satellite-selection" class="form-control selectpicker" data-style="btn" name="satellite"
+                  autocomplete="off" disabled>
+                  <option id="no-satellites" value="" selected>
+                    Error getting satellite list
+                  </option>
+                </select>
+            {% elif obs_filter.norad %}
               {% for satellite in satellites %}
                 {% if satellite.norad_cat_id == obs_filter.norad %}
                   <select id="satellite-selection" class="form-control selectpicker" data-style="btn" name="satellite" disabled>

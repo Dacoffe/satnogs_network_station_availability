@@ -60,7 +60,7 @@ class ObservationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.U
             queryset = Observation.objects.select_for_update()
         else:
             queryset = Observation.objects.prefetch_related('demoddata').select_related(
-                'satellite', 'ground_station', "waterfall_status_user", "author"
+                'ground_station', "waterfall_status_user", "author"
             )
         if isinstance(queryset, QuerySet):
             # Ensure queryset is re-evaluated on each request.

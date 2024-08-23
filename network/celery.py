@@ -46,9 +46,9 @@ def update_future_observations_with_new_transmitter_details():
 
 
 @APP.task
-def fetch_data():
-    """Wrapper task for 'fetch_data' shared task"""
-    from network.base.tasks import fetch_data as periodic_task
+def fetch_satellites():
+    """Wrapper task for 'fetch_satellites' shared task"""
+    from network.base.tasks import fetch_satellites as periodic_task
     periodic_task()
 
 
@@ -122,7 +122,7 @@ def setup_periodic_tasks(sender, **kwargs):  # pylint: disable=W0613
         name='refresh_transmitters_with_stats_cache'
     )
 
-    sender.add_periodic_task(RUN_HOURLY, fetch_data.s(), name='fetch_data')
+    sender.add_periodic_task(RUN_HOURLY, fetch_satellites.s(), name='fetch_satellites')
 
     sender.add_periodic_task(RUN_HOURLY, sync_to_db.s(), name='sync_to_db')
 

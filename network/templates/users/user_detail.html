@@ -3,6 +3,7 @@
 {% load tags %}
 {% load cache %}
 {% load humanize %}
+{% load tags %}
 
 {% block title %}
   {% if user == request.user %} - Dashboard{% else %} - User: {{ user.username }}{% endif %}
@@ -197,11 +198,13 @@
                         {% endif %}
                       </a>
                     </td>
+                    {% with satellites|get_item:observation.sat_id as sat %}
                     <td class="text-nowrap">
-                      <a href="#" data-toggle="modal" data-target="#SatelliteModal" data-id="{{ observation.satellite.norad_cat_id }}">
-                        {{ observation.satellite.name }}
+                      <a href="#" data-toggle="modal" data-target="#SatelliteModal" data-id="{{ sat.norad_cat_id }}">
+                        {{ sat.name }}
                       </a>
                     </td>
+                    {% endwith %}
                     <td class="text-nowrap">
                       {% if observation.center_frequency %}
                         {{ observation.center_frequency|frq }}

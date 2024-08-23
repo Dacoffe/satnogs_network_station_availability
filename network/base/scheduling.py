@@ -10,8 +10,9 @@ import ephem
 from django.conf import settings
 from django.utils.timezone import make_aware, now
 
+from network.base.cache import get_satellites
 from network.base.db_api import DBConnectionError, get_tle_set_by_norad_id
-from network.base.models import Observation, Satellite
+from network.base.models import Observation
 from network.base.perms import schedule_stations_perms
 from network.base.utils import format_frequency
 from network.base.validators import NegativeElevationError, NoTleSetError, \
@@ -535,7 +536,7 @@ def create_new_observation(
             format(station.id)
         )
 
-    sat = Satellite.objects.get(norad_cat_id=transmitter['norad_cat_id'])
+    sat = get_satellites()[transmitter['sat_id']]
     if not tle_set:
         try:
             tle_set = get_tle_set_by_norad_id(transmitter['norad_cat_id'])
@@ -618,7 +619,7 @@ def create_new_observation(
         )
 
     return Observation(
-        satellite=sat,
+        sat_id=sat['sat_id'],
         tle_line_0=tle['tle0'],
         tle_line_1=tle['tle1'],
         tle_line_2=tle['tle2'],
@@ -659,7 +660,7 @@ def get_available_stations(stations, downlink, user, satellite):
     """Returns stations for scheduling filtered by a specific downlink and user's permissions"""
     available_stations = []
 
-    if satellite.is_frequency_violator:
+    if satellite['is_frequency_violator']:
         stations = stations.exclude(violator_scheduling=0)
         if not user.groups.filter(name='Operators').exists():
             stations = stations.exclude(violator_scheduling=1)

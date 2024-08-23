@@ -22,7 +22,7 @@ class Command(BaseCommand):
         call_command('migrate')
 
         #  Initial data
-        call_command('fetch_data')
+        call_command('fetch_satellites')
 
         # Check if migration AntennaType data have been removed
         if not AntennaType.objects.all():

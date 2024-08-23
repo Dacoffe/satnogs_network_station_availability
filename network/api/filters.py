@@ -3,6 +3,7 @@ import django_filters
 from django.utils.timezone import now
 from django_filters.rest_framework import FilterSet
 
+from network.base.cache import get_satellite_by_norad
 from network.base.models import Observation, Station
 from network.users.models import User
 
@@ -64,6 +65,20 @@ class ObservationViewFilter(FilterSet):
 
     observation_id = NumberInFilter(field_name='id', label="Observation ID(s)")
 
+    norad_cat_id = django_filters.NumberFilter(label="Norad ID", method='filter_by_norad_cat_id')
+
+    def filter_by_norad_cat_id(self, queryset, name, value):  # pylint: disable=W0613
+        """
+        Filters by norad_cat_id using the satellite cache.
+        """
+
+        sat = get_satellite_by_norad(int(value))
+
+        if sat:
+            return queryset.filter(sat_id=sat['sat_id'])
+
+        return queryset.none()
+
     # see https://django-filter.readthedocs.io/en/master/ref/filters.html for W0613
     def filter_status(self, queryset, name, value):  # pylint: disable=W0613
         """ Returns filtered observations for a given observation status"""
@@ -82,9 +97,9 @@ class ObservationViewFilter(FilterSet):
     class Meta:
         model = Observation
         fields = [
-            'id', 'status', 'ground_station', 'start', 'end', 'satellite__norad_cat_id',
-            'transmitter_uuid', 'transmitter_mode', 'transmitter_type', 'waterfall_status',
-            'vetted_status', 'vetted_user', 'observer'
+            'id', 'status', 'ground_station', 'start', 'end', 'transmitter_uuid',
+            'transmitter_mode', 'transmitter_type', 'waterfall_status', 'vetted_status',
+            'vetted_user', 'observer', 'sat_id'
         ]
 
 

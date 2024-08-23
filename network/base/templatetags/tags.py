@@ -34,6 +34,12 @@ def gravatar_url(email, size=40):
     )
 
 
+@register.filter
+def get_item(dictionary, key):
+    """Acesses a key of a dictionary. Used when the key is a variable"""
+    return dictionary.get(key)
+
+
 @register.filter(name='not_true')
 def not_true(value):
     """A filter to be used as a not-equals operator"""

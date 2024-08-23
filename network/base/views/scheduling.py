@@ -15,16 +15,18 @@ from django.urls import reverse
 from django.utils.timezone import make_aware, now
 from django.views.decorators.http import require_POST
 
+from network.base.cache import get_satellite_by_norad, get_satellites
 from network.base.db_api import DBConnectionError, get_tle_set_by_norad_id, get_tle_sets, \
     get_transmitter_by_uuid, get_transmitters, get_transmitters_by_norad_id
 from network.base.decorators import ajax_required
 from network.base.forms import ObservationFormSet, SatelliteFilterForm
-from network.base.models import Observation, Satellite, Station
+from network.base.models import Observation, Station
 from network.base.perms import schedule_perms, schedule_station_violators_perms
 from network.base.scheduling import create_new_observation, get_available_stations, \
     over_min_duration, predict_available_observation_windows
 from network.base.serializers import StationSerializer
 from network.base.stats import get_satellite_stats_by_transmitter_list, get_transmitters_with_stats
+from network.base.tasks import fetch_satellites
 from network.base.validators import NegativeElevationError, NoTleSetError, \
     ObservationOverlapError, OutOfRangeError, SchedulingLimitError, SinglePassError, \
     check_violators_scheduling_limit, is_frequency_in_transmitter_range, \
@@ -34,7 +36,7 @@ from network.base.validators import NegativeElevationError, NoTleSetError, \
 def create_new_observations(formset, user):
     """Creates new observations from formset. Error handling is performed by upper layers."""
     new_observations = []
-    observations_per_norad_id = defaultdict(list)
+    observations_per_sat_id = defaultdict(list)
     for observation_data in formset.cleaned_data:
         transmitter_uuid = observation_data['transmitter_uuid']
         transmitter = formset.transmitters[transmitter_uuid]
@@ -42,8 +44,7 @@ def create_new_observations(formset, user):
         if transmitter["type"] == "Transponder" and center_frequency is None:
             center_frequency = (transmitter['downlink_high'] + transmitter['downlink_low']) // 2
         tle_set = formset.tle_sets[transmitter['norad_cat_id']]
-
-        observations_per_norad_id[transmitter['norad_cat_id']].append(observation_data['start'])
+        observations_per_sat_id[transmitter['sat_id']].append(observation_data['start'])
 
         observation = create_new_observation(
             station=observation_data['ground_station'],
@@ -57,7 +58,7 @@ def create_new_observations(formset, user):
         new_observations.append(observation)
 
     if formset.violators and not user.groups.filter(name='Operators').exists():
-        check_violators_scheduling_limit(formset.violators, observations_per_norad_id)
+        check_violators_scheduling_limit(formset.violators, observations_per_sat_id)
 
     for observation in new_observations:
         observation.save()
@@ -123,8 +124,20 @@ def observation_new(request):
     if request.method == 'POST':
         return observation_new_post(request)
 
-    satellites = Satellite.objects.filter(status='alive')
-
+    try:
+        satellites = {k: v for k, v in fetch_satellites().items() if v['status'] == 'alive'}
+    except DBConnectionError:
+        try:
+            satellites = get_satellites()
+            messages.warning(request, ('Warning: Using cached list of satellites.'))
+        except DBConnectionError:
+            satellites = {}
+            messages.error(
+                request, (
+                    'Error: Could not load satellite list. Please try again later. '
+                    'If the error persists, contact an administrator.'
+                )
+            )
     obs_filter = {}
     if request.method == 'GET':
         filter_form = SatelliteFilterForm(request.GET)
@@ -155,7 +168,7 @@ def observation_new(request):
 
     return render(
         request, 'base/observation_new.html', {
-            'satellites': satellites,
+            'satellites': satellites.values(),
             'obs_filter': obs_filter,
             'date_min_start': settings.OBSERVATION_DATE_MIN_START,
             'date_min_end': settings.OBSERVATION_DATE_MIN_END,
@@ -216,17 +229,20 @@ def prediction_windows(request):
     """Calculates and returns passes of satellites over stations"""
 
     try:
-        error_found = True
-        data = []
         # Parse and validate parameters
         params = prediction_windows_parse_parameters(request)
 
         # Check the selected satellite exists and is alive
-        satellite = Satellite.objects.filter(status='alive'
-                                             ).get(norad_cat_id=params['sat_norad_id'])
+        try:
+            norad = int(params['sat_norad_id'])
+        except ValueError as e:
+            raise ValueError('Invalid norad id.') from e
 
+        satellite = get_satellite_by_norad(norad)
+        if not satellite or satellite['status'] != 'alive':
+            raise ValueError('You should select a Satellite first.')
         # Get TLE set if there is one available for this satellite
-        tle = get_tle_set_if_available(satellite.norad_cat_id)
+        tle = get_tle_set_if_available(satellite['norad_cat_id'])
 
         # Check the selected transmitter exists, and if yes,
         # store this transmitter in the downlink variable
@@ -241,14 +257,8 @@ def prediction_windows(request):
             downlink = (transmitter[0]['downlink_high'] + transmitter[0]['downlink_low']) // 2
         else:
             downlink = transmitter[0]['downlink_low']
-        error_found = False
     except (ValueError, DBConnectionError, OutOfRangeError) as error:
-        data = [{'error': str(error)}]
-    except Satellite.DoesNotExist:
-        data = [{'error': 'You should select a Satellite first.'}]
-
-    if error_found:
-        return JsonResponse(data, safe=False)
+        return JsonResponse([{'error': str(error)}], safe=False)
 
     # Fetch all available ground stations
     stations = Station.objects.filter(
@@ -261,6 +271,7 @@ def prediction_windows(request):
         ), 'antennas', 'antennas__frequency_ranges'
     )
 
+    data = []
     if params['station_ids'] and params['station_ids'] != ['']:
         # Filter ground stations based on the given selection
         stations = stations.filter(id__in=params['station_ids'])
@@ -287,7 +298,6 @@ def prediction_windows(request):
 
     available_stations = get_available_stations(stations, downlink, request.user, satellite)
 
-    data = []
     passes_found = defaultdict(list)
     for station in available_stations:
         station_passes, station_windows = predict_available_observation_windows(
@@ -349,9 +359,9 @@ def pass_predictions(request, station_id):
         lng__isnull=False
     )
 
-    satellites = Satellite.objects.filter(status='alive')
+    satellites = [sat for sat in get_satellites().values() if sat['status'] == 'alive']
     if not schedule_station_violators_perms(request.user, station):
-        satellites = satellites.filter(is_frequency_violator='False')
+        satellites = [sat for sat in satellites if not sat['is_frequency_violator']]
 
     nextpasses = []
     start = make_aware(datetime.now(), timezone.utc)
@@ -375,7 +385,7 @@ def pass_predictions(request, station_id):
         for satellite in satellites:
             # look for a match between transmitters from the satellite and
             # ground station antenna frequency capabilities
-            norad_id = satellite.norad_cat_id
+            norad_id = satellite['norad_cat_id']
             transmitters = [
                 t for t in all_transmitters
                 if t['norad_cat_id'] == norad_id and t["status"] in ("active", "inactive")
@@ -404,8 +414,7 @@ def pass_predictions(request, station_id):
                     window_start = datetime.strptime(window['start'], '%Y-%m-%d %H:%M:%S.%f')
                     window_end = datetime.strptime(window['end'], '%Y-%m-%d %H:%M:%S.%f')
                     sat_pass = {
-                        'name': str(satellite.name),
-                        'id': str(satellite.id),
+                        'name': str(satellite['name']),
                         'success_rate': str(satellite_stats['success_rate']),
                         'bad_rate': str(satellite_stats['bad_rate']),
                         'unknown_rate': str(satellite_stats['unknown_rate']),
@@ -415,7 +424,7 @@ def pass_predictions(request, station_id):
                         'bad_count': str(satellite_stats['bad_count']),
                         'unknown_count': str(satellite_stats['unknown_count']),
                         'future_count': str(satellite_stats['future_count']),
-                        'norad_cat_id': str(satellite.norad_cat_id),
+                        'norad_cat_id': str(satellite['norad_cat_id']),
                         'tle1': window['tle1'],
                         'tle2': window['tle2'],
                         'tr': window_start,  # Rise time
@@ -476,12 +485,11 @@ def scheduling_stations(request):  # pylint: disable=too-many-return-statements
         if downlink is None:
             data = [{'error': 'You should select a valid Transmitter.'}]
             return JsonResponse(data, safe=False)
-        satellite = Satellite.objects.get(norad_cat_id=transmitter[0]['norad_cat_id'])
-    except DBConnectionError as error:
+        satellite = get_satellite_by_norad(transmitter[0]['norad_cat_id'])
+        if not satellite:
+            raise ValueError('Unable to find satellite for the selected transmitter.')
+    except (DBConnectionError, ValueError) as error:
         data = [{'error': str(error)}]
-        return JsonResponse(data, safe=False)
-    except Satellite.DoesNotExist:
-        data = {'error': 'Unable to find satellite for the selected transmitter.'}
         return JsonResponse(data, safe=False)
 
     stations = Station.objects.filter(
@@ -532,19 +540,22 @@ def transmitters_view(request):
     """Returns a transmitter JSON object with information and statistics"""
     norad_id = request.POST.get('satellite', None)
     station_id = request.POST.get('station_id', None)
+
     try:
-        if norad_id:
-            satellite = Satellite.objects.get(norad_cat_id=norad_id)
-        else:
-            data = {'error': 'Satellite not provided.'}
-            return JsonResponse(data, safe=False)
-    except Satellite.DoesNotExist:
-        data = {'error': 'Unable to find that satellite.'}
-        return JsonResponse(data, safe=False)
+        norad_id = int(norad_id)
+    except ValueError as err:
+        raise ValueError('Invalid norad id.') from err
+
+    if norad_id:
+        satellite = get_satellite_by_norad(norad_id)
+        if not satellite:
+            raise ValueError('Unable to find that satellite.')
+    else:
+        raise ValueError('Satellite not provided.')
 
     try:
         transmitters = get_transmitters_by_norad_id(norad_id)
-    except DBConnectionError as error:
+    except (DBConnectionError, ValueError) as error:
         data = [{'error': str(error)}]
         return JsonResponse(data, safe=False)
 
@@ -556,8 +567,8 @@ def transmitters_view(request):
         station = Station.objects.prefetch_related('antennas', 'antennas__frequency_ranges').get(
             id=station_id
         )
-        if satellite.is_frequency_violator and not schedule_station_violators_perms(request.user,
-                                                                                    station):
+        if satellite['is_frequency_violator'] and not schedule_station_violators_perms(
+                request.user, station):
             data = {'error': 'No permission to schedule this satellite on this station.'}
             return JsonResponse(data, safe=False)
         for transmitter in transmitters:

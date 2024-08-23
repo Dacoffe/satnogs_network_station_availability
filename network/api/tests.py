@@ -11,7 +11,7 @@ from rest_framework.utils.encoders import JSONEncoder
 
 from network.api.pagination import ObservationCursorPagination
 from network.base.tests import AntennaFactory, FrequencyRangeFactory, ObservationFactory, \
-    SatelliteFactory, StationFactory
+    StationFactory, create_satellite
 
 
 @pytest.mark.django_db(transaction=True)
@@ -25,7 +25,7 @@ class JobViewApiTest(TestCase):
 
     def setUp(self):
         for _ in range(1, 10):
-            self.satellites.append(SatelliteFactory())
+            self.satellites.append(create_satellite())
         for _ in range(1, 10):
             self.stations.append(StationFactory())
         self.future_observation = ObservationFactory(start=now() + timedelta(days=1))

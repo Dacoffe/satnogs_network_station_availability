@@ -6,15 +6,16 @@ from datetime import datetime, timedelta
 import factory
 import pytest
 from django.contrib.auth.models import Group
+from django.core.cache import cache
 from django.db import transaction
 from django.test import Client, TestCase
 from django.utils.timezone import now
 # C0412 below clashes with isort
 from factory import fuzzy  # pylint: disable=C0412
 
+from network.base.cache import get_satellites
 from network.base.models import OBSERVATION_STATUSES, Antenna, AntennaType, DemodData, \
-    FrequencyRange, Observation, Satellite, Station, StationConfiguration, \
-    StationConfigurationSchema
+    FrequencyRange, Observation, Station, StationConfiguration, StationConfigurationSchema
 from network.base.test_orbital import generate_fake_tle
 from network.users.models import User
 from network.users.tests import UserFactory
@@ -98,18 +99,27 @@ class FrequencyRangeFactory(factory.django.DjangoModelFactory):
         model = FrequencyRange
 
 
-class SatelliteFactory(factory.django.DjangoModelFactory):
-    """Satellite model factory."""
-    norad_cat_id = fuzzy.FuzzyInteger(2000, 4000)
-    name = fuzzy.FuzzyText()
+def create_satellite():
+    """Adds a new satellite to cache and returns it."""
+    sat = {
+        'sat_id': fuzzy.FuzzyText(length=24).fuzz(),
+        'name': fuzzy.FuzzyText().fuzz(),
+        'norad_cat_id': fuzzy.FuzzyInteger(2000, 4000).fuzz()
+    }
+    sats = get_satellites()
+    sats[sat['sat_id']] = sat
+    cache.set('satellites', sats)
+    return sat
 
-    class Meta:
-        model = Satellite
+
+def fuzzy_sat_id():
+    """Returns the sat_id of a satellite, that has been added to cache."""
+    return create_satellite()['sat_id']
 
 
 class ObservationFactory(factory.django.DjangoModelFactory):  # pylint: disable=R0902
     """Observation model factory."""
-    satellite = factory.SubFactory(SatelliteFactory)
+    sat_id = factory.LazyFunction(fuzzy_sat_id)
     author = factory.SubFactory(UserFactory)
     start = fuzzy.FuzzyDateTime(
         now() - timedelta(days=3), now() + timedelta(days=3), force_microsecond=0
@@ -162,7 +172,6 @@ class ObservationFactory(factory.django.DjangoModelFactory):  # pylint: disable=
 
 class RealisticObservationFactory(ObservationFactory):
     """Observation model factory which uses existing satellites and tles."""
-    satellite = factory.Iterator(Satellite.objects.all())
     author = factory.Iterator(User.objects.all())
     ground_station = factory.Iterator(Station.objects.all())
     waterfall_status_user = factory.Iterator(User.objects.all())
@@ -236,7 +245,6 @@ class ObservationsListViewTest(TestCase):
         # Clear the data and create some new random data
         with transaction.atomic():
             Observation.objects.all().delete()
-            Satellite.objects.all().delete()
         self.satellites = []
         self.observations_bad = []
         self.observations_good = []
@@ -244,7 +252,7 @@ class ObservationsListViewTest(TestCase):
         self.observations = []
         with transaction.atomic():
             for _ in range(1, 10):
-                self.satellites.append(SatelliteFactory())
+                self.satellites.append(create_satellite())
             for _ in range(1, 10):
                 self.stations.append(StationFactory())
             for i in range(1, 5):
@@ -329,7 +337,7 @@ class ObservationViewTest(TestCase):
         moderators = Group.objects.get(name='Moderators')
         moderators.user_set.add(self.user)
         for _ in range(1, 10):
-            self.satellites.append(SatelliteFactory())
+            self.satellites.append(create_satellite())
         for _ in range(1, 10):
             self.stations.append(StationFactory())
         self.observation = ObservationFactory()
@@ -356,7 +364,7 @@ class ObservationDeleteTest(TestCase):
         self.user = UserFactory()
         self.client.force_login(self.user)
         for _ in range(1, 10):
-            self.satellites.append(SatelliteFactory())
+            self.satellites.append(create_satellite())
         self.future_observation = ObservationFactory(
             start=now() + timedelta(days=1), author=self.user
         )
@@ -478,7 +486,7 @@ class ObservationModelTest(TestCase):
 
     def setUp(self):
         for _ in range(1, 10):
-            self.satellites.append(SatelliteFactory())
+            self.satellites.append(create_satellite())
         self.observation = ObservationFactory()
         self.observation.end = now()
         self.observation.save()

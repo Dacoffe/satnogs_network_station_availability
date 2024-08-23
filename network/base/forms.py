@@ -6,10 +6,11 @@ from django.forms import BaseFormSet, BaseInlineFormSet, CharField, DateTimeFiel
     Form, ImageField, IntegerField, JSONField, ModelChoiceField, ModelForm, TypedChoiceField, \
     ValidationError, formset_factory, inlineformset_factory
 
+from network.base.cache import get_satellites
 from network.base.db_api import DBConnectionError, get_tle_sets_by_norad_id_set, \
     get_transmitters_by_uuid_set
 from network.base.models import STATION_VIOLATOR_SCHEDULING_CHOICES, Antenna, FrequencyRange, \
-    Observation, Satellite, Station
+    Observation, Station
 from network.base.perms import UserNoPermissionError, \
     check_schedule_perms_of_violators_per_station, check_schedule_perms_per_station
 from network.base.validators import ObservationOverlapError, OutOfRangeError, check_end_datetime, \
@@ -141,10 +142,8 @@ class BaseObservationFormSet(BaseFormSet):
         except DBConnectionError as error:
             raise ValidationError(error) from error
 
-        self.violators = Satellite.objects.filter(
-            norad_cat_id__in=norad_id_set, is_frequency_violator=True
-        )
-        violators_norad_ids = [satellite.norad_cat_id for satellite in self.violators]
+        self.violators = [sat for sat in get_satellites().values() if sat['is_frequency_violator']]
+        violators_norad_ids = [satellite['norad_cat_id'] for satellite in self.violators]
         station_with_violators_set = {
             station
             for transmitter_uuid, station, _ in transmitter_uuid_station_set

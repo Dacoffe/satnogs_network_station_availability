@@ -18,12 +18,13 @@ from django.utils import timezone
 from django.utils.timezone import now, timedelta
 from django.views.generic import ListView
 
+from network.base.cache import get_satellite_by_norad, get_satellite_stats, get_satellites
 from network.base.db_api import DBConnectionError, get_transmitters_by_norad_id
 from network.base.decorators import ajax_required
-from network.base.models import Observation, Satellite, Station
+from network.base.models import Observation, Station
 from network.base.perms import delete_perms, schedule_perms, vet_perms
 from network.base.rating_tasks import rate_observation
-from network.base.stats import get_satellite_stats_by_transmitter_list, get_transmitters_with_stats
+from network.base.stats import get_transmitters_with_stats
 from network.base.tasks import get_and_refresh_transmitters_with_stats_cache
 from network.base.utils import community_get_discussion_details
 from network.users.models import User
@@ -101,12 +102,11 @@ class ObservationListBaseView(ListView):
         rated = self.request.GET.getlist('rated')
 
         observations = Observation.objects.prefetch_related(
-            'satellite', 'demoddata', 'author', 'ground_station'
+            'demoddata', 'author', 'ground_station'
         )
 
         # Mapping between the HTTP POST parameters and the fiter keys
         parameter_filter_mapping = {
-            'norad': 'satellite__norad_cat_id',
             'observer': 'author',
             'station': 'ground_station_id',
             'start': 'start__gt',
@@ -139,12 +139,15 @@ class ObservationListBaseView(ListView):
         if not self.filtered:
             filter_dict["start__gt"] = get_one_day_ago()
 
-        # If the user has used the extra filters, display hte extra filter section expaned
+        # If the user has used the extra filters, display the extra filter section expaned
         self.more_filtered = (
             results or rated or filter_dict.get('author') or filter_dict.get('ground_station_id')
             or filter_dict.get('transmitter_mode__icontains')
             or filter_dict.get('transmitter_uuid__icontains')
         )
+
+        if self.filter_params['norad']:
+            filter_dict['sat_id'] = get_satellite_by_norad(self.filter_params['norad'])['sat_id']
 
         observations = observations.filter(**filter_dict)
 
@@ -199,7 +202,7 @@ class ObservationListBaseView(ListView):
         """
         context = super().get_context_data(**kwargs)
         context.update(self.filter_params)
-        context['satellites'] = Satellite.objects.all()
+        context['satellites'] = get_satellites()
         context['authors'] = User.objects.all().order_by('first_name', 'last_name', 'username')
         context['stations'] = Station.objects.all().order_by('id')
         start = get_one_day_ago() if not self.filtered else self.request.GET.get('start')
@@ -256,53 +259,6 @@ class ObservationListView(ObservationListBaseView):
                 ' observations. Please change the filters below to narrow down the search results.'
             )
         return observations
-
-    def get_context_data(self, **kwargs):  # pylint: disable=W0221
-        """
-        Need to add a list of satellites to the context for the template
-        """
-        context = super().get_context_data(**kwargs)
-        context.update(self.filter_params)
-        context['satellites'] = Satellite.objects.all()
-        context['authors'] = User.objects.all().order_by('first_name', 'last_name', 'username')
-        context['stations'] = Station.objects.all().order_by('id')
-        start = get_one_day_ago() if not self.filtered else self.request.GET.get('start')
-        end = self.request.GET.get('end', None)
-        transmitter_uuid = self.request.GET.get('transmitter_uuid', None)
-        context['display_no_filter_warning'] = not self.filtered
-        context['results'] = self.request.GET.getlist('results')
-        context['rated'] = self.request.GET.getlist('rated')
-        context['transmitter_mode'] = self.request.GET.get('transmitter_mode', None)
-        cached_transmitters_with_stats = cache.get('transmitters-with-stats')
-        context['transmitter_uuids_info'] = cached_transmitters_with_stats.values(
-        ) if cached_transmitters_with_stats else get_and_refresh_transmitters_with_stats_cache(
-            in_list_form=True
-        )
-        context['more_filtered'] = bool(self.more_filtered)
-        if start is not None and start != '':
-            context['start'] = start
-        if end is not None and end != '':
-            context['end'] = end
-        if 'scheduled' in self.request.session:
-            context['scheduled'] = self.request.session['scheduled']
-            try:
-                del self.request.session['scheduled']
-            except KeyError:
-                pass
-        if transmitter_uuid:
-            context['transmitters_uuid'] = transmitter_uuid
-        context['can_schedule'] = schedule_perms(self.request.user)
-
-        url_query = urlparse(self.request.build_absolute_uri()).query
-        if not url_query:
-            vet_url_query = 'results=w1&start=' + (now() -
-                                                   timedelta(days=2)).strftime("%Y-%m-%d+%H:%M")
-        else:
-            vet_url_query = url_query.replace('results=w0', 'results=w1')
-            if vet_url_query == url_query:  # no 'results' parameter was given
-                vet_url_query += '&results=w1'
-        context['vet_url_query'] = vet_url_query
-        return context
 
 
 def get_observation_demoddata_details(observation, demoddata, demoddata_count):
@@ -366,6 +322,7 @@ class VetObservationsChunkListView(LoginRequiredMixin, ListView):
     def get(self, request, *args, **kwargs):
         observations = self.get_queryset()
         obs_html = []
+        satellites = get_satellites()
         for obs in observations:
             demoddata_details = get_observation_demoddata_details(
                 obs, obs.demoddata.all(), obs.demoddata_count
@@ -374,6 +331,7 @@ class VetObservationsChunkListView(LoginRequiredMixin, ListView):
             context = {
                 "tle_datetime": calculate_datetime_from_tle(obs.id),
                 "observation": obs,
+                'satellite': satellites[obs.sat_id],
                 "from_vetting": True,
                 "can_vet": True,
                 "demoddata_count": obs.demoddata_count,
@@ -453,9 +411,10 @@ def observation_view(request, observation_id):
     has_comments = False
     discuss_url = ''
     discuss_slug = ''
+    satellite = get_satellites()[observation.sat_id]
     if settings.ENVIRONMENT == 'production':
         discussion_details = community_get_discussion_details(
-            observation.id, observation.satellite.name, observation.satellite.norad_cat_id,
+            observation.id, satellite['name'], satellite['norad_cat_id'],
             'https:%2F%2F{}{}'.format(request.get_host(), request.path)
         )
         has_comments = discussion_details['has_comments']
@@ -471,6 +430,7 @@ def observation_view(request, observation_id):
     return render(
         request, 'base/observation_view.html', {
             'observation': observation,
+            'satellite': satellite,
             'tle_datetime': calculate_datetime_from_tle(observation.id),
             'demoddata_count': demoddata_count,
             'demoddata_details': demoddata_details,
@@ -579,22 +539,25 @@ def waterfall_vet(request, observation_id):
 def satellite_view(request, norad_id):
     """Returns a satellite JSON object with information and statistics"""
     try:
-        sat = Satellite.objects.get(norad_cat_id=norad_id)
-    except Satellite.DoesNotExist:
-        data = {'error': 'Unable to find that satellite.'}
-        return JsonResponse(data, safe=False)
+        norad_id = int(norad_id)
+    except ValueError as err:
+        raise ValueError('Invalid norad_id.') from err
+
+    satellite = get_satellite_by_norad(norad_id)
+    if not satellite:
+        raise ValueError('Unable to find that satellite.')
 
     try:
         transmitters = get_transmitters_by_norad_id(norad_id=norad_id)
-    except DBConnectionError as error:
+    except (DBConnectionError, ValueError) as error:
         data = [{'error': str(error)}]
         return JsonResponse(data, safe=False)
-    satellite_stats = get_satellite_stats_by_transmitter_list(transmitters)
+    satellite_stats = get_satellite_stats()[satellite['sat_id']]
     data = {
         'id': norad_id,
-        'name': sat.name,
-        'names': sat.names,
-        'image': sat.image,
+        'name': satellite['name'],
+        'names': satellite['names'],
+        'image': satellite['image'],
         'success_rate': satellite_stats['success_rate'],
         'good_count': satellite_stats['good_count'],
         'bad_count': satellite_stats['bad_count'],

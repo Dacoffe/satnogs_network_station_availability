@@ -6,10 +6,11 @@ from drf_spectacular.utils import extend_schema_field, inline_serializer
 from PIL import Image
 from rest_framework import serializers
 
+from network.base.cache import get_satellites
 from network.base.db_api import DBConnectionError, get_tle_sets_by_norad_id_set, \
     get_transmitters_by_uuid_set
 from network.base.models import ActiveStationConfiguration, Antenna, DemodData, FrequencyRange, \
-    Observation, Satellite, Station
+    Observation, Station
 from network.base.perms import UserNoPermissionError, \
     check_schedule_perms_of_violators_per_station, check_schedule_perms_per_station
 from network.base.scheduling import create_new_observation
@@ -115,7 +116,7 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
             'transmitter_downlink_low', 'transmitter_downlink_high', 'transmitter_downlink_drift',
             'transmitter_mode', 'transmitter_invert', 'transmitter_baud', 'transmitter_updated',
             'transmitter_status', 'tle0', 'tle1', 'tle2', 'tle_source', 'center_frequency',
-            'observer', 'observation_frequency', 'transmitter_unconfirmed'
+            'observer', 'observation_frequency', 'transmitter_unconfirmed', 'sat_id'
         )
         read_only_fields = [
             'id', 'start', 'end', 'observation', 'ground_station', 'transmitter', 'norad_cat_id',
@@ -128,7 +129,7 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
             'transmitter_downlink_drift', 'transmitter_mode', 'transmitter_invert',
             'transmitter_baud', 'transmitter_created', 'transmitter_updated', 'transmitter_status',
             'tle0', 'tle1', 'tle2', 'tle_source', 'observer', 'center_frequency',
-            'observation_frequency', 'transmitter_unconfirmed'
+            'observation_frequency', 'transmitter_unconfirmed', 'sat_id'
         ]
 
     def update(self, instance, validated_data):
@@ -179,7 +180,8 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
     @extend_schema_field(int)
     def get_norad_cat_id(self, obj):
         """Returns Satellite NORAD ID"""
-        return obj.satellite.norad_cat_id
+        sat = get_satellites()[obj.sat_id]
+        return sat['norad_cat_id']
 
     @extend_schema_field(serializers.URLField())
     def get_payload(self, obj):
@@ -343,10 +345,8 @@ class NewObservationListSerializer(serializers.ListSerializer):
         except DBConnectionError as error:
             raise serializers.ValidationError(error)
 
-        self.violators = Satellite.objects.filter(
-            norad_cat_id__in=norad_id_set, is_frequency_violator=True
-        )
-        violators_norad_ids = [satellite.norad_cat_id for satellite in self.violators]
+        self.violators = [sat for sat in get_satellites().values() if sat['is_frequency_violator']]
+        violators_norad_ids = [satellite['norad_cat_id'] for satellite in self.violators]
         station_with_violators_set = {
             station
             for transmitter_uuid, station in transmitter_uuid_station_set
@@ -724,7 +724,8 @@ class JobSerializer(serializers.ModelSerializer):
     @extend_schema_field(int)
     def get_norad_cat_id(self, obj):
         """Returns Satellite NORAD ID"""
-        return obj.satellite.norad_cat_id
+        satellite = get_satellites()[obj.sat_id]
+        return satellite['norad_cat_id']
 
 
 class TransmitterSerializer(serializers.Serializer):

@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand, CommandError
 # Remove this import after Python 3 migration
 from requests.exceptions import ConnectionError  # pylint: disable=W0622
 
-from network.base.tasks import fetch_data
+from network.base.tasks import fetch_satellites
 
 
 class Command(BaseCommand):
@@ -12,6 +12,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            fetch_data()
+            fetch_satellites()
         except ConnectionError as exception:
             raise CommandError(exception) from exception

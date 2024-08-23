@@ -2,8 +2,8 @@
 from django.contrib import admin
 
 from network.base.models import ActiveStationConfiguration, Antenna, AntennaType, DemodData, \
-    FrequencyRange, Observation, Satellite, Station, StationConfiguration, \
-    StationConfigurationSchema, StationStatusLog, StationType
+    FrequencyRange, Observation, Station, StationConfiguration, StationConfigurationSchema, \
+    StationStatusLog, StationType
 from network.base.utils import export_as_csv, export_station_status
 
 
@@ -137,15 +137,6 @@ class StationStatusLogAdmin(admin.ModelAdmin):
     search_fields = ('id', 'station__id')
 
 
-@admin.register(Satellite)
-class SatelliteAdmin(admin.ModelAdmin):
-    """Define Satellite view in django admin UI"""
-    list_display = ('id', 'name', 'norad_cat_id', 'status', 'is_frequency_violator')
-    list_filter = ('status', 'is_frequency_violator')
-    readonly_fields = ('name', 'names', 'image')
-    search_fields = ('name', 'norad_cat_id')
-
-
 class DemodDataInline(admin.TabularInline):
     """Define DemodData inline template for use in Observation view in django admin UI"""
     model = DemodData
@@ -155,13 +146,11 @@ class DemodDataInline(admin.TabularInline):
 class ObservationAdmin(admin.ModelAdmin):
     """Define Observation view in django admin UI"""
     list_display = (
-        'id', 'author', 'satellite', 'transmitter_uuid', 'start', 'end', 'archived',
-        'audio_zipped', 'status', 'payload_old', 'payload', 'waterfall_old', 'waterfall'
+        'id', 'author', 'sat_id', 'transmitter_uuid', 'start', 'end', 'archived', 'audio_zipped',
+        'status', 'payload_old', 'payload', 'waterfall_old', 'waterfall'
     )
-    list_filter = ('start', 'end', 'archived', 'audio_zipped', 'status', 'satellite', 'author')
-    search_fields = (
-        'id', 'satellite__name', 'satellite__names', 'satellite__norad_cat_id', 'author__username'
-    )
+    list_filter = ('start', 'end', 'archived', 'audio_zipped', 'status', 'sat_id', 'author')
+    search_fields = ('id', 'sat_id', 'author__username')
     inlines = [
         DemodDataInline,
     ]

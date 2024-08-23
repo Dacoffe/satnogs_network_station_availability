@@ -6,7 +6,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from network.base.decorators import staff_required
-from network.base.tasks import fetch_data, update_future_observations_with_new_tle_sets, \
+from network.base.tasks import fetch_satellites, update_future_observations_with_new_tle_sets, \
     update_future_observations_with_new_transmitter_details
 
 
@@ -31,7 +31,7 @@ def robots(request):
 def settings_site(request):
     """View to render settings page."""
     if request.method == 'POST':
-        fetch_data.delay()
+        fetch_satellites.delay()
         update_future_observations_with_new_tle_sets.delay()
         update_future_observations_with_new_transmitter_details.delay()
         messages.success(request, 'Data fetching task was triggered successfully!')

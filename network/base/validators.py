@@ -5,6 +5,8 @@ from datetime import datetime, timedelta, timezone
 from django.conf import settings
 from django.utils.timezone import make_aware
 
+from network.base.models import Observation
+
 
 class ObservationOverlapError(Exception):
     """Error when observation overlaps with already scheduled one"""
@@ -214,22 +216,23 @@ def fit_observation_into_scheduled_observations(
     scheduled_observations.append(observation)
 
 
-def check_violators_scheduling_limit(violators, observations_per_norad_id):
+def check_violators_scheduling_limit(violators, observations_per_sat_id):
     """
     Check if observations to be scheduled for satellite violators exceed the scheduling limit.
     """
-    scheduled_observations_per_norad_id = defaultdict(list)
+    scheduled_observations_per_sat_id = defaultdict(list)
     time_limit = settings.OBSERVATIONS_PER_VIOLATOR_SATELLITE_PERIOD
     observations_limit = settings.OBSERVATIONS_PER_VIOLATOR_SATELLITE
     for satellite in violators:
-        for observation in satellite.observations.filter(
-                start__gte=make_aware(datetime.now() - timedelta(seconds=time_limit), timezone.utc)
-        ):
-            scheduled_observations_per_norad_id[satellite.norad_cat_id].append(observation.start)
-        for observation in observations_per_norad_id[satellite.norad_cat_id]:
+        for observation in Observation.objects.filter(
+                sat_id=satellite['sat_id'],
+                start__gte=make_aware(datetime.now() - timedelta(seconds=time_limit),
+                                      timezone.utc)):
+            scheduled_observations_per_sat_id[satellite['sat_id']].append(observation.start)
+        for observation in observations_per_sat_id[satellite['sat_id']]:
             fit_observation_into_scheduled_observations(
-                observation, scheduled_observations_per_norad_id[satellite.norad_cat_id],
+                observation, scheduled_observations_per_sat_id[satellite['sat_id']],
                 observations_limit, time_limit, '{0}({1}) is frequency violator satellite'.format(
-                    satellite.name, satellite.norad_cat_id
+                    satellite['name'], satellite['norad_cat_id']
                 )
             )

@@ -8,6 +8,7 @@ from django.utils.timezone import now
 from django.views.generic import RedirectView, UpdateView
 from rest_framework.authtoken.models import Token
 
+from network.base.cache import get_satellites
 from network.base.models import Observation, Station
 from network.base.perms import schedule_perms
 from network.users.forms import UserForm
@@ -53,9 +54,8 @@ def update_user_token(request):
 def view_user(request, username):
     """View for user page."""
     user = get_object_or_404(User, username=username)
-    observations = Observation.objects.filter(
-        author=user
-    )[0:10].prefetch_related('satellite', 'ground_station')
+    observations = Observation.objects.filter(author=user)[0:10].prefetch_related('ground_station')
+    sat_ids = [obs.sat_id for obs in observations]
 
     stations = Station.objects.filter(
         owner=user
@@ -70,11 +70,15 @@ def view_user(request, username):
                 token = Token.objects.get(user=user)
             except Token.DoesNotExist:
                 token = Token.objects.create(user=user)
-
+    all_sats = get_satellites()
     return render(
         request, 'users/user_detail.html', {
             'user': user,
             'observations': observations,
+            'satellites': {
+                sat_id: all_sats[sat_id]
+                for sat_id in sat_ids
+            },
             'stations': stations,
             'token': token,
             'can_schedule': can_schedule,

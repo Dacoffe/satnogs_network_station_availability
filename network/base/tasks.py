@@ -23,7 +23,7 @@ from tinytag.tinytag import TinyTagException
 
 from network.base.db_api import DBConnectionError, get_tle_sets_by_norad_id_set, \
     get_transmitters_by_uuid_set
-from network.base.models import DemodData, Observation, Satellite, Station
+from network.base.models import DemodData, Observation, Station
 from network.base.rating_tasks import rate_observation
 from network.base.signals import _station_post_save
 from network.base.utils import format_frequency, format_frequency_range, sync_demoddata_to_db
@@ -35,20 +35,24 @@ LOGGER = logging.getLogger('db')
 def get_and_refresh_transmitters_with_stats_cache(in_list_form=False):
     """Refreshes the cache of transmitters with associated statistics and returns them"""
     queryset = Observation.objects.order_by().values(
-        'transmitter_uuid', 'satellite__norad_cat_id', 'satellite__name',
-        'transmitter_downlink_low', 'transmitter_downlink_high', 'transmitter_type'
+        'sat_id', 'transmitter_uuid', 'transmitter_downlink_low', 'transmitter_downlink_high',
+        'transmitter_type'
     ).distinct().annotate(
         date=Max('end'),
         future=Count('pk', filter=Q(end__gt=now())),
         bad=Count('pk', filter=Q(status__range=(-100, -1))),
         unknown=Count('pk', filter=Q(status__range=(0, 99), end__lte=now())),
         good=Count('pk', filter=Q(status__gte=100)),
-    ).prefetch_related('satellite').order_by()
+    )
     object_dict = {}
+    sats = cache.get('satellites') or fetch_satellites()
     for transmitter in queryset:
         same_transmitter = object_dict.get(transmitter["transmitter_uuid"])
         if same_transmitter and same_transmitter["date"] > transmitter["date"]:
             continue
+        sat = sats[transmitter['sat_id']]
+        transmitter['satellite__norad_cat_id'] = sat['norad_cat_id']
+        transmitter['satellite__name'] = sat['name']
         total_count = 0
         unknown_count = transmitter['unknown'] or 0
         future_count = transmitter['future'] or 0
@@ -331,10 +335,12 @@ def update_future_observations_with_new_tle_sets():
     """ Update future observations with latest TLE sets"""
     start = now() + timedelta(minutes=10)
     future_observations = Observation.objects.filter(start__gt=start)
-    norad_id_set = set(future_observations.values_list('satellite__norad_cat_id', flat=True))
+    sat_id_set = set(future_observations.values_list('sat_id', flat=True))
+    sats = cache.get('satellites') or fetch_satellites()
+    norad_ids = {sats[sat_id]['norad_cat_id']: sat_id for sat_id in sat_id_set}
     try:
-        if norad_id_set:
-            tle_sets = get_tle_sets_by_norad_id_set(norad_id_set)
+        if norad_ids.keys():
+            tle_sets = get_tle_sets_by_norad_id_set(set(norad_ids.keys()))
         else:
             return
     except DBConnectionError:
@@ -345,7 +351,7 @@ def update_future_observations_with_new_tle_sets():
         tle_set = tle_sets[norad_id][0]
         tle_updated = datetime.strptime(tle_set['updated'], "%Y-%m-%dT%H:%M:%S.%f%z")
         future_observations.filter(
-            satellite__norad_cat_id=norad_id, tle_updated__lt=tle_updated
+            sat_id=norad_ids[norad_id], tle_updated__lt=tle_updated
         ).update(
             tle_line_0=tle_set['tle0'],
             tle_line_1=tle_set['tle1'],
@@ -419,49 +425,76 @@ def update_future_observations_with_new_transmitter_details():
 
 
 @shared_task
-def fetch_data():
-    """Fetch all satellites from SatNOGS DB
+def calculate_satellite_statistics():
+    """Calculates statistics for each satellite based on its transmitters stats and caches them"""
+    all_transmitters = (
+        cache.get('transmitters-with-stats') or get_and_refresh_transmitters_with_stats_cache()
+    ).values()
+
+    satellite_stats = {}
+    for transmitter in all_transmitters:
+        if not satellite_stats.get(transmitter['sat_id']):
+            satellite_stats[transmitter['sat_id']] = {
+                'unknown_rate': 0,
+                'future_rate': 0,
+                'success_rate': 0,
+                'bad_rate': 0,
+                'total_count': 0,
+                'unknown_count': 0,
+                'future_count': 0,
+                'good_count': 0,
+                'bad_count': 0,
+            }
+        satellite_stats[transmitter['sat_id']
+                        ]['total_count'] += transmitter['stats']['total_count']
+        satellite_stats[transmitter['sat_id']
+                        ]['unknown_count'] += transmitter['stats']['unknown_count']
+        satellite_stats[transmitter['sat_id']
+                        ]['future_count'] += transmitter['stats']['future_count']
+        satellite_stats[transmitter['sat_id']]['good_count'] += transmitter['stats']['good_count']
+        satellite_stats[transmitter['sat_id']]['bad_count'] += transmitter['stats']['bad_count']
+
+    del all_transmitters
+
+    for sat in satellite_stats.values():
+        total_count = sat['total_count']
+        if total_count:
+            sat['unknown_rate'] = math.trunc(10000 * (sat['unknown_count'] / total_count)) / 100
+            sat['future_rate'] = math.trunc(10000 * (sat['future_count'] / total_count)) / 100
+            sat['success_rate'] = math.trunc(10000 * (sat['good_count'] / total_count)) / 100
+            sat['bad_rate'] = math.trunc(10000 * (sat['bad_count'] / total_count)) / 100
+
+    cache.set('satellite_stats', satellite_stats)
+    return satellite_stats
+
+
+@shared_task
+def fetch_satellites():
+    """Fetch all satellites from SatNOGS DB and stores them in cache
 
        Throws: requests.exceptions.ConectionError"""
 
     db_api_url = settings.DB_API_ENDPOINT
     if not db_api_url:
         LOGGER.info("Zero length api url, fetching is stopped")
-        return
+        raise DBConnectionError('Error in DB API connection. Blank DB API URL!')
     satellites_url = "{}satellites".format(db_api_url)
 
     LOGGER.info("Fetching Satellites from %s", satellites_url)
-    r_satellites = requests.get(satellites_url, timeout=settings.DB_API_TIMEOUT)
-
-    # Fetch Satellites
-    satellites_added = 0
-    satellites_updated = 0
+    try:
+        r_satellites = requests.get(satellites_url, timeout=settings.DB_API_TIMEOUT)
+    except requests.exceptions.RequestException as error:
+        raise DBConnectionError('Error in DB API connection. Please try again!') from error
+    satellite_dict = {}
     for satellite in r_satellites.json():
-        if satellite['norad_cat_id']:
-            norad_cat_id = satellite['norad_cat_id']
-            satellite.pop('decayed', None)
-            satellite.pop('launched', None)
-            satellite.pop('deployed', None)
-            satellite.pop('website', None)
-            satellite.pop('operator', None)
-            satellite.pop('countries', None)
-            satellite.pop('telemetries', None)
-            satellite.pop('updated', None)
-            satellite.pop('citation', None)
-            satellite.pop('associated_satellites', None)
-            satellite.pop('norad_follow_id', None)
-            try:
-                # Update Satellite
-                existing_satellite = Satellite.objects.get(norad_cat_id=norad_cat_id)
-                existing_satellite.__dict__.update(satellite)
-                existing_satellite.save()
-                satellites_updated += 1
-            except Satellite.DoesNotExist:
-                # Add Satellite
-                Satellite.objects.create(**satellite)
-                satellites_added += 1
+        sat_id = satellite.get('sat_id')
+        satellite_dict[sat_id] = satellite
+        for associated_sat_id in satellite['associated_satellites']:
+            satellite_dict[associated_sat_id] = satellite
 
-    LOGGER.info('Added/Updated %s/%s satellites from db.', satellites_added, satellites_updated)
+    cache.set('satellites', satellite_dict)
+    calculate_satellite_statistics.delay()
+    return satellite_dict
 
 
 @shared_task

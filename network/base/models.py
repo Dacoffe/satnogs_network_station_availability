@@ -454,36 +454,8 @@ class StationStatusLog(models.Model):
         return '{0} - {1}'.format(self.station, self.status)
 
 
-class Satellite(models.Model):
-    """Model for SatNOGS satellites."""
-    norad_cat_id = models.PositiveIntegerField(db_index=True)
-    sat_id = models.CharField(null=True, blank=True, max_length=24)
-    name = models.CharField(max_length=45)
-    names = models.TextField(blank=True)
-    image = models.CharField(max_length=100, blank=True, null=True)
-    status = models.CharField(
-        choices=list(zip(SATELLITE_STATUS, SATELLITE_STATUS)), max_length=10, default='alive'
-    )
-    is_frequency_violator = models.BooleanField(default=False)
-
-    class Meta:
-        ordering = ['norad_cat_id']
-
-    def get_image(self):
-        """Return the station image or the default if doesn't exist one"""
-        if self.image:
-            return self.image
-        return settings.SATELLITE_DEFAULT_IMAGE
-
-    def __str__(self):
-        return self.name
-
-
 class Observation(models.Model):
     """Model for SatNOGS observations."""
-    satellite = models.ForeignKey(
-        Satellite, related_name='observations', on_delete=models.SET_NULL, null=True, blank=True
-    )
     sat_id = models.CharField(max_length=24)
     tle_line_0 = models.CharField(
         max_length=69, blank=True, validators=[MinLengthValidator(1),
@@ -725,11 +697,6 @@ class Observation(models.Model):
 
     def __str__(self):
         return str(self.id)
-
-    def save(self, *args, **kwargs):
-        if self.pk is None:
-            self.sat_id = self.satellite.sat_id or '' if self.satellite else ''
-        super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         """Return absolute url of the model object"""
