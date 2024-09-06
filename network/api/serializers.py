@@ -114,8 +114,8 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
             'transmitter_uplink_low', 'transmitter_uplink_high', 'transmitter_uplink_drift',
             'transmitter_downlink_low', 'transmitter_downlink_high', 'transmitter_downlink_drift',
             'transmitter_mode', 'transmitter_invert', 'transmitter_baud', 'transmitter_updated',
-            'transmitter_status', 'tle0', 'tle1', 'tle2', 'center_frequency', 'observer',
-            'observation_frequency', 'transmitter_unconfirmed'
+            'transmitter_status', 'tle0', 'tle1', 'tle2', 'tle_source', 'center_frequency',
+            'observer', 'observation_frequency', 'transmitter_unconfirmed'
         )
         read_only_fields = [
             'id', 'start', 'end', 'observation', 'ground_station', 'transmitter', 'norad_cat_id',
@@ -127,8 +127,8 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
             'transmitter_uplink_drift', 'transmitter_downlink_low', 'transmitter_downlink_high',
             'transmitter_downlink_drift', 'transmitter_mode', 'transmitter_invert',
             'transmitter_baud', 'transmitter_created', 'transmitter_updated', 'transmitter_status',
-            'tle0', 'tle1', 'tle2', 'observer', 'center_frequency', 'observation_frequency',
-            'transmitter_unconfirmed'
+            'tle0', 'tle1', 'tle2', 'tle_source', 'observer', 'center_frequency',
+            'observation_frequency', 'transmitter_unconfirmed'
         ]
 
     def update(self, instance, validated_data):
