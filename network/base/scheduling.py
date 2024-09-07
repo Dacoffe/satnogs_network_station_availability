@@ -323,11 +323,11 @@ def generate_geo_observation_window(observer, satellite, start, end):
     :param observer: ephem object for the station
     :type observer: ephem.Observer
     :param satellite: ephem object for the satellite
-    :type satellite: ephem.Body
+    :type satellite: ephem.EarthSatellite
     :param start: Start datetime of scheduling period
-    :type start: datetime string in '%Y-%m-%d %H:%M'
+    :type start: timezone-aware datetime (UTC)
     :param end: End datetime of scheduling period
-    :type end: datetime string in '%Y-%m-%d %H:%M'
+    :type end: timezone-aware datetime (UTC)
 
     :return: pass parameters used for generating observation windows
     '''
@@ -354,7 +354,7 @@ def generate_overhead_observation_window(observer, satellite):
     :param observer: ephem object for the station
     :type observer: ephem.Observer
     :param satellite: ephem object for the satellite
-    :type satellite: ephem.Body
+    :type satellite: ephem.EarthSatellite
 
     :return: pass parameters used for generating observation windows
     '''
@@ -408,11 +408,13 @@ def predict_available_observation_windows(
     :param tle: Satellite current TLE
     :type tle: dictionary with Tle details
     :param start: Start datetime of scheduling period
-    :type start: datetime string in '%Y-%m-%d %H:%M'
+    :type start: timezone-aware datetime (UTC)
     :param end: End datetime of scheduling period
-    :type end: datetime string in '%Y-%m-%d %H:%M'
+    :type end: timezone-aware datetime (UTC)
     :param sat: Satellite for scheduling
     :type sat: Satellite django.db.model.Model
+    :param duration: Duration parameters, values in seconds, keys: split & break
+    :type duration: dict[str, int]
 
     :return: List of passes found and list of available observation windows
     '''
