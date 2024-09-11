@@ -360,9 +360,14 @@
             <span class="badge badge-secondary">TLE epoch time</span>
           </td>
           <td>
+            {% if tle_datetime %}
             <span data-toggle="tooltip" data-placement="bottom" title="{{ tle_datetime|naturaltime }}">
               <span class="datetime-date">{{ tle_datetime|date:"Y-m-d" }}</span>
               <span class="datetime-time">{{ tle_datetime|date:"H:i:s" }}</span><br>
+            {% else %}
+            <span data-toggle="tooltip" data-placement="bottom">
+              -
+            {% endif %}
             </span>
           </td>
         </tr>
@@ -372,7 +377,11 @@
           </td>
           <td>
           <span data-toggle="tooltip" data-placement="bottom" title="{{ epoch_difference|date:"Y-m-d H:i:s" }}">
-            {{ tle_datetime|timesince:observation.start}}
+            {% if tle_datetime %}
+              {{ tle_datetime|timesince:observation.start}}
+            {% else %}
+              -
+            {% endif %}
           </span><br>
           </td>
         </tr>

@@ -485,21 +485,26 @@ def observation_view(request, observation_id):
 
 
 def calculate_datetime_from_tle(observation_id):
-    """Converts TLE epoch to datetime object"""
+    """
+    Converts TLE epoch to datetime object.
+    :returns: timezone-aware datetime or None: The epoch for the given TLE
+    """
     observation = get_object_or_404(Observation, id=observation_id)
 
-    # Parse the TLE data to create an ephem EarthSatellite object
-    tle = ephem.readtle(observation.tle_line_0, observation.tle_line_1, observation.tle_line_2)
+    try:
+        # Parse the TLE data to create an ephem EarthSatellite object
+        tle = ephem.readtle(observation.tle_line_0, observation.tle_line_1, observation.tle_line_2)
 
-    # Get the TLE epoch time as an ephem.Date object
-    epoch_date = tle.epoch
+        # Get the TLE epoch time as an ephem.Date object
+        epoch_date = tle.epoch
 
-    # Convert the epoch time to a datetime object
-    epoch_datetime = datetime.strptime(str(epoch_date), "%Y/%m/%d %H:%M:%S")
+        # Convert the epoch time to a datetime object
+        epoch_datetime = datetime.strptime(str(epoch_date), "%Y/%m/%d %H:%M:%S")
 
-    # Make epoch_datetime timezone-aware
-    tle_datetime = timezone.make_aware(epoch_datetime)
-
+        # Make epoch_datetime timezone-aware
+        tle_datetime = timezone.make_aware(epoch_datetime)
+    except ValueError:
+        tle_datetime = None
     return tle_datetime
 
 
