@@ -27,7 +27,7 @@ def not_true(value):
 @register.simple_tag
 def active(request, urls):
     """Returns if this is an active URL"""
-    if request.path in (reverse(url) for url in urls.split()):
+    if hasattr(request, 'path') and request.path in (reverse(url) for url in urls.split()):
         return 'active'
     return None
 
