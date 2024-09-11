@@ -12,7 +12,7 @@ def _station_post_save(sender, instance, created, **kwargs):  # pylint: disable=
     """
     post_save.disconnect(_station_post_save, sender=Station)
     instance.update_status(created=created)
-    post_save.connect(_station_post_save, sender=Station)
+    post_save.connect(_station_post_save, sender=Station, weak=False)
 
 
 def _station_pre_delete(sender, instance, **kwargs):  # pylint: disable=W0613
@@ -23,6 +23,6 @@ def _station_pre_delete(sender, instance, **kwargs):  # pylint: disable=W0613
     instance.observations.filter(start__gte=now()).delete()
 
 
-post_save.connect(_station_post_save, sender=Station)
+post_save.connect(_station_post_save, sender=Station, weak=False)
 
-pre_delete.connect(_station_pre_delete, sender=Station)
+pre_delete.connect(_station_pre_delete, sender=Station, weak=False)

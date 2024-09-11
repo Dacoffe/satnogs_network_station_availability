@@ -521,7 +521,7 @@ def station_status_update():
     post_save.disconnect(_station_post_save, sender=Station)
     for station in Station.objects.all():
         station.update_status(created=False)
-    post_save.connect(_station_post_save, sender=Station)
+    post_save.connect(_station_post_save, sender=Station, weak=False)
 
 
 @shared_task

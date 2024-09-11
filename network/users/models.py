@@ -30,4 +30,4 @@ class User(AbstractUser):
         return self.username
 
 
-post_save.connect(gen_token, sender=User)
+post_save.connect(gen_token, sender=User, weak=False)
