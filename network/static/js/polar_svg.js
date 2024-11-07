@@ -56,6 +56,15 @@ function calcPolarPlotSVG(timeframe, groundstation, tleLine1, tleLine2) {
     polarOrbit.setAttributeNS(null, 'stroke-opacity', '1.0');
     polarOrbit.setAttributeNS(null, 'stroke-width', '3');
 
+    // Normalize BStar term
+    // Workaround, until either the parser in satellite.js is changed
+    // or satellite-db returns normalized TLEs only
+    tleLine1 = tleLine1.substring(0, 53) +
+               tleLine1.substring(53, 54).replace(/\s/g, '0') +
+               tleLine1.substring(54, 59) +
+               tleLine1.substring(59, 61).replace(/\s/g, '0') +
+               tleLine1.substring(61);
+
     // Initialize the satellite record
     var satrec = satellite.twoline2satrec(tleLine1, tleLine2);
 
