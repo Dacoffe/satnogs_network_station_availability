@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 import factory
 import pytest
+from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.db import transaction
@@ -101,12 +102,19 @@ class FrequencyRangeFactory(factory.django.DjangoModelFactory):
 
 def create_satellite():
     """Adds a new satellite to cache and returns it."""
+    sats = get_satellites()
+
+    # This function is used when testing but also by the 'initialize' management command.
+    # When it is used by 'initialize', we want actual sat_id values.
+    # When testing, satellite data from satnogs-db is not available so we mock them.
+    sat_id = fuzzy.FuzzyText(
+        length=24
+    ).fuzz() if settings.TESTING else fuzzy.FuzzyChoice(list(sats.keys())).fuzz()
     sat = {
-        'sat_id': fuzzy.FuzzyText(length=24).fuzz(),
+        'sat_id': sat_id,
         'name': fuzzy.FuzzyText().fuzz(),
         'norad_cat_id': fuzzy.FuzzyInteger(2000, 4000).fuzz()
     }
-    sats = get_satellites()
     sats[sat['sat_id']] = sat
     cache.set('satellites', sats)
     return sat

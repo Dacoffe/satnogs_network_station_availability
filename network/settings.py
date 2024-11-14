@@ -4,6 +4,7 @@ For local installation settings please copy .env-dist to .env and edit
 the appropriate settings in that file. You should not need to edit this
 file for local settings!
 """
+import sys
 from pathlib import Path
 
 from decouple import Csv, config
@@ -20,6 +21,7 @@ ROOT = Path(__file__).parent
 ENVIRONMENT = config('ENVIRONMENT', default='dev')
 DEBUG = config('DEBUG', default=True, cast=bool)
 AUTH0 = config('AUTH0', default=False, cast=bool)
+TESTING = 'pytest' in sys.modules
 
 # Apps
 DJANGO_APPS = (

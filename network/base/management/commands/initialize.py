@@ -2,7 +2,6 @@
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
-from network.base.models import AntennaType
 from network.base.tests import AntennaFactory, DemodDataFactory, FrequencyRangeFactory, \
     RealisticObservationFactory, StationFactory, generate_payload, generate_payload_name
 
@@ -21,32 +20,11 @@ class Command(BaseCommand):
         self.stdout.write("Creating database...")
         call_command('migrate')
 
-        #  Initial data
-        call_command('fetch_satellites')
+        # Fetch Satellite and transmitters
+        call_command('fetch_data')
 
-        # Check if migration AntennaType data have been removed
-        if not AntennaType.objects.all():
-            AntennaType.objects.bulk_create(
-                [
-                    AntennaType(name="Dipole"),
-                    AntennaType(name="V-Dipole"),
-                    AntennaType(name="Discone"),
-                    AntennaType(name="Ground Plane"),
-                    AntennaType(name="Yagi"),
-                    AntennaType(name="Cross Yagi"),
-                    AntennaType(name="Helical"),
-                    AntennaType(name="Parabolic"),
-                    AntennaType(name="Vertical"),
-                    AntennaType(name="Turnstile"),
-                    AntennaType(name="Quadrafilar"),
-                    AntennaType(name="Eggbeater"),
-                    AntennaType(name="Lindenblad"),
-                    AntennaType(name="Parasitic Lindenblad"),
-                    AntennaType(name="Patch"),
-                    AntennaType(name="Other Directional"),
-                    AntennaType(name="Other Omni-Directional"),
-                ]
-            )
+        # Load default data for antennaes and station configuration schemas
+        call_command('load_default_data')
 
         # Create random fixtures for remaining models
         self.stdout.write("Creating fixtures...")
