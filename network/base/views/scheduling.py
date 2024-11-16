@@ -96,6 +96,15 @@ def observation_new_post(request):
         else:
             messages.success(request, str(total) + ' Observations were scheduled successfully.')
             response = redirect(reverse('base:observations_list'))
+            observer = request.user.id
+            start = request.POST.get('start')
+            end = request.POST.get('end')
+            satellite = request.POST.get('satellite')
+            transmitter_uuid = request.POST.get('transmitter')
+            response['Location'] += (
+                f'?observer={observer}&start={start}&end={end}'
+                f'&norad={satellite}&transmitter_uuid={transmitter_uuid}'
+            )
     except (ObservationOverlapError, NegativeElevationError, NoTleSetError, SinglePassError,
             ValidationError, ValueError, SchedulingLimitError) as error:
         messages.error(request, str(error))
