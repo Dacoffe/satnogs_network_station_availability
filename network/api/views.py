@@ -312,7 +312,11 @@ class StationConfigurationView(viewsets.ReadOnlyModelViewSet):
                 "satnogs_api_token": config_obj.station.owner.auth_token.key
             }
         )
-        return {'id': config_obj.pk, 'configuration': flat_config}
+        return {
+            'id': config_obj.pk,
+            'station_name': config_obj.station.name,
+            'configuration': flat_config
+        }
 
     def list(self, request, *args, **kwargs):
         configuration = get_object_or_404(
