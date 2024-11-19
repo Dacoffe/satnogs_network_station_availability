@@ -200,7 +200,8 @@ class ObservationListBaseView(ListView):
         context = super().get_context_data(**kwargs)
         context.update(self.filter_params)
         context['satellites'] = get_satellites()
-        context['authors'] = User.objects.all().order_by('first_name', 'last_name', 'username')
+        context['authors'] = User.objects.filter(is_observer=True
+                                                 ).order_by('first_name', 'last_name', 'username')
         context['stations'] = Station.objects.all().order_by('id')
         start = get_one_day_ago() if not self.filtered else self.request.GET.get('start')
         end = self.request.GET.get('end', None)

@@ -18,6 +18,7 @@ class User(AbstractUser):
     """Model for SatNOGS users."""
 
     bio = models.TextField(default='', validators=[MaxLengthValidator(1000)])
+    is_observer = models.BooleanField(default=False)
 
     @property
     def displayname(self):

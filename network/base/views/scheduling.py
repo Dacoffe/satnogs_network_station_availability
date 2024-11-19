@@ -80,6 +80,9 @@ def observation_new_post(request):
             return redirect(reverse('base:observation_new'))
 
         new_observations = create_new_observations(formset, request.user)
+        if not request.user.is_observer:
+            request.user.is_observer = True
+            request.user.save(update_fields=['is_observer'])
 
         if 'scheduled' in request.session:
             del request.session['scheduled']

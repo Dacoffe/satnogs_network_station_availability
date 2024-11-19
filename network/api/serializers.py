@@ -406,6 +406,10 @@ class NewObservationListSerializer(serializers.ListSerializer):
         for observation in new_observations:
             observation.save()
 
+        if not self.context['request'].user.is_observer:
+            self.context['request'].user.is_observer = True
+            self.context['request'].user.save(update_fields=['is_observer'])
+
         return new_observations
 
     def update(self, instance, validated_data):
