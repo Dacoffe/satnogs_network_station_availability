@@ -89,13 +89,13 @@ $(document).ready( function(){
                     custom_split_formgroup.addClass('has-error');
                     $('#split-duration-span').addClass('alert-error');
                     $('#calculate-observation').prop('disabled', true);
-                    $('#schedule-observation').prop('disabled', true);
+                    $('.schedule-observation-btn').prop('disabled', true);
                     $('#split-duration-span').html(get_errors(has_error, min_value, null));
                 } else {
                     custom_split_formgroup.removeClass('has-error');
                     $('#split-duration-span').removeClass('alert-error');
                     $('#calculate-observation').prop('disabled', false);
-                    $('#schedule-observation').prop('disabled', false);
+                    $('.schedule-observation-btn').prop('disabled', false);
                     $('#split-duration-span').html('');
                 }
             });
@@ -512,7 +512,7 @@ $(document).ready( function(){
     function update_schedule_button_status(){
         var obs_counter = $('rect').not('.unselected-obs').length;
         if (obs_counter == 0){
-            $('#schedule-observation').prop('disabled', true);
+            $('.schedule-observation-btn').prop('disabled', true);
             $('#selected-observations').html(
                 'No observation selected! Please select one or more.'
             ).addClass(
@@ -521,7 +521,7 @@ $(document).ready( function(){
                 'text-success bg-success'
             );
         } else if (obs_counter == 1){
-            $('#schedule-observation').prop('disabled', false);
+            $('.schedule-observation-btn').prop('disabled', false);
             $('#selected-observations').html(
                 'One selected observation.'
             ).removeClass(
@@ -530,7 +530,7 @@ $(document).ready( function(){
                 'text-success bg-success'
             );
         } else if (obs_counter > 180){
-            $('#schedule-observation').prop('disabled', true);
+            $('.schedule-observation-btn').prop('disabled', true);
             $('#selected-observations').html(
                 'Selected observations: ' + obs_counter + '! This is over the limit, please select less than 180.'
             ).addClass(
@@ -539,7 +539,7 @@ $(document).ready( function(){
                 'text-success bg-success'
             );
         } else {
-            $('#schedule-observation').prop('disabled', false);
+            $('.schedule-observation-btn').prop('disabled', false);
             $('#selected-observations').html(
                 'Selected observations: ' + obs_counter
             ).removeClass(
@@ -605,12 +605,12 @@ $(document).ready( function(){
 
     $('#modal-schedule-observation').on('click', function() {
         $(this).prop('disabled', true);
-        $('#schedule-observation').prop('disabled', true);
+        $('.schedule-observation-btn').prop('disabled', true);
         $('#calculate-observation').prop('disabled', true);
         $('#form-obs').submit();
     });
 
-    $('#schedule-observation').on('click', function() {
+    $('.schedule-observation-btn').on('click', function() {
         $('#windows-data').empty();
         var obs_counter = 0;
         var station_counter = 0;
@@ -786,14 +786,16 @@ $(document).ready( function(){
     function initiliaze_calculation(show_results){
         if(show_results){
             $('.calculation-result').show();
+            $('#schedule-observation-btn2').show();
         } else {
             $('.calculation-result').hide();
+            $('#schedule-observation-btn2').hide();
         }
         $('#obs-selection-tools').hide();
         $('#timeline').empty();
         $('#hover-obs').hide();
         $('#windows-data').empty();
-        $('#schedule-observation').prop('disabled', true);
+        $('.schedule-observation-btn').prop('disabled', true);
         $('#calculate-observation').prop('disabled', false);
     }
 
@@ -849,7 +851,6 @@ $(document).ready( function(){
     const frequency_input = $('#center-frequency-input');
     const frequency_formgroup = $('#center-frequency-formgroup');
     const calculate_button = $('#calculate-observation');
-    const schedule_observation = $('#schedule-observation');
     const transmitter_selection = $('#transmitter-selection');
     const frequency_errors = { '1': 'Value is not a number', '2': 'Value out of range' };
 
@@ -872,7 +873,7 @@ $(document).ready( function(){
             frequency_input.data('is-valid', true);
             frequency_input_format.html(format_frequency(val));
             calculate_button.prop('disabled', false);
-            schedule_observation.prop('disabled', false);
+            $('.schedule-observation-btn').prop('disabled', false);
             var transmitter_object = transmitter_selection.find(':selected');
             search_for_stations(transmitter_object);
         } else {
@@ -880,7 +881,7 @@ $(document).ready( function(){
             frequency_input_format.addClass('alert-error');
             frequency_input_format.html(frequency_errors[has_error]);
             calculate_button.prop('disabled', true);
-            schedule_observation.prop('disabled', true);
+            $('.schedule-observation-btn').prop('disabled', true);
             frequency_input.data('is-valid', false);
         }
     });
@@ -1199,7 +1200,7 @@ $(document).ready( function(){
             if (event.which == 67) {
                 calculate_observation();
             } else if (event.which == 83) {
-                var link_schedule = $('#schedule-observation');
+                var link_schedule = $('#schedule-observation-btn1');
                 link_schedule[0].click();
             }
         }

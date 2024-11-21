@@ -306,6 +306,10 @@
 
     <div class="row justify-content-end">
       <div class="col-">
+        <button type="button" id="schedule-observation-btn2" data-warn-min-obs="{{ warn_min_obs }}" class="btn btn-success schedule-observation-btn" disabled="True">
+          <i class="bi bi-calendar2-range" aria-hidden="true"></i>
+          Schedule
+        </button>
         <button type="button" id="calculate-observation" class="btn btn-primary">
           <i class="bi bi-calculator-fill" aria-hidden="true"></i>
           Calculate
@@ -359,7 +363,7 @@
 
     <div id="schedule-selection" class="row calculation-result">
       <div class="col-md-12">
-        <button type="button" id="schedule-observation" data-warn-min-obs="{{ warn_min_obs }}" class="btn btn-success" disabled="True">
+        <button type="button" id="schedule-observation-btn1" data-warn-min-obs="{{ warn_min_obs }}" class="btn btn-success schedule-observation-btn" disabled="True">
           <i class="bi bi-calendar2-range" aria-hidden="true"></i>
           Schedule
         </button>
