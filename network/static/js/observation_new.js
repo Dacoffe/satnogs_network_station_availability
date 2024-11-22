@@ -371,6 +371,22 @@ $(document).ready( function(){
         `;
     }
 
+    function show_alert(type, msg){
+        $('#alert-messages').html(
+            `<div class="col-md-12">
+               <div class="alert alert-` + type + ' alert-dismissible" role="alert">'
+               + msg +
+                `<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                   <span aria-hidden="true">&times;</span>
+                 </button>
+               </div>
+             </div>`);
+    }
+
+    function clear_alerts() {
+        $('#alert-messages').html('');
+    }
+
     function select_proper_transmitters(filters){
         var url = '/transmitters/';
         var data = {'satellite': filters.satellite};
@@ -391,13 +407,26 @@ $(document).ready( function(){
                 $('#station-field-loading').show();
             }
         }).done(function(data) {
+            console.debug(data.length);
             if (data.length == 1 && data[0].error) {
                 $('#transmitter-selection').html(`<option id="no-transmitter"
                                                           value="" selected>
-                                                    No transmitter available
+                                                    An error occured.
                                                   </option>`).prop('disabled', true);
                 $('#transmitter-selection').selectpicker('refresh');
+                show_alert('danger', data[0].error);
+                $('#station-field-loading').hide();
+            } else if (!data.length) {
+                const msg = `The selected satellite does not have a transmitter associated with it in
+SatNOGS DB. You can submit a transmitter suggestion in SatNOGS DB,
+and once approved, it will be available for scheduling here.`;
+
+                $('#transmitter-selection').html('<option id="no-transmitter" value="" selected> No transmitters available.</option>').prop('disabled', true);
+                $('#transmitter-selection').selectpicker('refresh');
+                show_alert('info', msg);
+                $('#station-field-loading').hide();
             } else if (data.transmitters_active.length > 0 || data.transmitters_inactive.length > 0 ||  data.transmitters_unconfirmed.length > 0) {
+                clear_alerts();
                 var transmitters_options = '';
                 var inactive_transmitters_options = '';
                 var unconfirmed_transmitters_options = '';

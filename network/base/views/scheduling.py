@@ -534,18 +534,25 @@ def transmitters_view(request):
     """Returns a transmitter JSON object with information and statistics"""
     sat_id = request.POST.get('satellite', None)
     station_id = request.POST.get('station_id', None)
-
-    if sat_id:
-        satellite = get_satellites()[sat_id]
-        if not satellite:
-            raise ValueError('Unable to find that satellite.')
-    else:
-        raise ValueError('Satellite not provided.')
+    try:
+        if sat_id:
+            satellite = get_satellites()[sat_id]
+        else:
+            data = {'error': 'Satellite not provided.'}
+            return JsonResponse(data, safe=False)
+    except KeyError:
+        data = {'error': 'Unable to find that satellite.'}
+        return JsonResponse(data, safe=False)
 
     try:
         transmitters = get_transmitters_by_sat_id(sat_id)
-    except (DBConnectionError, ValueError) as error:
-        data = [{'error': str(error)}]
+    except DBConnectionError:
+        data = [
+            {
+                'error': 'Could\'t reach the SatNOGS DB service, which is needed to provide the '
+                'latest list of transmitters. Please try again in a few moments.'
+            }
+        ]
         return JsonResponse(data, safe=False)
 
     transmitters = [
@@ -558,7 +565,7 @@ def transmitters_view(request):
         )
         if satellite['is_frequency_violator'] and not schedule_station_violators_perms(
                 request.user, station):
-            data = {'error': 'No permission to schedule this satellite on this station.'}
+            data = [{'error': 'No permission to schedule this satellite on this station.'}]
             return JsonResponse(data, safe=False)
         for transmitter in transmitters:
             transmitter_supported = is_transmitter_in_station_range(transmitter, station)
@@ -577,5 +584,10 @@ def transmitters_view(request):
             [t for t in transmitters if t["unconfirmed"]]
         ),
     }
+
+    if not any((data['transmitters_active'], data['transmitters_inactive'],
+                data['transmitters_unconfirmed'])):
+        data = []
+        return JsonResponse(data, safe=False)
 
     return JsonResponse(data, safe=False)

@@ -62,7 +62,7 @@ def satnogs_db_api_request(url):
         raise DBConnectionError('Error in DB API connection. Blank DB API URL!')
     try:
         request = requests.get(url, timeout=DB_API_TIMEOUT)
-    except requests.exceptions.RequestException as error:
+    except (requests.exceptions.RequestException, requests.exceptions.Timeout) as error:
         raise DBConnectionError('Error in DB API connection. Please try again!') from error
     return request.json()
 
