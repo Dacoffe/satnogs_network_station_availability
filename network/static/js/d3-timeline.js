@@ -147,14 +147,25 @@
         };
   
         var appendLabel = function (gParent, yAxisMapping, index, hasLabel, datum) {
-            var fullItemHeight    = itemHeight + itemMargin;
-            var rowsDown          = margin.top + (fullItemHeight/2) + fullItemHeight * (yAxisMapping[index] || 1);
-  
-            gParent.append('text')
+            var fullItemHeight = itemHeight + itemMargin;
+            var rowsDown = margin.top + (fullItemHeight / 2) + fullItemHeight * (yAxisMapping[index] || 1);
+        
+            gParent.append('foreignObject')
+                .attr('x', labelMargin)
+                .attr('y', rowsDown - 10) // Adjusting `y` to center-align the label
+                .attr('width', 140) // Width of the foreignObject
+                .attr('height', 20) // Height of the foreignObject
+                .append('xhtml:div') // Create an XHTML div for use inside the SVG
+                .attr('title', hasLabel ? labelFunction(datum.label) : datum.id) // Tooltip for full text
+                .style('width', '140px')
                 .attr('class', 'timeline-label')
-                .attr('transform', 'translate(' + labelMargin + ',' + rowsDown + ')')
-                .text(hasLabel ? labelFunction(datum.label) : datum.id)
-                .on('click', function (d, i) { click(d, index, datum); });
+                .style('white-space', 'nowrap')
+                .style('overflow', 'hidden')
+                .style('text-overflow', 'ellipsis')
+                .text(hasLabel ? labelFunction(datum.label) : datum.id) // Display the truncated text
+                .on('click', function (d, i) {
+                    click(d, index, datum);
+                });
         };
   
         function timeline (gParent) {
