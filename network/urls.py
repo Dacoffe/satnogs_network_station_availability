@@ -14,13 +14,14 @@ urlpatterns = [
     path('', include(BASE_URLPATTERNS)),
     path('admin/', admin.site.urls),
     path('users/', include(USERS_URLPATTERNS)),
-    path('accounts/', include(allauth_urls)),
     path('api/', include(API_URLPATTERNS))
 ]
 
 # Auth0
 if settings.AUTH0:
     urlpatterns += [path('', include('auth0login.urls'))]
+else:
+    urlpatterns += [path('accounts/', include(allauth_urls))]
 
 if settings.DEBUG:
     import debug_toolbar

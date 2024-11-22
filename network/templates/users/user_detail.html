@@ -25,9 +25,11 @@
             <a class="btn btn-primary" role=button" href="{% url 'users:update_user' %}">
               <span class="bi bi-gear" aria-hidden="true"></span> Settings
            </a>
+           {% if not using_auth0 %}
            <a class="btn btn-primary"  role=button" href="{% url 'account_email' %}">
               <span class="bi bi-envelope-at" aria-hidden="true"></span> Email
            </a>
+           {% endif %}
            <a class="btn btn-info"  role=button" data-toggle="modal" data-target="#APIModal" href="#">
               <span class="bi bi-Key" aria-hidden="true"></span> API Key
            </a>
@@ -41,9 +43,11 @@
             <a class="btn btn-primary" role=button" href="{% url 'users:update_user' %}">
               <span class="bi bi-gear" aria-hidden="true"></span>
            </a>
+           {% if not using_auth0 %}
            <a class="btn btn-primary"  role=button" href="{% url 'account_email' %}">
               <span class="bi bi-envelope-at" aria-hidden="true"></span>
            </a>
+           {% endif %}
            <a class="btn btn-info"  role=button" data-toggle="modal" data-target="#APIModal" href="#">
               <span class="bi bi-Key" aria-hidden="true"></span>
            </a>

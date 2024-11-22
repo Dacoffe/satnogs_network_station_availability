@@ -78,6 +78,7 @@ def view_user(request, username):
             'observations': observations,
             'stations': stations,
             'token': token,
-            'can_schedule': can_schedule
+            'can_schedule': can_schedule,
+            'using_auth0': settings.AUTH0
         }
     )
