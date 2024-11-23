@@ -122,6 +122,16 @@
             {% endif %}
           </td>
         </tr>
+        {% if observation.testing == True %}
+        <tr>
+          <td>
+            <span class="badge badge-secondary">Experimental</span>
+          </td>
+          <td>
+              <span class="badge badge-testing" data-toggle="tooltip" data-original-title="Observation from a testing station"> Yes </span>
+          </td>
+        </tr>
+        {% endif %}
         <tr>
           <td>
             <span class="badge badge-secondary">Status</span>
