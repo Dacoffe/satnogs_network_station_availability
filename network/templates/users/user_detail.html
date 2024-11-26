@@ -78,6 +78,7 @@
                 <th>Location</th>
                 <th>Total</th>
                 <th>Future</th>
+                <th>Client Version</th>
                 <th>Antennas</th>
               </thead>
               <tbody>
@@ -128,6 +129,9 @@
                       <a href="{% url 'base:observations_list' %}?future=1&good=0&bad=0&unknown=0&failed=0&station={{ station.id }}" class="badge badge-info badge-pill">
                         {{ station.observations_stats.future }}
                       </a>
+                    </td>
+                    <td>
+                      <span>{{ station.client_version|default:"N/A" }}</span>
                     </td>
                     <td class="antennas">
                       {% for antenna in station.antennas.all %}
