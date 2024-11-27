@@ -2,11 +2,27 @@
 from hashlib import md5
 
 from django import template
+from django.conf import settings
 from django.urls import reverse
 
 from network.base.utils import format_frequency
 
 register = template.Library()
+
+
+@register.simple_tag
+def satnogs_db_url():
+    """
+    Returns the configured SatNOGS DB URL
+
+    Usage:
+        {{ satnogs_db_url }}
+    """
+
+    # Drop path from URL (usually 'api/')
+    satnogs_db_base_url = settings.DB_API_ENDPOINT.rstrip('/')[:-3]
+
+    return satnogs_db_base_url
 
 
 # TEMPLATE USE:  {{ email|gravatar_url:150 }}

@@ -1,4 +1,5 @@
-<div class="modal fade" id="SatelliteModal" tabindex="-1" role="dialog" aria-labelledby="SatelliteModalTitle" aria-hidden="true">
+{% load tags %}
+<div class="modal fade" id="SatelliteModal" data-db_url="{% satnogs_db_url %}"  tabindex="-1" role="dialog" aria-labelledby="SatelliteModalTitle" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header align-items-center justify-content-between">
@@ -9,7 +10,7 @@
               <span class="bi bi-plus" aria-hidden="true"></span> New Observation
             </a>
           {% endif %}
-          <a class="btn btn-sm btn-outline-dark" href="https://db.satnogs.org/" target="_blank" id="db-link">
+          <a class="btn btn-sm btn-outline-dark" href="#" target="_blank" id="db-link">
             <span class="bi bi-box-arrow-up-right" aria-hidden="true"></span> SatNOGS DB
           </a>
         </div>

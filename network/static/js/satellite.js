@@ -7,7 +7,7 @@ function satellite_script() {
     $('#SatelliteModal').on('show.bs.modal', function (event) {
         var satlink = $(event.relatedTarget);
         var modal = $(this);
-        var satnogs_db_url = 'https://db.satnogs.org';
+        var satnogs_db_url = event.target.dataset['db_url'];
 
         $.ajax({
             url: '/satellites/' + satlink.data('id') + '/'
@@ -16,7 +16,7 @@ function satellite_script() {
             modal.find('.satellite-names').text(data.names);
             modal.find('#SatelliteModalTitle').text(data.name);
             modal.find('.satellite-id').text(satlink.data('id'));
-            modal.find('#db-link').attr('href', satnogs_db_url + '/satellite/' + satlink.data('id'));
+            modal.find('#db-link').attr('href', satnogs_db_url + 'satellite/' + satlink.data('id'));
             modal.find('#new-obs-link').attr('href', '/observations/new/?norad=' + satlink.data('id'));
             modal.find('#old-obs-link').attr('href', '/observations/?norad=' + satlink.data('id'));
             modal.find('#good-sat-obs').attr('href', '/observations/?future=0&good=1&bad=0&unknown=0&failed=0&norad=' + satlink.data('id'));
