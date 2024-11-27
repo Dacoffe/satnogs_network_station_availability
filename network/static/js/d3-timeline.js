@@ -149,7 +149,7 @@
         var appendLabel = function (gParent, yAxisMapping, index, hasLabel, datum) {
             var fullItemHeight = itemHeight + itemMargin;
             var rowsDown = margin.top + (fullItemHeight / 2) + fullItemHeight * (yAxisMapping[index] || 1);
-        
+            // Label each row with the station name (truncated, show full name in tooltip)
             gParent.append('foreignObject')
                 .attr('x', labelMargin)
                 .attr('y', rowsDown - 10) // Adjusting `y` to center-align the label
