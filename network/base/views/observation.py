@@ -437,6 +437,7 @@ def observation_view(request, observation_id):
             'observation': observation,
             'satellite': satellite,
             'tle_datetime': calculate_datetime_from_tle(observation.id),
+            'obs_no_results_ignore_time': settings.OBS_NO_RESULTS_IGNORE_TIME,
             'demoddata_count': demoddata_count,
             'demoddata_details': demoddata_details,
             'show_hex_to_ascii_button': show_hex_to_ascii_button,

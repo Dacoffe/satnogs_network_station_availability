@@ -1,4 +1,4 @@
-/* global WaveSurfer calcPolarPlotSVG */
+/* global WaveSurfer calcPolarPlotSVG moment */
 
 $(document).ready(observationView);
 document.addEventListener('obs_changed', observationView, false);
@@ -7,6 +7,63 @@ function observationView() {
     'use strict';
 
     let obs_vetted = new Event('obs_vetted');
+
+    var countdownInterval = setInterval(dataCountdown, 60000);
+
+    dataCountdown();
+
+    function dataCountdown() {
+        var observationEnd = $('.observation-data').attr('data-observation-end');
+        var no_results_ignore_time =  Number($('.observation-data').attr('data-obs-no-results-ignore-time'));
+
+        var observation_end = moment.utc(observationEnd, 'MMM. D, YYYY, h:mm a').format('YYYY-MM-DD HH:mm');
+        var results_expected_timestamp = moment.utc(observation_end).add(no_results_ignore_time, 'seconds');
+        var current_time = moment.utc();
+
+        var differenceInSeconds = results_expected_timestamp.diff(current_time, 'seconds');
+        var formattedDifference = moment.duration(differenceInSeconds, 'seconds').humanize();
+
+        if (current_time.isSameOrAfter(results_expected_timestamp)) {
+            if (!sessionStorage.getItem('hasObservationEnded')) {
+                sessionStorage.setItem('hasObservationEnded', 'true');
+                location.reload(true);
+            }
+            clearInterval(countdownInterval);
+            $('#countdown').attr('hidden', true);
+
+            if ($('#observation-results').attr('data-has-no-results') == 'True') {
+                $('#no-results').html('No results uploaded from station for this observation.');
+                $('#no-results').removeAttr('hidden');
+                $('#observation-results').attr('hidden', true);
+            } else {
+                $('#no-results').attr('hidden', true);
+                $('#observation-results').removeAttr('hidden');
+            }
+        } else if (differenceInSeconds > no_results_ignore_time) {
+            var end = moment.utc(observationEnd, 'MMM. D, YYYY, h:mm a');
+            var difference = end.diff(current_time, 'seconds');
+            var formattedDiff = moment.duration(difference, 'seconds').humanize();
+            if ($('#observation-results').attr('data-has-no-results') == 'True') {
+                $('#observation-results').attr('hidden', true);
+                $('#countdown').html('No results yet. Observation ends in ' + formattedDiff);
+                $('#countdown').removeAttr('hidden');
+            }
+            else {
+                $('#observation-results').attr('hidden', false);
+                clearInterval(countdownInterval);
+            }
+            $('#no-results').attr('hidden', true);
+        } else {
+            if (!sessionStorage.getItem('hasIgnoreTimePassed')) {
+                sessionStorage.setItem('hasIgnoreTimePassed', 'true');
+                location.reload(true);
+            }
+            $('#countdown').html('Observation results should be visible in ' + formattedDifference);
+            $('#no-results').attr('hidden', true);
+            $('#countdown').removeAttr('hidden');
+            $('#observation-results').attr('hidden', false);
+        }
+    }
 
     // Format time for the player
     function formatTime(timeSeconds) {
