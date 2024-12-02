@@ -303,3 +303,7 @@ label {
 .badge {
     padding: 0.5em 0.6em !important;
 }
+
+a span {
+    pointer-events: none;
+}
