@@ -1,5 +1,6 @@
 """SatNOGS Network API serializers, django rest framework"""
 from collections import defaultdict
+from datetime import datetime
 
 from django.core.validators import MaxValueValidator, MinValueValidator
 from drf_spectacular.utils import extend_schema_field, inline_serializer
@@ -488,6 +489,20 @@ class NewObservationSerializer(serializers.Serializer):
         except ValueError as error:
             raise serializers.ValidationError(error, code='invalid')
         return attrs
+
+    def to_representation(self, instance):
+        """Customize output format of start and end timestamps"""
+        data = super().to_representation(instance)
+
+        # Ensure start and end fields are formatted to '%Y-%m-%d %H:%M:%S'
+        if 'start' in data and data['start']:
+            data['start'] = datetime.strptime(data['start'], '%Y-%m-%dT%H:%M:%S.%fZ'
+                                              ).strftime('%Y-%m-%d %H:%M:%S')
+        if 'end' in data and data['end']:
+            data['end'] = datetime.strptime(data['end'],
+                                            '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%Y-%m-%d %H:%M:%S')
+
+        return data
 
     def create(self, validated_data):
         """Creates a new observation
