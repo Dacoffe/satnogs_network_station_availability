@@ -7,7 +7,7 @@ from django.forms import BaseFormSet, BaseInlineFormSet, CharField, DateTimeFiel
     ValidationError, formset_factory, inlineformset_factory
 
 from network.base.cache import get_satellites
-from network.base.db_api import DBConnectionError, get_tle_sets_by_norad_id_set, \
+from network.base.db_api import DBConnectionError, get_tle_sets_by_sat_id_set, \
     get_transmitters_by_uuid_set
 from network.base.models import STATION_VIOLATOR_SCHEDULING_CHOICES, Antenna, FrequencyRange, \
     Observation, Station
@@ -106,8 +106,8 @@ class BaseObservationFormSet(BaseFormSet):
         station_set = set()
         transmitter_uuid_set = set()
         transmitter_uuid_station_set = set()
-        norad_id_set = set()
-        uuid_to_norad_id = {}
+        sat_id_set = set()
+        uuid_to_sat_id = {}
         start_end_per_station = defaultdict(list)
 
         for form in self.forms:
@@ -134,20 +134,25 @@ class BaseObservationFormSet(BaseFormSet):
         try:
             self.transmitters = get_transmitters_by_uuid_set(transmitter_uuid_set)
             for uuid in transmitter_uuid_set:
-                norad_id_set.add(self.transmitters[uuid]['norad_cat_id'])
-                uuid_to_norad_id[uuid] = self.transmitters[uuid]['norad_cat_id']
-            self.tle_sets = get_tle_sets_by_norad_id_set(norad_id_set)
+                sat_id_set.add(self.transmitters[uuid]['sat_id'])
+                uuid_to_sat_id[uuid] = self.transmitters[uuid]['sat_id']
+            self.tle_sets = get_tle_sets_by_sat_id_set(sat_id_set)
         except ValueError as error:
             raise ValidationError(error, code='invalid') from error
         except DBConnectionError as error:
             raise ValidationError(error) from error
 
-        self.violators = [sat for sat in get_satellites().values() if sat['is_frequency_violator']]
-        violators_norad_ids = [satellite['norad_cat_id'] for satellite in self.violators]
+        self.violators = []
+        sats = get_satellites()
+        for sat_id in sat_id_set:
+            sat = sats[sat_id]
+            if sat['is_frequency_violator']:
+                self.violators.append(sat)
+        violators_sat_ids = [satellite['sat_id'] for satellite in self.violators]
         station_with_violators_set = {
             station
             for transmitter_uuid, station, _ in transmitter_uuid_station_set
-            if uuid_to_norad_id[transmitter_uuid] in violators_norad_ids
+            if uuid_to_sat_id[transmitter_uuid] in violators_sat_ids
         }
         try:
             check_schedule_perms_of_violators_per_station(self.user, station_with_violators_set)
@@ -295,7 +300,7 @@ FrequencyRangeInlineFormSet = inlineformset_factory(  # pylint: disable=C0103
 
 class SatelliteFilterForm(Form):
     """Form class for Satellite objects"""
-    norad = IntegerField(required=False)
+    sat_id = CharField(required=False)
     start = CharField(required=False)
     end = CharField(required=False)
     ground_station = IntegerField(required=False)

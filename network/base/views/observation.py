@@ -18,8 +18,8 @@ from django.utils import timezone
 from django.utils.timezone import now, timedelta
 from django.views.generic import ListView
 
-from network.base.cache import get_satellite_by_norad, get_satellite_stats, get_satellites
-from network.base.db_api import DBConnectionError, get_transmitters_by_norad_id
+from network.base.cache import get_satellite_stats, get_satellites
+from network.base.db_api import DBConnectionError, get_transmitters_by_sat_id
 from network.base.decorators import ajax_required
 from network.base.models import Observation, Station
 from network.base.perms import delete_perms, schedule_perms, vet_perms
@@ -44,7 +44,7 @@ class ObservationListBaseView(ListView):
     paginate_by = settings.ITEMS_PER_PAGE
     template_name = 'base/observations.html'
     str_filters = [
-        'norad', 'observer', 'station', 'start', 'end', 'transmitter_mode', 'transmitter_uuid'
+        'sat_id', 'observer', 'station', 'start', 'end', 'transmitter_mode', 'transmitter_uuid'
     ]
     flag_filters = ['bad', 'good', 'unknown', 'future', 'failed']
     filtered = None
@@ -65,23 +65,25 @@ class ObservationListBaseView(ListView):
         self.filter_errors = []
         for parameter_name in self.str_filters:
             self.filter_params[parameter_name] = self.request.GET.get(parameter_name, '')
-            if parameter_name in {'norad', 'observer', 'station'
+            if parameter_name in {'sat_id', 'observer', 'station'
                                   } and self.filter_params[parameter_name] != '':
                 filter_param = self.filter_params[parameter_name]
-                try:
-                    filter_param = int(filter_param)
-                    if filter_param < 0:
+                if parameter_name != 'sat_id':
+                    try:
+                        filter_param = int(filter_param)
+                        if filter_param < 0:
+                            self.filter_errors.append(
+                                'Filter "' + parameter_name +
+                                '" is ignored due to error: Value cannot be less than 0'
+                            )
+                            filter_param = ''
+                    except ValueError:
                         self.filter_errors.append(
                             'Filter "' + parameter_name +
-                            '" is ignored due to error: Value cannot be less than 0'
+                            '" is ignored due to error: Invalid value'
                         )
                         filter_param = ''
-                except ValueError:
-                    self.filter_errors.append(
-                        'Filter "' + parameter_name + '" is ignored due to error: Invalid value'
-                    )
-                    filter_param = ''
-                self.filter_params[parameter_name] = filter_param
+                    self.filter_params[parameter_name] = filter_param
 
         for parameter_name in self.flag_filters:
             param = self.request.GET.get(parameter_name, 1)
@@ -93,7 +95,7 @@ class ObservationListBaseView(ListView):
 
     def get_queryset(self):
         """
-        Optionally filter based on norad get argument
+        Optionally filter based on sat_id get argument
         Optionally filter based on future/good/bad/unknown/failed
         """
         self.parse_filter_params()
@@ -146,8 +148,8 @@ class ObservationListBaseView(ListView):
             or filter_dict.get('transmitter_uuid__icontains')
         )
 
-        if self.filter_params['norad']:
-            filter_dict['sat_id'] = get_satellite_by_norad(self.filter_params['norad'])['sat_id']
+        if self.filter_params['sat_id']:
+            filter_dict['sat_id'] = self.filter_params['sat_id']
 
         observations = observations.filter(**filter_dict)
 
@@ -536,25 +538,23 @@ def waterfall_vet(request, observation_id):
     return JsonResponse(data, safe=False)
 
 
-def satellite_view(request, norad_id):
+def satellite_view(request, sat_id):
     """Returns a satellite JSON object with information and statistics"""
-    try:
-        norad_id = int(norad_id)
-    except ValueError as err:
-        raise ValueError('Invalid norad_id.') from err
-
-    satellite = get_satellite_by_norad(norad_id)
-    if not satellite:
-        raise ValueError('Unable to find that satellite.')
 
     try:
-        transmitters = get_transmitters_by_norad_id(norad_id=norad_id)
+        satellite = get_satellites()[sat_id]
+    except KeyError as err:
+        raise ValueError('Unable to find that satellite.') from err
+
+    try:
+        transmitters = get_transmitters_by_sat_id(sat_id)
     except (DBConnectionError, ValueError) as error:
         data = [{'error': str(error)}]
         return JsonResponse(data, safe=False)
     satellite_stats = get_satellite_stats()[satellite['sat_id']]
     data = {
-        'id': norad_id,
+        'id': sat_id,
+        'norad': satellite['norad_cat_id'],
         'name': satellite['name'],
         'names': satellite['names'],
         'image': satellite['image'],

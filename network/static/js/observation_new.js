@@ -491,7 +491,7 @@ $(document).ready( function(){
                     filters.transmitter = max_good_val || inactive_max_good_val || unconfirmed_max_good_val;
                 }
                 $('.tle').hide();
-                $('.tle[data-norad="' + filters.satellite + '"]').show();
+                $('.tle[data-sat_id="' + filters.satellite + '"]').show();
             } else {
                 $('#transmitter-selection').html(`<option id="no-transmitter"
                                                           value="" selected>
@@ -801,7 +801,7 @@ $(document).ready( function(){
 
     $('#satellite-selection').on('changed.bs.select', function() {
         reset_split_duration();
-        var satellite = $(this).find(':selected').data('norad');
+        var satellite = $(this).find(':selected').data('sat_id');
         var station = $('#form-obs').data('obs-filter-station');
         select_proper_transmitters({
             satellite: satellite,

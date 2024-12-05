@@ -33,7 +33,7 @@
   <form role="form" action="{% url 'base:observation_new' %}"
         method="post" data-obs-filter="{{ obs_filter.exists|lower }}" data-obs-filter-station="{{ obs_filter.ground_station }}"
         data-obs-filter-dates="{{ obs_filter.dates|lower }}" data-obs-filter-transmitter="{{ obs_filter.transmitter }}"
-        data-obs-filter-satellite="{{ obs_filter.norad }}" id="form-obs">{% csrf_token %}
+        data-obs-filter-satellite="{{ obs_filter.sat_id }}" id="form-obs">{% csrf_token %}
     <div class="row">
       <div class="col-md-6">
         <div class="form-group row align-items-center">
@@ -46,15 +46,15 @@
                     Error getting satellite list
                   </option>
                 </select>
-            {% elif obs_filter.norad %}
+            {% elif obs_filter.sat_id %}
               {% for satellite in satellites %}
-                {% if satellite.norad_cat_id == obs_filter.norad %}
+                {% if not satellite.merged_into and satellite.sat_id == obs_filter.sat_id %}
                   <select id="satellite-selection" class="form-control selectpicker" data-style="btn" name="satellite" disabled>
-                    <option data-norad="{{ satellite.norad_cat_id }}" value="{{ satellite.norad_cat_id }}" selected>
+                    <option data-sat_id="{{ satellite.sat_id }}" value="{{ satellite.sat_id }}" selected>
                       {{ satellite.norad_cat_id }} - {{ satellite.name }}
                     </option>
                   </select>
-                  <input type="hidden" name="satellite" value="{{ satellite.norad_cat_id }}">
+                  <input type="hidden" name="satellite" value="{{ satellite.sat_id }}">
                 {% endif %}
               {% endfor %}
             {% else %}
@@ -62,9 +62,11 @@
                       data-live-search="true" autocomplete="off">
                 <option value="" selected>Select a satellite</option>
                 {% for satellite in satellites %}
-                  <option data-norad="{{ satellite.norad_cat_id }}" value="{{ satellite.norad_cat_id }}">
+                {% if not satellite.merged_into %}
+                  <option data-sat_id="{{ satellite.sat_id }}" value="{{ satellite.sat_id }}" data-tokens="{{ satellite.sat_id }}">
                     {{ satellite.norad_cat_id }} - {{ satellite.name }}
                   </option>
+                {% endif %}
                 {% endfor %}
               </select>
             {% endif %}

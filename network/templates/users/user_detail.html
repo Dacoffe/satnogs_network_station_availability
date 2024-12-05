@@ -200,7 +200,7 @@
                     </td>
                     {% with satellites|get_item:observation.sat_id as sat %}
                     <td class="text-nowrap">
-                      <a href="#" data-toggle="modal" data-target="#SatelliteModal" data-id="{{ sat.norad_cat_id }}">
+                      <a href="#" data-toggle="modal" data-target="#SatelliteModal" data-id="{{ sat.sat_id }}">
                         {{ sat.name }}
                       </a>
                     </td>

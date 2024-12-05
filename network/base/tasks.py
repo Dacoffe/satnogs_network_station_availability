@@ -1,4 +1,5 @@
 """SatNOGS Network Celery task functions"""
+import copy
 import logging
 import math
 import os
@@ -21,7 +22,7 @@ from internetarchive.exceptions import AuthenticationError
 from tinytag import TinyTag
 from tinytag.tinytag import TinyTagException
 
-from network.base.db_api import DBConnectionError, get_tle_sets_by_norad_id_set, \
+from network.base.db_api import DBConnectionError, get_tle_sets_by_sat_id_set, \
     get_transmitters_by_uuid_set
 from network.base.models import DemodData, Observation, Station
 from network.base.rating_tasks import rate_observation
@@ -51,6 +52,8 @@ def get_and_refresh_transmitters_with_stats_cache(in_list_form=False):
         if same_transmitter and same_transmitter["date"] > transmitter["date"]:
             continue
         sat = sats[transmitter['sat_id']]
+        if sat.get('merged_into'):  # This sat_id was merged into another satellite
+            continue
         transmitter['satellite__norad_cat_id'] = sat['norad_cat_id']
         transmitter['satellite__name'] = sat['name']
         total_count = 0
@@ -336,22 +339,20 @@ def update_future_observations_with_new_tle_sets():
     start = now() + timedelta(minutes=10)
     future_observations = Observation.objects.filter(start__gt=start)
     sat_id_set = set(future_observations.values_list('sat_id', flat=True))
-    sats = cache.get('satellites') or fetch_satellites()
-    norad_ids = {sats[sat_id]['norad_cat_id']: sat_id for sat_id in sat_id_set}
     try:
-        if norad_ids.keys():
-            tle_sets = get_tle_sets_by_norad_id_set(set(norad_ids.keys()))
+        if sat_id_set:
+            tle_sets = get_tle_sets_by_sat_id_set(sat_id_set)
         else:
             return
     except DBConnectionError:
         return
-    for norad_id in tle_sets.keys():
-        if not tle_sets[norad_id]:
+    for sat_id in sat_id_set:
+        if not tle_sets[sat_id]:
             continue
-        tle_set = tle_sets[norad_id][0]
+        tle_set = tle_sets[sat_id][0]
         tle_updated = datetime.strptime(tle_set['updated'], "%Y-%m-%dT%H:%M:%S.%f%z")
         future_observations.filter(
-            sat_id=norad_ids[norad_id], tle_updated__lt=tle_updated
+            sat_id=sat_id, tle_updated__lt=tle_updated
         ).update(
             tle_line_0=tle_set['tle0'],
             tle_line_1=tle_set['tle1'],
@@ -490,7 +491,8 @@ def fetch_satellites():
         sat_id = satellite.get('sat_id')
         satellite_dict[sat_id] = satellite
         for associated_sat_id in satellite['associated_satellites']:
-            satellite_dict[associated_sat_id] = satellite
+            satellite_dict[associated_sat_id] = copy.deepcopy(satellite)
+            satellite_dict[associated_sat_id]['merged_into'] = satellite['sat_id']
 
     cache.set('satellites', satellite_dict)
     calculate_satellite_statistics.delay()

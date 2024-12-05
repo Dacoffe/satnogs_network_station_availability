@@ -26,9 +26,9 @@ def satnogs_db_api_request_authed(url):
     return request.json()
 
 
-def get_tle_set_by_norad_id(norad_id):
-    """Returns TLE set filtered by NORAD ID"""
-    tle_url = "{}tle/?norad_cat_id={}".format(DB_API_URL, norad_id)
+def get_tle_set_by_sat_id(sat_id):
+    """Returns TLE set filtered by Satellite ID"""
+    tle_url = "{}tle/?sat_id={}".format(DB_API_URL, sat_id)
     return satnogs_db_api_request_authed(tle_url)
 
 
@@ -38,21 +38,21 @@ def get_tle_sets():
     return satnogs_db_api_request_authed(tle_url)
 
 
-def get_tle_sets_by_norad_id_set(norad_id_set):
-    """Returns TLE sets filtered by NORAD ID list"""
-    if not norad_id_set:
-        raise ValueError('Expected a non empty list of NORAD IDs.')
-    if len(norad_id_set) == 1:
-        norad_id = next(iter(norad_id_set))
-        tle_set = get_tle_set_by_norad_id(norad_id)
-        return {norad_id: tle_set}
+def get_tle_sets_by_sat_id_set(sat_id_set):
+    """Returns TLE sets filtered by Satellite ID list"""
+    if not sat_id_set:
+        raise ValueError('Expected a non empty list of Satellite IDs.')
+    if len(sat_id_set) == 1:
+        sat_id = next(iter(sat_id_set))
+        tle_set = get_tle_set_by_sat_id(sat_id)
+        return {sat_id: tle_set}
 
     tle_sets_list = get_tle_sets()
 
-    tle_sets = {t['norad_cat_id']: [t] for t in tle_sets_list if t['norad_cat_id'] in norad_id_set}
-    found_norad_ids_set = set(tle_sets.keys())
-    for norad_id in norad_id_set.difference(found_norad_ids_set):
-        tle_sets[norad_id] = []
+    tle_sets = {t['sat_id']: [t] for t in tle_sets_list if t['sat_id'] in sat_id_set}
+    found_sat_ids_set = set(tle_sets.keys())
+    for sat_id in sat_id_set.difference(found_sat_ids_set):
+        tle_sets[sat_id] = []
     return tle_sets
 
 
@@ -73,9 +73,9 @@ def get_transmitter_by_uuid(uuid):
     return satnogs_db_api_request(transmitters_url)
 
 
-def get_transmitters_by_norad_id(norad_id):
-    """Returns transmitters filtered by NORAD ID"""
-    transmitters_url = "{}transmitters/?satellite__norad_cat_id={}".format(DB_API_URL, norad_id)
+def get_transmitters_by_sat_id(sat_id):
+    """Returns transmitters filtered by Satellite ID"""
+    transmitters_url = "{}transmitters/?sat_id={}".format(DB_API_URL, sat_id)
     return satnogs_db_api_request(transmitters_url)
 
 

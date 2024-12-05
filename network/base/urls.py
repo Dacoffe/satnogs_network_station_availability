@@ -39,12 +39,7 @@ BASE_URLPATTERNS = (
             observation.waterfall_vet,
             name='waterfall_vet'
         ),
-        re_path(
-            r'^satellites/(?P<norad_id>[0-9]+)/$',
-            observation.satellite_view,
-            name='satellite_view'
-        ),
-
+        path('satellites/<str:sat_id>/', observation.satellite_view, name='satellite_view'),
         # Stations
         path('stations_all/', station.station_all_view, name='stations_all'),
         path('stations/', station.StationListView.as_view(), name='stations_list'),

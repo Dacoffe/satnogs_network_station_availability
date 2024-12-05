@@ -6,23 +6,25 @@ function satellite_script() {
 
     $('#SatelliteModal').on('show.bs.modal', function (event) {
         var satlink = $(event.relatedTarget);
+        const sat_id = satlink.data('id');
         var modal = $(this);
         var satnogs_db_url = event.target.dataset['db_url'];
 
         $.ajax({
-            url: '/satellites/' + satlink.data('id') + '/'
+            url: '/satellites/' + sat_id + '/'
         }).done(function (data) {
             modal.find('.satellite-title').text(data.name);
             modal.find('.satellite-names').text(data.names);
             modal.find('#SatelliteModalTitle').text(data.name);
-            modal.find('.satellite-id').text(satlink.data('id'));
-            modal.find('#db-link').attr('href', satnogs_db_url + 'satellite/' + satlink.data('id'));
-            modal.find('#new-obs-link').attr('href', '/observations/new/?norad=' + satlink.data('id'));
-            modal.find('#old-obs-link').attr('href', '/observations/?norad=' + satlink.data('id'));
-            modal.find('#good-sat-obs').attr('href', '/observations/?future=0&good=1&bad=0&unknown=0&failed=0&norad=' + satlink.data('id'));
-            modal.find('#unknown-sat-obs').attr('href', '/observations/?future=0&good=0&bad=0&unknown=1&failed=0&norad=' + satlink.data('id'));
-            modal.find('#bad-sat-obs').attr('href', '/observations/?future=0&good=0&bad=1&unknown=0&failed=0&norad=' + satlink.data('id'));
-            modal.find('#future-sat-obs').attr('href', '/observations/?future=1&good=0&bad=0&unknown=0&failed=0&norad=' + satlink.data('id'));
+            modal.find('#satellite-norad').text(data.norad);
+            modal.find('.satellite-id').text(sat_id);
+            modal.find('#db-link').attr('href', satnogs_db_url + 'satellite/' + sat_id);
+            modal.find('#new-obs-link').attr('href', '/observations/new/?sat_id=' + sat_id);
+            modal.find('#old-obs-link').attr('href', '/observations/?sat_id=' + sat_id);
+            modal.find('#good-sat-obs').attr('href', '/observations/?future=0&good=1&bad=0&unknown=0&failed=0&sat_id=' + sat_id);
+            modal.find('#unknown-sat-obs').attr('href', '/observations/?future=0&good=0&bad=0&unknown=1&failed=0&sat_id=' + sat_id);
+            modal.find('#bad-sat-obs').attr('href', '/observations/?future=0&good=0&bad=1&unknown=0&failed=0&sat_id=' + sat_id);
+            modal.find('#future-sat-obs').attr('href', '/observations/?future=1&good=0&bad=0&unknown=0&failed=0&sat_id=' + sat_id);
             modal.find('.satellite-success-rate').text(data.success_rate + '%');
             modal.find('.satellite-total-obs').text(data.total_count);
             modal.find('.satellite-good').text(data.good_count);

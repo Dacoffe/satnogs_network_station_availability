@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0119_populate_observation_sat_id'),
+        ('base', '0120_rename_testing_observation_experimental'),
     ]
 
     operations = [
@@ -14,7 +14,5 @@ class Migration(migrations.Migration):
             model_name='observation',
             name='satellite',
         ),
-        migrations.DeleteModel(
-            name='Satellite',
-        ),
+        migrations.DeleteModel(name='Satellite', ),
     ]

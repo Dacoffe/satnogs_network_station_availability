@@ -16,7 +16,7 @@ def satnogs_db_url():
     Returns the configured SatNOGS DB URL
 
     Usage:
-        {{ satnogs_db_url }}
+        {% satnogs_db_url %}
     """
 
     # Drop path from URL (usually 'api/')

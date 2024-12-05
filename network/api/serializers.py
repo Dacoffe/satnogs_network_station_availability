@@ -7,7 +7,7 @@ from PIL import Image
 from rest_framework import serializers
 
 from network.base.cache import get_satellites
-from network.base.db_api import DBConnectionError, get_tle_sets_by_norad_id_set, \
+from network.base.db_api import DBConnectionError, get_tle_sets_by_sat_id_set, \
     get_transmitters_by_uuid_set
 from network.base.models import ActiveStationConfiguration, Antenna, DemodData, FrequencyRange, \
     Observation, Station
@@ -309,10 +309,10 @@ class NewObservationListSerializer(serializers.ListSerializer):
         """Validates data from a list of new observations"""
 
         (
-            station_set, transmitter_uuid_set, transmitter_uuid_station_set, norad_id_set,
+            station_set, transmitter_uuid_set, transmitter_uuid_station_set, sat_id_set,
             transm_uuid_station_center_freq_set
         ) = (set() for _ in range(5))
-        uuid_to_norad_id = {}
+        uuid_to_sat_id = {}
         start_end_per_station = defaultdict(list)
 
         for observation in attrs:
@@ -337,20 +337,24 @@ class NewObservationListSerializer(serializers.ListSerializer):
         try:
             self.transmitters = get_transmitters_by_uuid_set(transmitter_uuid_set)
             for uuid in transmitter_uuid_set:
-                norad_id_set.add(self.transmitters[uuid]['norad_cat_id'])
-                uuid_to_norad_id[uuid] = self.transmitters[uuid]['norad_cat_id']
-            self.tle_sets = get_tle_sets_by_norad_id_set(norad_id_set)
+                sat_id_set.add(self.transmitters[uuid]['sat_id'])
+                uuid_to_sat_id[uuid] = self.transmitters[uuid]['sat_id']
+            self.tle_sets = get_tle_sets_by_sat_id_set(sat_id_set)
         except ValueError as error:
             raise serializers.ValidationError(error, code='invalid')
         except DBConnectionError as error:
             raise serializers.ValidationError(error)
 
-        self.violators = [sat for sat in get_satellites().values() if sat['is_frequency_violator']]
-        violators_norad_ids = [satellite['norad_cat_id'] for satellite in self.violators]
+        self.violators = []
+        sats = get_satellites()
+        for sat_id in sat_id_set:
+            if sats[sat_id]['is_frequency_violator']:
+                self.violators.append(sats[sat_id])
+        violators_sat_ids = [satellite['sat_id'] for satellite in self.violators]
         station_with_violators_set = {
             station
             for transmitter_uuid, station in transmitter_uuid_station_set
-            if uuid_to_norad_id[transmitter_uuid] in violators_norad_ids
+            if uuid_to_sat_id[transmitter_uuid] in violators_sat_ids
         }
         try:
             check_schedule_perms_of_violators_per_station(
@@ -382,15 +386,13 @@ class NewObservationListSerializer(serializers.ListSerializer):
     def create(self, validated_data):
         """Creates new observations from a list of new observations validated data"""
         new_observations = []
-        observations_per_norad_id = defaultdict(list)
+        observations_per_sat_id = defaultdict(list)
         for observation_data in validated_data:
             transmitter_uuid = observation_data['transmitter_uuid']
             transmitter = self.transmitters[transmitter_uuid]
-            tle_set = self.tle_sets[transmitter['norad_cat_id']]
+            tle_set = self.tle_sets[transmitter['sat_id']]
 
-            observations_per_norad_id[transmitter['norad_cat_id']].append(
-                observation_data['start']
-            )
+            observations_per_sat_id[transmitter['sat_id']].append(observation_data['start'])
 
             observation = create_new_observation(
                 station=observation_data['ground_station'],
@@ -405,7 +407,7 @@ class NewObservationListSerializer(serializers.ListSerializer):
 
         if self.violators and not self.context['request'].user.groups.filter(name='Operators'
                                                                              ).exists():
-            check_violators_scheduling_limit(self.violators, observations_per_norad_id)
+            check_violators_scheduling_limit(self.violators, observations_per_sat_id)
 
         for observation in new_observations:
             observation.save()

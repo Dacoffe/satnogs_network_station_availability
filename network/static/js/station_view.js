@@ -229,7 +229,7 @@ $(document).ready(function() {
                     $('#pass-predictions-results').append(`
                       <tr class="pass ${overlap_style}" data-overlap="${overlap}">
                         <td class="success-rate" data-suc="${data.nextpasses[i].success_rate}">
-                          <a href="#" data-toggle="modal" data-target="#SatelliteModal" data-id="${data.nextpasses[i].norad_cat_id}">
+                          <a href="#" data-toggle="modal" data-target="#SatelliteModal" data-id="${data.nextpasses[i].sat_id}">
                             ${data.nextpasses[i].norad_cat_id} - ${data.nextpasses[i].name}
                           </a>
                           <div class="progress satellite-success">
@@ -325,7 +325,7 @@ $(document).ready(function() {
                         ${can_schedule ? `
                           <td class="pass-schedule">
                               ${schedulable ? `
-                                <a href="${new_obs}?norad=${data.nextpasses[i].norad_cat_id}&ground_station=${station}&start=${tr}&end=${ts}"
+                                <a href="${new_obs}?sat_id=${data.nextpasses[i].sat_id}&ground_station=${station}&start=${tr}&end=${ts}"
                                    class="btn btn-outline-dark schedulable"
                                    target="_blank">
                                   Schedule

@@ -11,7 +11,7 @@ from django.conf import settings
 from django.utils.timezone import make_aware, now
 
 from network.base.cache import get_satellites
-from network.base.db_api import DBConnectionError, get_tle_set_by_norad_id
+from network.base.db_api import DBConnectionError, get_tle_set_by_sat_id
 from network.base.models import Observation
 from network.base.perms import schedule_stations_perms
 from network.base.utils import format_frequency
@@ -539,7 +539,7 @@ def create_new_observation(
     sat = get_satellites()[transmitter['sat_id']]
     if not tle_set:
         try:
-            tle_set = get_tle_set_by_norad_id(transmitter['norad_cat_id'])
+            tle_set = get_tle_set_by_sat_id(transmitter['sat_id'])
         except DBConnectionError:
             tle_set = []
 

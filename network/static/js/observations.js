@@ -152,19 +152,19 @@ $(document).ready(function() {
     });
 
     $('#satellite-selection').on('changed.bs.select',  function() {
-        const selectedSatelliteNorad = $(this).val();
+        const selectedSatId = $(this).val();
 
-        filterTransmitters(selectedSatelliteNorad);
+        filterTransmitters(selectedSatId);
     });
 
-    const selectedSatelliteNorad = $('#satellite-selection').val();
-    filterTransmitters(selectedSatelliteNorad);
+    const selectedSatId = $('#satellite-selection').val();
+    filterTransmitters(selectedSatId);
 
-    function filterTransmitters(selectedSatelliteNorad) {
+    function filterTransmitters(selectedSatId) {
         const options = document.querySelectorAll('#transmitter-uuid-selection option');
         
         options.forEach(option => {
-            if (option.dataset['norad'] === selectedSatelliteNorad || !selectedSatelliteNorad) {
+            if (option.dataset['sat_id'] === selectedSatId || !selectedSatId) {
                 option.disabled = false;
             } else {
                 option.disabled = true;
