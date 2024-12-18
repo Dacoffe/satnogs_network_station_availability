@@ -274,7 +274,8 @@ class Station(models.Model):
         """Return the success rate of the station - successful observation over failed ones"""
         rate = cache.get('station-{0}-rate'.format(self.id))
         if not rate:
-            observations = self.observations.exclude(testing=True).exclude(status__range=(0, 99))
+            observations = self.observations.exclude(experimental=True
+                                                     ).exclude(status__range=(0, 99))
             stats = observations.aggregate(
                 bad=Count('pk', filter=Q(status__range=(-100, -1))),
                 good=Count('pk', filter=Q(status__gte=100)),
@@ -538,7 +539,7 @@ class Observation(models.Model):
     100 =< x      -> Good
     """
     status = models.SmallIntegerField(default=0)
-    testing = models.BooleanField(default=False)
+    experimental = models.BooleanField(default=False)
     rise_azimuth = models.FloatField(blank=True, null=True)
     max_altitude = models.FloatField(blank=True, null=True)
     set_azimuth = models.FloatField(blank=True, null=True)

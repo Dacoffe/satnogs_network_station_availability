@@ -122,13 +122,13 @@
             {% endif %}
           </td>
         </tr>
-        {% if observation.testing == True %}
+        {% if observation.experimental == True %}
         <tr>
           <td>
             <span class="badge badge-secondary">Experimental</span>
           </td>
           <td>
-              <span class="badge badge-testing" data-toggle="tooltip" data-original-title="Observation from a testing station"> Yes </span>
+              <span class="badge badge-experimental" data-toggle="tooltip" data-original-title="Observation from a testing station"> Yes </span>
           </td>
         </tr>
         {% endif %}

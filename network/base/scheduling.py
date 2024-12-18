@@ -628,7 +628,7 @@ def create_new_observation(
         start=start,
         end=end,
         ground_station=station,
-        testing=station.testing,
+        experimental=station.testing,
         rise_azimuth=rise_azimuth,
         max_altitude=max_altitude,
         set_azimuth=set_azimuth,
