@@ -44,7 +44,8 @@ class ObservationListBaseView(ListView):
     paginate_by = settings.ITEMS_PER_PAGE
     template_name = 'base/observations.html'
     str_filters = [
-        'sat_id', 'observer', 'station', 'start', 'end', 'transmitter_mode', 'transmitter_uuid'
+        'sat_id', 'observer', 'station', 'start', 'end', 'transmitter_mode', 'transmitter_uuid',
+        'experimental_observation'
     ]
     flag_filters = ['bad', 'good', 'unknown', 'future', 'failed']
     filtered = None
@@ -115,6 +116,7 @@ class ObservationListBaseView(ListView):
             'end': 'end__lt',
             'transmitter_mode': 'transmitter_mode__icontains',
             'transmitter_uuid': 'transmitter_uuid__icontains',
+            'experimental_observation': 'experimental'
         }
 
         # Create observations filter based on the received HTTP POST parameters
@@ -145,7 +147,7 @@ class ObservationListBaseView(ListView):
         self.more_filtered = (
             results or rated or filter_dict.get('author') or filter_dict.get('ground_station_id')
             or filter_dict.get('transmitter_mode__icontains')
-            or filter_dict.get('transmitter_uuid__icontains')
+            or filter_dict.get('transmitter_uuid__icontains') or filter_dict.get('experimental')
         )
 
         if self.filter_params['sat_id']:
@@ -214,6 +216,7 @@ class ObservationListBaseView(ListView):
         context['results'] = self.request.GET.getlist('results')
         context['rated'] = self.request.GET.getlist('rated')
         context['transmitter_mode'] = self.request.GET.get('transmitter_mode', None)
+        context['experimental_values'] = ['True', 'False']
         cached_transmitters_with_stats = cache.get('transmitters-with-stats')
         context['transmitter_uuids_info'] = cached_transmitters_with_stats.values(
         ) if cached_transmitters_with_stats else get_and_refresh_transmitters_with_stats_cache(

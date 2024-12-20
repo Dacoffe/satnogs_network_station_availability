@@ -230,6 +230,18 @@
               {% endfor %}
             </select>
           </div>
+          <div class="form-group col-md-4 col-lg-3">
+            <label for="results-selection">Experimental</label>
+            <select class="form-control selectpicker" data-style="btn" name="experimental_observation" autocomplete="off" id="experimental-observation-selection">
+              <option value="" selected>All</option>
+              {% for experimental_value in experimental_values %}
+                <option data-experimental="{{ experimental_value }}" value="{{ experimental_value }}"
+                  {% if experimental_observation == experimental_value %}selected{% endif %}>
+                  {{ experimental_value }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
         </div>
         <div class="form-group col-md-12 text-center">
           <button type="submit-{{form_type}}" class="btn btn-primary">Search</button>
