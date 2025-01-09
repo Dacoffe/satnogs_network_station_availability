@@ -168,31 +168,24 @@ class ObservationListBaseView(ListView):
 
         if results:
             if 'w0' in results:
-                observations = observations.filter(waterfall_old='', waterfall='')
+                observations = observations.filter(waterfall='')
             elif 'w1' in results:
-                observations = observations.exclude(waterfall_old='', waterfall='')
+                observations = observations.exclude(waterfall='')
             if 'a0' in results:
-                observations = observations.filter(archived=False, payload_old='', payload='')
+                observations = observations.filter(archived=False, payload='')
             elif 'a1' in results:
-                observations = observations.exclude(archived=False, payload_old='', payload='')
+                observations = observations.exclude(archived=False, payload='')
             if 'd0' in results:
-                observations = observations.filter(
-                    demoddata__payload_demod__isnull=True,
-                    demoddata__demodulated_data__isnull=True
-                )
+                observations = observations.filter(demoddata__demodulated_data__isnull=True)
             elif 'd1' in results:
-                observations = observations.exclude(
-                    demoddata__payload_demod__isnull=True,
-                    demoddata__demodulated_data__isnull=True
-                )
+                observations = observations.exclude(demoddata__demodulated_data__isnull=True)
             if 'i1' in results:
                 observations = observations.filter(demoddata__is_image=True)
 
         if rated:
             if 'rwu' in rated:
-                observations = observations.filter(waterfall_status__isnull=True).exclude(
-                    waterfall_old='', waterfall=''
-                )
+                observations = observations.filter(waterfall_status__isnull=True
+                                                   ).exclude(waterfall='')
             elif 'rw1' in rated:
                 observations = observations.filter(waterfall_status=True)
             elif 'rw0' in rated:
@@ -277,15 +270,7 @@ def get_observation_demoddata_details(observation, demoddata, demoddata_count):
 
         for datum in demoddata:
             if datum.is_image:
-                if datum.payload_demod:
-                    demoddata_details.append(
-                        {
-                            'url': datum.payload_demod.url,
-                            'name': datum.payload_demod.name,
-                            'type': 'image'
-                        }
-                    )
-                else:
+                if datum.demodulated_data:
                     demoddata_details.append(
                         {
                             'url': datum.demodulated_data.url,
@@ -295,15 +280,7 @@ def get_observation_demoddata_details(observation, demoddata, demoddata_count):
                     )
             else:
                 show_hex_to_ascii_button = True
-                if datum.payload_demod:
-                    demoddata_details.append(
-                        {
-                            'url': datum.payload_demod.url,
-                            'name': datum.payload_demod.name,
-                            'type': content_type
-                        }
-                    )
-                else:
+                if datum.demodulated_data:
                     demoddata_details.append(
                         {
                             'url': datum.demodulated_data.url,

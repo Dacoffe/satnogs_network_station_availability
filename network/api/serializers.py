@@ -60,8 +60,6 @@ class DemodDataSerializer(serializers.ModelSerializer):
     def get_payload_demod(self, obj):
         """Returns DemodData Link"""
         request = self.context.get("request")
-        if obj.payload_demod:
-            return request.build_absolute_uri(obj.payload_demod.url)
         if obj.demodulated_data:
             return request.build_absolute_uri(obj.demodulated_data.url)
         return None
@@ -187,8 +185,6 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
     def get_payload(self, obj):
         """Returns Audio Link"""
         request = self.context.get("request")
-        if obj.payload_old:
-            return request.build_absolute_uri(obj.payload_old.url)
         if obj.payload:
             return request.build_absolute_uri(obj.payload.url)
         return None
@@ -197,8 +193,6 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
     def get_waterfall(self, obj):
         """Returns Watefall Link"""
         request = self.context.get("request")
-        if obj.waterfall_old:
-            return request.build_absolute_uri(obj.waterfall_old.url)
         if obj.waterfall:
             return request.build_absolute_uri(obj.waterfall.url)
         return None

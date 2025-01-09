@@ -410,15 +410,7 @@
                   </button>
                 </a>
               {% endif %}
-              {% if observation.waterfall_old %}
-                <a href="{{ observation.waterfall_old.url }}"
-                   target="_blank"
-                   download="">
-                  <button type="button" class="btn btn-outline-dark btn-sm">
-                    <i class="bi bi-download"></i> Waterfall
-                  </button>
-                </a>
-              {% elif observation.waterfall %}
+              {% if observation.waterfall %}
                 <a href="{{ observation.waterfall.url }}"
                    target="_blank"
                    download="">
@@ -552,9 +544,7 @@
                 {% if from_vetting == True %}
                   <div id="waterfall-loading" class="m-auto d-block spinner-border text-muted"></div>
                 {% endif %}
-                {% if observation.waterfall_old %}
-                  <img id="waterfall-img" class="img-fluid" {% if from_vetting %}data-{% endif %}src="{{ observation.waterfall_old.url }}" alt="waterfall">
-                {% else %}
+                {% if observation.waterfall %}
                   <img id="waterfall-img" class="img-fluid" {% if from_vetting %}data-{% endif %}src="{{ observation.waterfall.url }}" alt="waterfall">
                 {% endif %}
               </div>

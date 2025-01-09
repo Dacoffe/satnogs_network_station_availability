@@ -140,9 +140,8 @@ def zip_audio(observation_id, path):
         if file_exists_in_zip_file:
             LOGGER.info('Audio file already exists in zip file for id %s', observation_id)
             ids = [name.split('_')[1] for name in files_in_zip]
-            observations = Observation.objects.filter(pk__in=ids).exclude(
-                payload_old='', payload=''
-            ).exclude(archived=True)
+            observations = Observation.objects.filter(pk__in=ids).exclude(payload=''
+                                                                          ).exclude(archived=True)
             if observations.count() == len(ids):
                 observations.update(audio_zipped=False)
                 os.remove(zip_path)
@@ -201,9 +200,7 @@ def zip_audio_files(force_zip=False):
         LOGGER.info('Lock acquired for zip task')
         if (settings.ZIP_AUDIO_FILES or force_zip) and not settings.USE_S3_STORAGE_FOR_AUDIO:
             zipped_files = []
-            observations = Observation.objects.filter(audio_zipped=False).exclude(
-                payload_old='', payload=''
-            )
+            observations = Observation.objects.filter(audio_zipped=False).exclude(payload='')
             non_zipped_ids = observations.order_by('pk').values_list('pk', flat=True)
             if non_zipped_ids:
                 group = get_observation_zip_group(non_zipped_ids[0])
@@ -243,11 +240,11 @@ def archive_audio_zip_files(force_archive=False):  # pylint: disable=R0915
             for group in groups:
                 group_range, zip_path = get_zip_range_and_path(group)
                 cache_key = '{0}-{1}-{2}'.format('ziplock', group_range[0], group_range[1])
-                if (not cache.add(cache_key, '', settings.ARCHIVE_ZIP_LOCK_EXPIRATION)
-                    ) or (not zipfile.is_zipfile(zip_path)) or Observation.objects.filter(
-                        Q(end__gte=archive_skip_time) | Q(archived=True)
-                        | (Q(audio_zipped=False) & (~Q(payload_old='') | ~Q(payload='')))).filter(
-                            pk__range=group_range).exists():
+                if (not cache.add(cache_key, '', settings.ARCHIVE_ZIP_LOCK_EXPIRATION)) or (
+                        not zipfile.is_zipfile(zip_path)
+                ) or Observation.objects.filter(Q(end__gte=archive_skip_time) | Q(archived=True)
+                                                | (Q(audio_zipped=False) & ~Q(payload=''))).filter(
+                                                    pk__range=group_range).exists():
                     skipped_groups.append(group_range)
                     cache.delete(cache_key)
                     continue
@@ -305,24 +302,18 @@ def archive_audio_zip_files(force_archive=False):  # pylint: disable=R0915
                     with transaction.atomic():
                         for observation in observations:
                             audio_filename = ''
-                            if observation.payload_old:
-                                audio_filename = observation.payload_old.name.split('/')[-1]
-                            else:
-                                audio_filename = observation.payload.name.split('/')[-1]
+                            audio_filename = observation.payload.name.split('/')[-1]
                             observation.archived = True
                             observation.archive_url = '{0}{1}/{2}/{3}'.format(
                                 settings.ARCHIVE_URL, item_id, zip_name, audio_filename
                             )
                             observation.archive_identifier = item_id
                             if settings.REMOVE_ARCHIVED_AUDIO_FILES:
-                                if observation.payload_old:
-                                    observation.payload_old.delete(save=False)
                                 if observation.payload:
                                     observation.payload.delete(save=False)
                             observation.save(
                                 update_fields=[
-                                    'archived', 'archive_url', 'archive_identifier', 'payload_old',
-                                    'payload'
+                                    'archived', 'archive_url', 'archive_identifier', 'payload'
                                 ]
                             )
                     if settings.REMOVE_ARCHIVED_ZIP_FILE:
@@ -504,7 +495,7 @@ def clean_observations():
     """Task to clean up old observations that lack actual data."""
     threshold = now() - timedelta(days=int(settings.OBSERVATION_OLD_RANGE))
     observations = Observation.objects.filter(end__lt=threshold, archived=False) \
-                                      .exclude(payload_old='', payload='')
+                                      .exclude(payload='')
     for obs in observations:
         if settings.ENVIRONMENT == 'stage':
             if not obs.status >= 100:
@@ -521,9 +512,6 @@ def sync_to_db():
         observation__station_lng__isnull=False, observation__station_lat__isnull=False
     )
     for frame in frames:
-        if frame.payload_demod and not frame.payload_demod.storage.exists(frame.payload_demod.name
-                                                                          ):
-            continue
         try:
             sync_demoddata_to_db(frame)
         except requests.exceptions.RequestException:
@@ -538,11 +526,8 @@ def sync_frame_to_db(frame_id):
     missing_station_coord = not bool(
         frame.observation.station_lat and frame.observation.station_lng
     )
-    missing_payload_file = bool(
-        frame.payload_demod and not frame.payload_demod.storage.exists(frame.payload_demod.name)
-    )
     mode_in_nonsynced = bool(frame.observation.transmitter_mode in settings.NOT_SYNCED_MODES)
-    if any((frame.is_image, missing_station_coord, missing_payload_file, mode_in_nonsynced)):
+    if any((frame.is_image, missing_station_coord, mode_in_nonsynced)):
         pass
     try:
         sync_demoddata_to_db(frame)

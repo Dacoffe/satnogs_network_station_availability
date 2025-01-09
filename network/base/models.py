@@ -481,11 +481,9 @@ class Observation(models.Model):
     )
     client_version = models.CharField(max_length=255, blank=True)
     client_metadata = models.TextField(blank=True)
-    payload_old = models.FileField(upload_to=_name_obs_files, blank=True, null=True)
     payload = models.FileField(
         upload_to=_name_observation_data, storage=_select_audio_storage, blank=True
     )
-    waterfall_old = models.ImageField(upload_to=_name_obs_files, blank=True, null=True)
     waterfall = models.ImageField(
         upload_to=_name_observation_data, storage=_select_waterfall_storage, blank=True
     )
@@ -616,11 +614,6 @@ class Observation(models.Model):
     @property
     def has_waterfall(self):
         """Run some checks on the waterfall for existence of data."""
-        if self.waterfall_old:
-            if (not self.waterfall_old.storage.exists(self.waterfall_old.name
-                                                      )) or self.waterfall_old.size == 0:
-                return False
-            return True
         if self.waterfall:
             return True
         return False
@@ -629,11 +622,6 @@ class Observation(models.Model):
     def has_audio(self):
         """Run some checks on the payload for existence of data."""
         if self.archive_url:
-            return True
-        if self.payload_old:
-            if (not self.payload_old.storage.exists(self.payload_old.name
-                                                    )) or self.payload_old.size == 0:
-                return False
             return True
         if self.payload:
             return True
@@ -674,8 +662,6 @@ class Observation(models.Model):
         if self.has_audio:
             if self.archive_url:
                 return self.archive_url
-            if self.payload_old:
-                return self.payload_old.url
             return self.payload.url
         return ''
 
@@ -706,10 +692,6 @@ class Observation(models.Model):
 @receiver(models.signals.post_delete, sender=Observation)
 def observation_remove_files(sender, instance, **kwargs):  # pylint: disable=W0613
     """Remove audio and waterfall files of an observation if the observation is deleted"""
-    if instance.payload_old:
-        instance.payload_old.delete(save=False)
-    if instance.waterfall_old:
-        instance.waterfall_old.delete(save=False)
     if instance.payload:
         instance.payload.delete(save=False)
     if instance.waterfall:
@@ -721,7 +703,6 @@ class DemodData(models.Model):
     observation = models.ForeignKey(
         Observation, related_name='demoddata', on_delete=models.CASCADE
     )
-    payload_demod = models.FileField(upload_to=_name_obs_demoddata, blank=True)
     demodulated_data = models.FileField(
         upload_to=_name_observation_demoddata, storage=_select_data_storage, blank=True
     )
@@ -735,10 +716,7 @@ class DemodData(models.Model):
         """
         Return the content of the data file as hex dump of the following form: `DE AD C0 DE`.
         """
-        if self.payload_demod:
-            with self.payload_demod.storage.open(self.payload_demod.name, mode='rb') as data_file:
-                payload = data_file.read()
-        else:
+        if self.demodulated_data:
             with self.demodulated_data.storage.open(self.demodulated_data.name,
                                                     mode='rb') as data_file:
                 payload = data_file.read()
@@ -750,10 +728,7 @@ class DemodData(models.Model):
         Return the content of the data file decoded as UTF-8. If this fails,
         show as hex dump.
         """
-        if self.payload_demod:
-            with self.payload_demod.storage.open(self.payload_demod.name, mode='rb') as data_file:
-                payload = data_file.read()
-        else:
+        if self.demodulated_data:
             with self.demodulated_data.storage.open(self.demodulated_data.name,
                                                     mode='rb') as data_file:
                 payload = data_file.read()
@@ -764,15 +739,11 @@ class DemodData(models.Model):
             return _decode_pretty_hex(payload)
 
     def __str__(self):
-        if self.payload_demod:
-            return '{} - {}'.format(self.id, self.payload_demod)
         return '{} - {}'.format(self.id, self.demodulated_data)
 
 
 @receiver(models.signals.post_delete, sender=DemodData)
 def demoddata_remove_files(sender, instance, **kwargs):  # pylint: disable=W0613
     """Remove data file of an observation if the observation is deleted"""
-    if instance.payload_demod:
-        instance.payload_demod.delete(save=False)
     if instance.demodulated_data:
         instance.demodulated_data.delete(save=False)

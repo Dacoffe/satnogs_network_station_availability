@@ -89,9 +89,7 @@ def unknown_observations_count(user):
     if user_unknown_count is None:
         user_unknown_count = Observation.objects.filter(
             author=user, status__range=(0, 99), end__lte=now()
-        ).exclude(
-            waterfall_old='', waterfall=''
-        ).count()
+        ).exclude(waterfall='').count()
         cache.set('user-{0}-unknown-count'.format(user.id), user_unknown_count, 120)
 
     return user_unknown_count

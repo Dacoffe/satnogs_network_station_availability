@@ -88,13 +88,6 @@ def percentagerest(value):
         return 0
 
 
-def get_demoddata_filenames(demoddata):
-    """Returns the filename of a demoddata file"""
-    if demoddata.payload_demod:
-        return demoddata.payload_demod.name.split('/')[-1]
-    return demoddata.demodulated_data.name.split('/')[-1]
-
-
 @register.filter
 def lookup_with_key(dictionary, key):
     """Returns a value from dictionary for a given key"""

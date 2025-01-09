@@ -147,7 +147,7 @@ class ObservationAdmin(admin.ModelAdmin):
     """Define Observation view in django admin UI"""
     list_display = (
         'id', 'author', 'sat_id', 'transmitter_uuid', 'start', 'end', 'archived', 'audio_zipped',
-        'status', 'payload_old', 'payload', 'waterfall_old', 'waterfall'
+        'status', 'payload', 'waterfall'
     )
     list_filter = ('start', 'end', 'archived', 'audio_zipped', 'status', 'sat_id', 'author')
     search_fields = ('id', 'sat_id', 'author__username')
@@ -159,8 +159,6 @@ class ObservationAdmin(admin.ModelAdmin):
 @admin.register(DemodData)
 class DemodDataAdmin(admin.ModelAdmin):
     """Define DemodData view in django admin UI"""
-    list_display = (
-        'id', 'observation', 'payload_demod', 'demodulated_data', 'copied_to_db', 'is_image'
-    )
+    list_display = ('id', 'observation', 'demodulated_data', 'copied_to_db', 'is_image')
     list_filter = ('copied_to_db', 'is_image')
     search_fields = ('id', 'observation__id')
