@@ -407,7 +407,6 @@ $(document).ready( function(){
                 $('#station-field-loading').show();
             }
         }).done(function(data) {
-            console.debug(data.length);
             if (data.length == 1 && data[0].error) {
                 $('#transmitter-selection').html(`<option id="no-transmitter"
                                                           value="" selected>
@@ -416,7 +415,7 @@ $(document).ready( function(){
                 $('#transmitter-selection').selectpicker('refresh');
                 show_alert('danger', data[0].error);
                 $('#station-field-loading').hide();
-            } else if (!data.length) {
+            } else if (data.length == 0) {
                 const msg = `The selected satellite does not have a transmitter associated with it in
 SatNOGS DB. You can submit a transmitter suggestion in SatNOGS DB,
 and once approved, it will be available for scheduling here.`;
