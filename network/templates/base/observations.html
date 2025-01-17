@@ -234,12 +234,14 @@
             <label for="results-selection">Experimental</label>
             <select class="form-control selectpicker" data-style="btn" name="experimental_observation" autocomplete="off" id="experimental-observation-selection">
               <option value="" selected>All</option>
-              {% for experimental_value in experimental_values %}
-                <option data-experimental="{{ experimental_value }}" value="{{ experimental_value }}"
-                  {% if experimental_observation == experimental_value %}selected{% endif %}>
-                  {{ experimental_value }}
-                </option>
-              {% endfor %}
+              <option data-experimental="Experimental" value="True"
+                {% if experimental_observation == "True" %}selected{% endif %}>
+                Experimental
+              </option>
+              <option data-experimental="Non-Experimental" value="False"
+                {% if experimental_observation == "False" %}selected{% endif %}>
+                Non-Experimental
+              </option>
             </select>
           </div>
         </div>
