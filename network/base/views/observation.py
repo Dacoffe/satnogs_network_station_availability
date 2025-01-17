@@ -216,7 +216,6 @@ class ObservationListBaseView(ListView):
         context['results'] = self.request.GET.getlist('results')
         context['rated'] = self.request.GET.getlist('rated')
         context['transmitter_mode'] = self.request.GET.get('transmitter_mode', None)
-        context['experimental_values'] = ['True', 'False']
         cached_transmitters_with_stats = cache.get('transmitters-with-stats')
         context['transmitter_uuids_info'] = cached_transmitters_with_stats.values(
         ) if cached_transmitters_with_stats else get_and_refresh_transmitters_with_stats_cache(
