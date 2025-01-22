@@ -580,7 +580,7 @@ def notify_for_stations_without_results():
                 if observation.end >= last_check:
                     obs_after_last_check = True
             if obs_without_results == obs_limit and obs_after_last_check:
-                stations += ' ' + str(station.id)
+                stations += f'{station.id}\n'
         if stations:
             # Notify user
             subject = '[satnogs] Station with observations without results'
