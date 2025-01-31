@@ -100,6 +100,7 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
     observation_frequency = serializers.SerializerMethodField()
     transmitter_status = serializers.SerializerMethodField()
     transmitter_unconfirmed = serializers.SerializerMethodField()
+    artifact_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Observation
@@ -114,7 +115,8 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
             'transmitter_downlink_low', 'transmitter_downlink_high', 'transmitter_downlink_drift',
             'transmitter_mode', 'transmitter_invert', 'transmitter_baud', 'transmitter_updated',
             'transmitter_status', 'tle0', 'tle1', 'tle2', 'tle_source', 'center_frequency',
-            'observer', 'observation_frequency', 'transmitter_unconfirmed', 'sat_id'
+            'observer', 'observation_frequency', 'transmitter_unconfirmed', 'sat_id',
+            'artifact_url'
         )
         read_only_fields = [
             'id', 'start', 'end', 'observation', 'ground_station', 'transmitter', 'norad_cat_id',
@@ -127,13 +129,18 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
             'transmitter_downlink_drift', 'transmitter_mode', 'transmitter_invert',
             'transmitter_baud', 'transmitter_created', 'transmitter_updated', 'transmitter_status',
             'tle0', 'tle1', 'tle2', 'tle_source', 'observer', 'center_frequency',
-            'observation_frequency', 'transmitter_unconfirmed', 'sat_id'
+            'observation_frequency', 'transmitter_unconfirmed', 'sat_id', 'artifact_url'
         ]
 
     def update(self, instance, validated_data):
         """Updates observation object with validated data"""
         super().update(instance, validated_data)
         return instance
+
+    @extend_schema_field(serializers.URLField(allow_null=True))
+    def get_artifact_url(self, obj):
+        """Returns the url of the artifact if it exists"""
+        return obj.artifact_url or None
 
     @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_observation_frequency(self, obj):
