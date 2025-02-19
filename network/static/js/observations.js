@@ -164,7 +164,7 @@ $(document).ready(function() {
         const options = document.querySelectorAll('#transmitter-uuid-selection option');
         
         options.forEach(option => {
-            if (option.dataset['sat_id'] === selectedSatId || !selectedSatId) {
+            if ((option.dataset['sat_id'] === selectedSatId || !selectedSatId) || option.value === '') {
                 option.disabled = false;
             } else {
                 option.disabled = true;
