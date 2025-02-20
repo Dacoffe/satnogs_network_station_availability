@@ -1,5 +1,11 @@
 """Define functions and settings for the django admin base interface"""
+from datetime import timedelta
+
+from django.conf import settings
 from django.contrib import admin
+from django.contrib.admin import SimpleListFilter
+from django.db.models import Q
+from django.utils.timezone import now
 
 from network.base.models import ActiveStationConfiguration, Antenna, AntennaType, DemodData, \
     FrequencyRange, Observation, Station, StationConfiguration, StationConfigurationSchema, \
@@ -94,14 +100,40 @@ class ActiveStationConfigurationAdmin(admin.ModelAdmin):
     search_fields = ('id', 'name', 'station')
 
 
+class IsConnectedFilter(SimpleListFilter):
+    """Filter for connected/disconnected stations"""
+    title = "Is Connected"
+    parameter_name = "is_connected"
+
+    def lookups(self, request, model_admin):
+        return [
+            ("yes", "Connected"),
+            ("no", "Disconnected"),
+        ]
+
+    def queryset(self, request, queryset):
+        threshold = now() - timedelta(minutes=int(settings.STATION_HEARTBEAT_TIME))
+        if self.value() == "yes":
+            return queryset.filter(last_seen__gte=threshold)
+        if self.value() == "no":
+            return queryset.filter(Q(last_seen__lt=threshold) | Q(last_seen__isnull=True))
+        return queryset
+
+
 @admin.register(Station)
 class StationAdmin(admin.ModelAdmin):
     """Define Station view in django admin UI"""
     list_display = (
         'id', 'name', 'owner', 'get_email', 'lat', 'lng', 'qthlocator', 'client_version',
-        'created_date', 'state', 'target_utilization', 'violator_scheduling', 'client_id'
+        'created_date', 'target_utilization', 'violator_scheduling', 'client_id', 'is_connected',
+        'is_available', 'testing'
     )
-    list_filter = ('status', 'created', 'client_version', 'violator_scheduling')
+
+    list_filter = (
+        'created', 'client_version', 'violator_scheduling', IsConnectedFilter, 'is_available',
+        'testing'
+    )
+
     search_fields = ('id', 'name', 'owner__username')
 
     actions = [export_as_csv, export_station_status]
@@ -132,8 +164,8 @@ class StationAdmin(admin.ModelAdmin):
 @admin.register(StationStatusLog)
 class StationStatusLogAdmin(admin.ModelAdmin):
     """Define StationStatusLog view in django admin UI"""
-    list_display = ('id', 'station', 'status', 'changed')
-    list_filter = ('station', 'status')
+    list_display = ('id', 'station', 'is_connected', 'is_available', 'testing', 'changed')
+    list_filter = ('station', 'is_connected', 'is_available', 'testing')
     search_fields = ('id', 'station__id')
 
 

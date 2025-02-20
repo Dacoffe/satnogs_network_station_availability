@@ -346,7 +346,7 @@ class VetObservationsView(LoginRequiredMixin, ObservationListBaseView):
         if not (self.request.user.is_superuser
                 or self.request.user.groups.filter(name='Moderators').exists()
                 or self.request.user.has_perm('base.can_vet')
-                or self.request.user.ground_stations.filter(status=2).exists()):
+                or self.request.user.connected_stations.filter(is_available=True).exists()):
             queryset = queryset.filter(
                 Q(author=self.request.user)
                 | Q(ground_station__isnull=False, ground_station__owner=self.request.user)

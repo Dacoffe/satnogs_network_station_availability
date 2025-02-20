@@ -86,6 +86,14 @@ class StationViewApiTest(TestCase):
             }
         ]
 
+        def get_deprecated_status(status_label):
+            """Returns Station status. DEPRECATED, exists for backwards compatability"""
+            if status_label == 'Connected':
+                return 'Online'
+            if status_label in ('Disconnected', 'Unavailable'):
+                return 'Offline'
+            return 'Testing'
+
         station_serialized = {
             'id': self.station.id,
             'altitude': self.station.alt,
@@ -101,7 +109,10 @@ class StationViewApiTest(TestCase):
             'observations': 0,
             'qthlocator': self.station.qthlocator,
             'target_utilization': self.station.target_utilization,
-            'status': self.station.get_status_display(),
+            'status': get_deprecated_status(self.station.status_label),
+            'is_available': self.station.is_available,
+            'is_connected': self.station.is_connected,
+            'testing': self.station.testing,
             'future_observations': 0,  # No observation scheduled in the test
             'image': self.station.get_image(),
             'success_rate': self.station.success_rate,

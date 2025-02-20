@@ -134,20 +134,24 @@ span.datetime-time {
 
 //Define bg-{online,offline,testing} & text-{online,offline,testing}
 
-.bg-online {
+.bg-connected {
     background-color: #dff0d8;
 }
 
-.text-online {
+.text-connected {
     color: #3c763d;
 }
 
-.bg-offline {
+.bg-unavailable {
     background-color: #f2dede;
 }
 
-.text-offline {
+.text-unavailable {
     color: #a94442;
+}
+
+.bg-disconnected {
+    background-color: #d9d9d9;
 }
 
 .bg-testing {

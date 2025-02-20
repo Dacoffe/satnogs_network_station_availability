@@ -87,19 +87,14 @@
                   <tr class="station-row clickable-row" data-href="{% url 'base:station_view' station_id=station.id %}">
                     <td>
                       <a href="{% url 'base:station_view' station_id=station.id %}">
-                        <span class="station
-                                     {% if station.last_seen %}
-                                       badge badge-{{ station.get_status_display|lower }}
-                                     {% else %}
-                                       badge badge-future
-                                     {% endif %}"
+                        <span class="station badge badge-{{ station.status_label|lower }}"
                               data-toggle="tooltip"
                               data-placement="bottom"
-                              title="{% if station.last_seen %}
-                                       Seen {{ station.last_seen|timesince }} ago
-                                     {% else %}
-                                       Never seen online
-                                     {% endif %}">
+                              title="{{ station.status_label }}, {% if station.last_seen %}
+                                      Seen {{ station.last_seen|timesince }} ago
+                                    {% else %}
+                                      Never seen online
+                                    {% endif %}">
                           {{ station.id }}
                         </span>
                       </a>

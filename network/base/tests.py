@@ -52,6 +52,7 @@ class StationFactory(factory.django.DjangoModelFactory):
     lat = fuzzy.FuzzyFloat(-20, 70)
     lng = fuzzy.FuzzyFloat(-180, 180)
     featured_date = fuzzy.FuzzyDateTime(now() - timedelta(days=10), now())
+    is_available = fuzzy.FuzzyChoice(choices=[True, False])
     testing = fuzzy.FuzzyChoice(choices=[True, False])
     last_seen = fuzzy.FuzzyDateTime(now() - timedelta(days=3), now())
     horizon = fuzzy.FuzzyInteger(10, 20)

@@ -12,7 +12,7 @@
 {% block body-class %}class="home"{% endblock %}
 
 {% block prenav-content %}
-  <div id="map" data-mapboxid="{{ mapbox_id }}" data-mapboxtoken="{{ mapbox_token }}" data-stations="{% url 'base:stations_all' %}"></div>
+  <div id="map" data-mapboxid="{{ mapbox_id }}" data-mapboxtoken="{{ mapbox_token }}" data-stations="{% url 'base:mapped_stations' %}"></div>
 {% endblock prenav-content %}
 
 {% block content %}

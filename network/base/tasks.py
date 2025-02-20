@@ -15,7 +15,6 @@ from django.core.cache import cache
 from django.core.mail import send_mail
 from django.db import transaction
 from django.db.models import Count, Max, Q
-from django.db.models.signals import post_save
 from django.utils.timezone import now
 from internetarchive import upload
 from internetarchive.exceptions import AuthenticationError
@@ -24,9 +23,8 @@ from tinytag.tinytag import TinyTagException
 
 from network.base.db_api import DBConnectionError, get_tle_sets_by_sat_id_set, \
     get_transmitters_by_uuid_set
-from network.base.models import DemodData, Observation, Station
+from network.base.models import DemodData, Observation, Station, StationStatusLog
 from network.base.rating_tasks import rate_observation
-from network.base.signals import _station_post_save
 from network.base.utils import format_frequency, format_frequency_range, sync_demoddata_to_db
 from network.base.validators import is_transmitter_in_station_range
 
@@ -538,12 +536,11 @@ def sync_frame_to_db(frame_id):
 
 
 @shared_task
-def station_status_update():
-    """Task to update Station status."""
-    post_save.disconnect(_station_post_save, sender=Station)
-    for station in Station.objects.all():
-        station.update_status(created=False)
-    post_save.connect(_station_post_save, sender=Station, weak=False)
+def station_log_disconnect():
+    """Task to log station disconnection."""
+    for station in Station.objects.disconnected():
+        if station.has_unlogged_status_change:
+            StationStatusLog.create_from_station(station)
 
 
 @shared_task
@@ -555,7 +552,7 @@ def notify_for_stations_without_results():
         obs_limit = settings.OBS_NO_RESULTS_MIN_COUNT
         time_limit = now() - timedelta(seconds=settings.OBS_NO_RESULTS_IGNORE_TIME)
         last_check = time_limit - timedelta(seconds=settings.OBS_NO_RESULTS_CHECK_PERIOD)
-        for station in Station.objects.filter(status=2):
+        for station in Station.objects.connected().filter(is_available=True, testing=False):
             last_obs = Observation.objects.filter(
                 ground_station=station, end__lt=time_limit
             ).order_by("-end")[:obs_limit]

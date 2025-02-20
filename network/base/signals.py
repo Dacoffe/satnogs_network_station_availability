@@ -2,7 +2,7 @@
 from django.db.models.signals import post_delete, post_save, pre_delete
 from django.utils.timezone import now
 
-from network.base.models import Observation, Station
+from network.base.models import Observation, Station, StationStatusLog
 
 
 def _observation_post_delete(sender, instance, **kwargs):  # pylint: disable=W0613
@@ -17,11 +17,10 @@ def _observation_post_delete(sender, instance, **kwargs):  # pylint: disable=W06
 def _station_post_save(sender, instance, created, **kwargs):  # pylint: disable=W0613
     """
     Post save Station operations
-    * Store current status
+    * Store current status when a station is created or its status changes
     """
-    post_save.disconnect(_station_post_save, sender=Station)
-    instance.update_status(created=created)
-    post_save.connect(_station_post_save, sender=Station, weak=False)
+    if created or instance.has_unlogged_status_change:
+        StationStatusLog.create_from_station(instance)
 
 
 def _station_pre_delete(sender, instance, **kwargs):  # pylint: disable=W0613

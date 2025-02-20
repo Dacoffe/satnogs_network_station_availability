@@ -5,6 +5,7 @@ from datetime import timedelta
 from operator import truth
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import DefaultStorage
@@ -14,15 +15,15 @@ from django.db import models
 from django.db.models import Count, Q
 from django.dispatch import receiver
 from django.urls import reverse
-from django.utils.html import format_html
 from django.utils.timezone import now
 from shortuuidfield import ShortUUIDField
 from storages.backends.s3boto3 import S3Boto3Storage
 
 from network.base.db_api import DBConnectionError, get_artifact_metadata_by_observation_id
-from network.base.managers import ObservationManager
+from network.base.managers import ObservationManager, StationManagerQueryset
 from network.base.utils import bands_from_range
-from network.users.models import User
+
+User = get_user_model()
 
 OBSERVATION_STATUSES = (
     ('unknown', 'Unknown'),
@@ -194,9 +195,9 @@ class Station(models.Model):
     qthlocator = models.CharField(max_length=8, blank=True)
     featured_date = models.DateField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
+    is_available = models.BooleanField(default=True)
     testing = models.BooleanField(default=True)
     last_seen = models.DateTimeField(null=True, blank=True)
-    status = models.IntegerField(choices=STATION_STATUSES, default=0)
     violator_scheduling = models.IntegerField(
         choices=STATION_VIOLATOR_SCHEDULING_CHOICES, default=0
     )
@@ -213,9 +214,20 @@ class Station(models.Model):
     client_id = models.UUIDField(null=True, blank=True, editable=True, db_index=True)
     active_configuration_changed = models.DateTimeField(blank=True, null=True)
 
+    objects = StationManagerQueryset.as_manager()
+
     class Meta:
-        ordering = ['-status', 'id']
-        indexes = [models.Index(fields=['-status', 'id'])]
+        indexes = [models.Index(fields=['last_seen'])]
+
+    @property
+    def has_unlogged_status_change(self):
+        """Returns whether the last log reflects the current station status"""
+        last_log = StationStatusLog.objects.filter(station=self).order_by('-changed').first()
+
+        if not last_log or (last_log.is_connected != self.is_connected or last_log.is_available
+                            != self.is_available or last_log.testing != self.testing):
+            return True
+        return False
 
     @property
     def active_configuration(self):
@@ -233,18 +245,13 @@ class Station(models.Model):
         return settings.STATION_DEFAULT_IMAGE
 
     @property
-    def is_online(self):
-        """Return true if station is online"""
+    def is_connected(self) -> bool:
+        """Returns whether the station has contacted Network recently"""
         try:
             heartbeat = self.last_seen + timedelta(minutes=int(settings.STATION_HEARTBEAT_TIME))
             return heartbeat > now()
         except TypeError:
             return False
-
-    @property
-    def is_offline(self):
-        """Return true if station is offline"""
-        return not self.is_online
 
     @property
     def has_location(self):
@@ -254,20 +261,15 @@ class Station(models.Model):
         return True
 
     @property
-    def is_testing(self):
-        """Return true if station is online and in testing mode"""
-        if self.is_online:
-            if self.status == 1:
-                return True
-        return False
-
-    def state(self):
-        """Return the station status in html format"""
-        if not self.status:
-            return format_html('<span style="color:red;">Offline</span>')
-        if self.status == 1:
-            return format_html('<span style="color:orange;">Testing</span>')
-        return format_html('<span style="color:green">Online</span>')
+    def status_label(self):
+        """Returns a text label that summarizes the station status"""
+        if self.is_connected:
+            if self.is_available:
+                if self.testing:
+                    return 'Testing'
+                return 'Connected'
+            return 'Unavailable'
+        return 'Disconnected'
 
     @property
     def success_rate(self):
@@ -281,9 +283,9 @@ class Station(models.Model):
                 good=Count('pk', filter=Q(status__gte=100)),
                 failed=Count('pk', filter=Q(status__lt=100))
             )
-            good_count = 0 if stats['good'] is None else stats['good']
-            bad_count = 0 if stats['bad'] is None else stats['bad']
-            failed_count = 0 if stats['failed'] is None else stats['failed']
+            good_count = stats['good'] or 0
+            bad_count = stats['bad'] or 0
+            failed_count = stats['failed'] or 0
             total = good_count + bad_count + failed_count
             if total:
                 rate = int(100 * ((bad_count + good_count) / total))
@@ -333,26 +335,6 @@ class Station(models.Model):
                     )
                 }
             )
-
-    def update_status(self, created: bool = False):
-        """
-        Update the status of the station
-
-        :param created: Whether the model is being created
-        """
-        if not created:
-            current_status = self.status
-            if self.is_offline:
-                self.status = 0
-            elif self.testing:
-                self.status = 1
-            else:
-                self.status = 2
-            self.save()
-            if self.status != current_status:
-                StationStatusLog.objects.create(station=self, status=self.status)
-        else:
-            StationStatusLog.objects.create(station=self, status=self.status)
 
 
 class AntennaType(models.Model):
@@ -443,15 +425,42 @@ class StationStatusLog(models.Model):
     station = models.ForeignKey(
         Station, related_name='station_logs', on_delete=models.CASCADE, null=True, blank=True
     )
-    status = models.IntegerField(choices=STATION_STATUSES, default=0)
+    is_connected = models.BooleanField(default=False)
+    is_available = models.BooleanField(default=True)
+    testing = models.BooleanField(default=False)
     changed = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def status_label(self):
+        """Returns a text label that summarizes the station status"""
+        if self.is_connected:
+            if self.is_available:
+                if self.testing:
+                    return 'Testing'
+                return 'Connected'
+            return 'Unavailable'
+        return 'Disconnected'
+
+    @classmethod
+    def create_from_station(cls, station):
+        """
+        Creates a StationStatusLog entry based on a given Station instance.
+        """
+        return cls.objects.create(
+            station=station,
+            testing=station.testing,
+            is_available=station.is_available,
+            is_connected=station.is_connected
+        )
 
     class Meta:
         ordering = ['-changed']
-        indexes = [models.Index(fields=['-changed'])]
+        indexes = [
+            models.Index(fields=["station", "-changed"]),
+        ]
 
     def __str__(self):
-        return '{0} - {1}'.format(self.station, self.status)
+        return '{0} - {1}'.format(self.station, self.status_label)
 
 
 class Observation(models.Model):

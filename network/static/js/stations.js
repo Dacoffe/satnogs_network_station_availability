@@ -4,11 +4,13 @@ $(document).ready(function () {
     'use strict';
 
     // Check if filters should be displayed
-    if (window.location.hash == '#collapseFilters') {
-        $('#collapseFilters').hide();
+    if (window.location.hash == '#collapseFilters' || $('#collapseFilters').data('filtered') == 'False') {
+        $('#collapseFilters').collapse('hide');
     } else if ($('#collapseFilters').data('filtered') == 'True') {
-        $('#collapseFilters').show();
+        $('#collapseFilters').collapse('show');
     }
+
+    $('.selectpicker').selectpicker();
 
     $('.filter-section #status-selector input').click(function() {
         var input = $(this);

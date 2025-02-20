@@ -249,7 +249,7 @@ $(document).ready( function(){
         return `
             <option value="` + station.id + `"
                     data-content='<div class="station-option">
-                                    <span class="badge badge-` + station.status_display.toLowerCase() +`">
+                                    <span class="badge badge-` + station.status_label.toLowerCase() +`">
                                       ` + station.id +
             `</span>
                                     <span class="station-description">
@@ -936,11 +936,27 @@ and once approved, it will be available for scheduling here.`;
         search_for_stations(transmitter_object);
     });
 
-    function sort_stations(a, b){
-        if( a.status > b.status){
-            return -1;
+    function sort_stations(a, b) {
+        if(a.status_label === 'Unavailable') {
+            if (b.status_label === a.status_label) {
+                return a.id - b.id;
+            } else {
+                return 1;
+            }
+        } else if (a.status_label === 'Testing') {
+            if (b.status_label === a.status_label) {
+                return a.id - b.id;
+            } else if (b.status_label === 'Connected') {
+                return 1;
+            } else {
+                return -1;
+            }
         } else {
-            return a.id - b.id;
+            if (b.status_label === a.status_label) {
+                return a.id - b.id;
+            } else {
+                return -1;
+            }
         }
     }
 

@@ -11,7 +11,7 @@ $(document).ready(function() {
     // Make table rows clickable
     $('.clickable-row').click(function(e) {
         if (e.target.nodeName != 'A') {
-            var href = $(this).find('a').attr('href');
+            var href = $(this).data('href');
             e.preventDefault();
             if (e.ctrlKey) {
                 window.open(href, '_blank');

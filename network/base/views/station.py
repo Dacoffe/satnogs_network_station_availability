@@ -1,10 +1,12 @@
 """Django base views for SatNOGS Network"""
+from datetime import timedelta
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.db import DatabaseError, transaction
-from django.db.models import Q
+from django.db.models import BooleanField, Case, Q, Value, When
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -23,10 +25,17 @@ from network.base.utils import populate_formset_error_messages
 
 
 @ajax_required
-def station_all_view(request):
+def mapped_stations_view(request):
     """Return JSON with all stations"""
-    stations = Station.objects.all()
-    data = StationSerializer(stations, many=True).data
+
+    cache_key = 'mapped_stations'
+    data = cache.get(cache_key)
+    if not data:
+        stations = Station.objects.connected().filter(is_available=True)
+        data = StationSerializer(stations, many=True).data
+        # STATION_HEARTBEAT_TIME is in minutes, timeout is in seconds
+        cache.set(cache_key, data, timeout=settings.STATION_HEARTBEAT_TIME * 10)
+
     return JsonResponse(data, safe=False)
 
 
@@ -36,7 +45,6 @@ class StationListView(ListView):
     context_object_name = "stations"
     paginate_by = settings.ITEMS_PER_PAGE
     template_name = "base/stations.html"
-    flag_filters = ['online', 'testing', 'offline', 'future']
     freq_filters = ['freq']
     is_filtered = False
     freq_filter_errors = []
@@ -47,17 +55,10 @@ class StationListView(ListView):
         """
 
         filter_params = {}
-        for param_name in self.flag_filters:
-            param_val = self.request.GET.get(param_name, 1)
-            if param_val != '0':
-                filter_params[param_name] = True
-            else:
-                filter_params[param_name] = False
-                self.is_filtered = True
-        self.freq_filter_errors = []
+        filter_params['status_filters'] = self.request.GET.getlist('status', [])
         filter_freq = self.request.GET.get('freq', None)
+        self.is_filtered = bool(filter_freq) or bool(filter_params['status_filters'])
         if filter_freq:
-            self.is_filtered = True
             try:
                 filter_freq = int(float(filter_freq))
             except ValueError:
@@ -69,20 +70,31 @@ class StationListView(ListView):
         return filter_params
 
     def get_queryset(self):
+        threshold = now() - timedelta(minutes=int(settings.STATION_HEARTBEAT_TIME))
         stations = Station.objects.select_related('owner').prefetch_related(
             'antennas', 'antennas__antenna_type', 'antennas__frequency_ranges'
-        )
+        ).annotate(
+            connected=Case(
+                When(last_seen__gte=threshold, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField()
+            )
+        ).order_by('-connected', '-is_available', 'testing')
 
         filter_params = self.get_filter_params()
 
-        if not filter_params["online"]:
-            stations = stations.exclude(status=2)
-        if not filter_params["testing"]:
-            stations = stations.exclude(status=1)
-        if not filter_params["offline"]:
-            stations = stations.exclude(Q(status=0) & Q(last_seen__isnull=False))
-        if not filter_params["future"]:
-            stations = stations.exclude(last_seen__isnull=True)
+        if 'c1' in filter_params['status_filters']:
+            stations = stations.exclude(connected=False)
+        elif 'c0' in filter_params['status_filters']:
+            stations = stations.exclude(connected=True)
+        if 'a1' in filter_params['status_filters']:
+            stations = stations.exclude(is_available=False)
+        elif 'a0' in filter_params['status_filters']:
+            stations = stations.exclude(is_available=True)
+        if 't1' in filter_params['status_filters']:
+            stations = stations.exclude(testing=False)
+        elif 't0' in filter_params['status_filters']:
+            stations = stations.exclude(testing=True)
 
         freq = filter_params.get("freq", None)
         if freq:
@@ -119,9 +131,9 @@ def station_view(request, station_id):
     uptime_since = None
     if station_log:
         latest_entry = station_log[0]
-        if latest_entry.status > 0:
+        if latest_entry.is_connected:
             for entry in station_log:
-                if entry.status == 0:
+                if not entry.is_connected:
                     break
                 uptime_since = entry.changed
 
@@ -132,7 +144,7 @@ def station_view(request, station_id):
                 'bi-question-circle" aria-hidden="true"></span>'
                 '</a>'.format(settings.WIKI_STATION_URL)
             )
-            if station.is_offline:
+            if not station.is_connected:
                 messages.error(
                     request, (
                         'Your Station is offline. You should make '
@@ -140,11 +152,31 @@ def station_view(request, station_id):
                         '{0}'.format(wiki_help)
                     )
                 )
-            if station.is_testing:
+            if station.testing and station.is_available:
                 messages.warning(
                     request, (
-                        'Your Station is in Testing mode. Once you are sure '
-                        'it returns good observations you can put it online. '
+                        'Your Station is in testing mode and available to everyone '
+                        'for scheduling. Once you verify that it returns good observations, '
+                        'consider turning off testing mode. '
+                        '{0}'.format(wiki_help)
+                    )
+                )
+            if not station.testing and not station.is_available:
+                messages.warning(
+                    request, (
+                        'Your station is unavailable to others for scheduling. '
+                        'When it\'s ready, consider making it again available for '
+                        'scheduling by everyone. '
+                        '{0}'.format(wiki_help)
+                    )
+                )
+            if station.testing and not station.is_available:
+                messages.warning(
+                    request, (
+                        'Your station is in testing mode and unavailable to others for '
+                        'scheduling. When it\'s ready, consider making it available again '
+                        'to everyone for scheduling, and once you verify it returns '
+                        'good observations, turning off testing mode. '
                         '{0}'.format(wiki_help)
                     )
                 )
@@ -302,22 +334,41 @@ def handle_station_edit_get(request, station, registered):
     )
 
 
-def handle_station_edit_post(request, station, registered):
-    """Handles the form submission for creating or editing a station"""
-    frequency_range_formsets = {}
+def handle_station_edit_post_forms(request, station):
+    """Validates the forms of station_edit POST request"""
     station_form = StationForm(request.POST, request.FILES, instance=station)
     antenna_formset = AntennaInlineFormSet(
         request.POST, instance=station_form.instance, prefix='ant'
     )
-    for antenna_form in antenna_formset:
-        if not antenna_form['DELETE'].value():
-            prefix = antenna_form.prefix
-            frequency_range_formsets[prefix] = FrequencyRangeInlineFormSet(
-                request.POST, instance=antenna_form.instance, prefix=prefix + '-fr'
-            )
+    frequency_range_formsets = {
+        form.prefix: FrequencyRangeInlineFormSet(
+            request.POST, instance=form.instance, prefix=form.prefix + '-fr'
+        )
+        for form in antenna_formset if not form['DELETE'].value()
+    }
+
+    if not antenna_formset.is_valid():
+        populate_formset_error_messages(messages, request, antenna_formset)
+        return (False, station_form, antenna_formset, frequency_range_formsets)
 
     if not station_form.is_valid():
         messages.error(request, str(station_form.errors))
+        return (False, station_form, antenna_formset, frequency_range_formsets)
+
+    for frequency_range_formset_value in frequency_range_formsets.values():
+        if not frequency_range_formset_value.is_valid():
+            populate_formset_error_messages(messages, request, frequency_range_formset_value)
+            return (False, station_form, antenna_formset, frequency_range_formsets)
+
+    return (True, station_form, antenna_formset, frequency_range_formsets)
+
+
+def handle_station_edit_post(request, station, registered):
+    """Handles the form submission for creating or editing a station"""
+    (all_forms_valid, station_form, antenna_formset,
+     frequency_range_formsets) = handle_station_edit_post_forms(request, station)
+
+    if not all_forms_valid:
         return render_station_edit_form(
             request, station_form, registered, antenna_formset, frequency_range_formsets
         )
@@ -328,18 +379,6 @@ def handle_station_edit_post(request, station, registered):
     station = station_form.save(commit=False)
     station.owner = request.user
     station.qthlocator = calculate_qth_locator(station.lat, station.lng)
-    if not antenna_formset.is_valid():
-        populate_formset_error_messages(messages, request, antenna_formset)
-        return render_station_edit_form(
-            request, station_form, registered, antenna_formset, frequency_range_formsets
-        )
-
-    for frequency_range_formset_value in frequency_range_formsets.values():
-        if not frequency_range_formset_value.is_valid():
-            populate_formset_error_messages(messages, request, frequency_range_formset_value)
-            return render_station_edit_form(
-                request, station_form, registered, antenna_formset, frequency_range_formsets
-            )
 
     try:
         schema_instance = StationConfigurationSchema.objects.select_related('station_type').get(
@@ -351,11 +390,11 @@ def handle_station_edit_post(request, station, registered):
             conf_changed = False
         else:
             conf_changed = True
-
         if conf_changed:
             Draft202012Validator(schema_instance.schema).validate(station_configuration)
         with transaction.atomic():
-            is_station_new = not bool(station.pk)
+            if is_station_new := not bool(station.pk):
+                station.testing = True
             if conf_changed:
                 station.active_configuration_changed = now()
             station.save()

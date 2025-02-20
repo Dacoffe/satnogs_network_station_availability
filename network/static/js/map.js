@@ -36,8 +36,8 @@ $(document).ready(function() {
             map.addImage('offline', image);
         });
 
-        var online_points = {
-            'id': 'online-points',
+        var connected_points = {
+            'id': 'connected-points',
             'type': 'symbol',
             'source': {
                 'type': 'geojson',
@@ -70,57 +70,23 @@ $(document).ready(function() {
             }
         };
 
-        var offline_points = {
-            'id': 'offline-points',
-            'type': 'symbol',
-            'source': {
-                'type': 'geojson',
-                'data': {
-                    'type': 'FeatureCollection',
-                    'features': []
-                }
-            },
-            'layout': {
-                'icon-image': 'offline',
-                'icon-size': 0.25,
-                'icon-allow-overlap': true
-            }
-        };
-
         $.ajax({
             url: stations
         }).done(function(data) {
-            data.forEach(function(m) {
+            data.forEach(function(station) {
 
-                if (m.status == 1){
-                    create_station_point(testing_points, m);
-                } else if (m.status == 2) {
-                    create_station_point(online_points, m);
-                } else if (m.status == 0) {
-                    create_station_point(offline_points, m);
+                if (station.testing){
+                    create_station_point(testing_points, station);
+                } else {
+                    create_station_point(connected_points, station);
                 }
             });
 
             // Add layers to map
             map.addLayer(testing_points);
-            map.addLayer(online_points);
-            map.addLayer(offline_points);
+            map.addLayer(connected_points);
 
-            // Set offline layer to invisble
-            map.setLayoutProperty(offline_points.id, 'visibility', 'none');
             map.repaint = false;
-
-            // Register keys for toggling visibility of layers
-            $(document).bind('keyup', function(event){
-                if (event.which == 79) {
-                    toggle_layer(map, offline_points);
-                } else if (event.which == 78 ) {
-                    toggle_layer(map, online_points);
-                } else if (event.which == 84 ) {
-                    toggle_layer(map, testing_points);
-                }
-            });
-
         });
     });
 
@@ -145,27 +111,13 @@ $(document).ready(function() {
         });
     }
 
-    // Toggle map layer
-    function toggle_layer(map, layer) {
-        var visibility = map.getLayoutProperty(layer.id, 'visibility');
-
-        //Check if layer is already visible
-        if (visibility === 'visible') {
-            map.setLayoutProperty(layer.id, 'visibility', 'none');
-            layer.className = '';
-        } else {
-            layer.className = 'active';
-            map.setLayoutProperty(layer.id, 'visibility', 'visible');
-        }
-    }
-
     // Create a popup, but don't add it to the map yet.
     var popup = new maplibregl.Popup({
         closeButton: false,
         closeOnClick: true
     });
 
-    map.on('mouseenter', 'online-points', function(e) {
+    map.on('mouseenter', 'connected-points', function(e) {
         // Change the cursor style as a UI indicator.
         map.getCanvas().style.cursor = 'pointer';
 
@@ -177,17 +129,6 @@ $(document).ready(function() {
     });
 
     map.on('mouseenter','testing-points', function(e) {
-        // Change the cursor style as a UI indicator.
-        map.getCanvas().style.cursor = 'pointer';
-
-        // Populate the popup and set its coordinates
-        // based on the feature found.
-        popup.setLngLat(e.features[0].geometry.coordinates)
-            .setHTML(e.features[0].properties.description)
-            .addTo(map);
-    });
-
-    map.on('mouseenter','offline-points', function(e) {
         // Change the cursor style as a UI indicator.
         map.getCanvas().style.cursor = 'pointer';
 

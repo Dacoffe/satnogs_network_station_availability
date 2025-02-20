@@ -1,7 +1,10 @@
 """Django users views for SatNOGS Network"""
+from datetime import timedelta
+
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import BooleanField, Case, Value, When
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.timezone import now
@@ -57,9 +60,21 @@ def view_user(request, username):
     observations = Observation.objects.filter(author=user)[0:10].prefetch_related('ground_station')
     sat_ids = [obs.sat_id for obs in observations]
 
-    stations = Station.objects.filter(
-        owner=user
-    ).prefetch_related('antennas', 'antennas__antenna_type', 'antennas__frequency_ranges')
+    threshold = now() - timedelta(minutes=int(settings.STATION_HEARTBEAT_TIME))
+    stations = (
+        Station.objects.filter(owner=user).prefetch_related(
+            "antennas",
+            "antennas__antenna_type",
+            "antennas__frequency_ranges",
+        ).annotate(
+            connected=Case(
+                When(last_seen__gte=threshold, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            )
+        ).order_by("-connected", "-is_available", "testing")
+    )
+
     token = ''
     can_schedule = False
     if request.user.is_authenticated:

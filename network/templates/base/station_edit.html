@@ -378,6 +378,16 @@
               </label>
             </div>
           </div>
+          <div class="form-group">
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" name="is_available" {% if station_form.is_available.value %}checked="True"{% endif %}>
+                Available?
+                    <span class="bi bi-question-circle" aria-hidden="true" data-toggle="tooltip"
+                          title="Unchecking this box disallows others from scheduling on your station. Admins are able to schedule after communicating with you."></span>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 

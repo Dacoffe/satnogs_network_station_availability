@@ -41,7 +41,7 @@ BASE_URLPATTERNS = (
         ),
         path('satellites/<str:sat_id>/', observation.satellite_view, name='satellite_view'),
         # Stations
-        path('stations_all/', station.station_all_view, name='stations_all'),
+        path('mapped_stations/', station.mapped_stations_view, name='mapped_stations'),
         path('stations/', station.StationListView.as_view(), name='stations_list'),
         re_path(r'^stations/(?P<station_id>[0-9]+)/$', station.station_view, name='station_view'),
         re_path(

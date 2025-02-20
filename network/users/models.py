@@ -1,4 +1,5 @@
 """Django database users model for SatNOGS Network"""
+from django.apps import apps
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxLengthValidator
 from django.db import models
@@ -19,6 +20,19 @@ class User(AbstractUser):
 
     bio = models.TextField(default='', validators=[MaxLengthValidator(1000)])
     is_observer = models.BooleanField(default=False)
+
+    @property
+    def connected_stations(self):
+        """Returns the stations of the user that are connected"""
+        Station = apps.get_model('base', 'Station')  # pylint: disable=invalid-name
+        return Station.objects.connected().filter(owner=self)
+
+    @property
+    def useable_stations(self):
+        """Returns the stations of the user that other users can schedule on"""
+        return self.connected_stations.filter(
+            is_available=True, lat__isnull=False, lng__isnull=False, alt__isnull=False
+        )
 
     @property
     def displayname(self):

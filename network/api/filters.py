@@ -1,5 +1,10 @@
 """SatNOGS Network django rest framework Filters class"""
+from datetime import timedelta
+
 import django_filters
+from django import forms
+from django.conf import settings
+from django.db.models import Q
 from django.utils.timezone import now
 from django_filters.rest_framework import FilterSet
 
@@ -106,6 +111,60 @@ class ObservationViewFilter(FilterSet):
 class StationViewFilter(FilterSet):
     """SatNOGS Network Station API View Filter"""
 
+    BOOLEAN_WIDGET_CHOICES = [
+        (None, "Any"),
+        (True, "Yes"),
+        (False, "No"),
+    ]
+
+    STATUS_WIDGET_CHOICES = [
+        ("online", "Online"),
+        ("testing", "Testing"),
+        ("offline", "Offline"),
+    ]
+    status = django_filters.ChoiceFilter(
+        label='Status (Deprecated)',
+        method='filter_status',
+        choices=STATUS_WIDGET_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
+    connected = django_filters.BooleanFilter(
+        label='Is connected',
+        method='filter_is_connected',
+        widget=forms.Select(choices=BOOLEAN_WIDGET_CHOICES, attrs={'class': 'form-control'})
+    )
+    is_available = django_filters.BooleanFilter(
+        widget=forms.Select(choices=BOOLEAN_WIDGET_CHOICES, attrs={'class': 'form-control'})
+    )
+    testing = django_filters.BooleanFilter(
+        widget=forms.Select(choices=BOOLEAN_WIDGET_CHOICES, attrs={'class': 'form-control'})
+    )
+
+    def filter_is_connected(self, queryset, name, value):  # pylint:disable=unused-argument
+        """Custom filter logic"""
+        threshold = now() - timedelta(minutes=int(settings.STATION_HEARTBEAT_TIME))
+        if value:
+            return queryset.filter(last_seen__gte=threshold)
+        return queryset.filter(Q(last_seen__lt=threshold) | Q(last_seen__isnull=True))
+
+    def filter_status(self, queryset, name, value):  # pylint:disable=unused-argument
+        """Custom filter logic"""
+        threshold = now() - timedelta(minutes=int(settings.STATION_HEARTBEAT_TIME))
+        if value == 'online':
+            return queryset.filter(
+                Q(last_seen__gte=threshold) & Q(is_available=True) & Q(testing=False)
+            )
+        if value == 'testing':
+            return queryset.filter(
+                Q(last_seen__gte=threshold) & Q(is_available=True) & Q(testing=True)
+            )
+        if value == 'offline':
+            return queryset.filter(
+                Q(last_seen__lt=threshold) | Q(last_seen__isnull=True) | Q(is_available=False)
+            )
+        return queryset
+
     class Meta:
         model = Station
-        fields = ['id', 'name', 'status', 'client_version']
+        fields = ['id', 'name', 'connected', 'is_available', 'testing', 'client_version', 'status']

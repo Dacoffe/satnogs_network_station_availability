@@ -442,12 +442,11 @@ class NewObservationSerializer(serializers.Serializer):
         }
     )
     ground_station = serializers.PrimaryKeyRelatedField(
-        queryset=Station.objects.filter(
-            status__gt=0, alt__isnull=False, lat__isnull=False, lng__isnull=False
-        ),
+        queryset=Station.objects.connected_and_located(),
         allow_null=False,
         error_messages={
-            'does_not_exist': 'Station should exist, be online and have a defined location.',
+            'does_not_exist': 'Station should exist, be '
+            'connected and have a defined location.',
             'required': 'Station(\'ground_station\' key) is required.'
         }
     )
@@ -537,18 +536,19 @@ class StationSerializer(serializers.ModelSerializer):
     min_horizon = serializers.SerializerMethodField()
     observations = serializers.SerializerMethodField()
     future_observations = serializers.SerializerMethodField()
-    status = serializers.SerializerMethodField()
     altitude = serializers.IntegerField(min_value=0, source='alt')
     image = serializers.SerializerMethodField()
     success_rate = serializers.SerializerMethodField()
     owner = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()  # DEPRECATED
 
     class Meta:
         model = Station
         fields = (
             'id', 'name', 'altitude', 'min_horizon', 'lat', 'lng', 'qthlocator', 'antenna',
-            'created', 'last_seen', 'status', 'observations', 'future_observations', 'description',
-            'client_version', 'target_utilization', 'image', 'success_rate', 'owner'
+            'created', 'last_seen', 'observations', 'future_observations', 'description',
+            'client_version', 'target_utilization', 'image', 'success_rate', 'owner',
+            'is_connected', 'is_available', 'testing', 'status'
         )
 
     @extend_schema_field(str)
@@ -647,11 +647,13 @@ class StationSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(str)
     def get_status(self, obj):
-        """Returns Station status"""
-        try:
-            return obj.get_status_display()
-        except AttributeError:
-            return None
+        """Returns Station status. DEPRECATED in favor of is_connected, is_available and testing"""
+        status_label = obj.status_label
+        if status_label == 'Connected':
+            return 'Online'
+        if status_label in ('Disconnected', 'Unavailable'):
+            return 'Offline'
+        return 'Testing'
 
 
 class StationConfigurationSerializer(serializers.ModelSerializer):

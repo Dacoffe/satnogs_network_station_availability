@@ -60,9 +60,9 @@ def clean_observations():
 
 
 @APP.task
-def station_status_update():
+def station_log_disconnect():
     """Wrapper task for 'station_status_update' shared task"""
-    from network.base.tasks import station_status_update as periodic_task
+    from network.base.tasks import station_log_disconnect as periodic_task
     periodic_task()
 
 
@@ -126,7 +126,7 @@ def setup_periodic_tasks(sender, **kwargs):  # pylint: disable=W0613
 
     sender.add_periodic_task(RUN_HOURLY, sync_to_db.s(), name='sync_to_db')
 
-    sender.add_periodic_task(RUN_HOURLY, station_status_update.s(), name='station_status_update')
+    sender.add_periodic_task(RUN_HOURLY, station_log_disconnect.s(), name='station_status_update')
 
     sender.add_periodic_task(
         settings.OBS_NO_RESULTS_CHECK_PERIOD,

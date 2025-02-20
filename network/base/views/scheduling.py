@@ -261,9 +261,7 @@ def prediction_windows(request):
         return JsonResponse([{'error': str(error)}], safe=False)
 
     # Fetch all available ground stations
-    stations = Station.objects.filter(
-        status__gt=0, alt__isnull=False, lat__isnull=False, lng__isnull=False
-    ).prefetch_related(
+    stations = Station.objects.connected_and_located().prefetch_related(
         Prefetch(
             'observations',
             queryset=Observation.objects.filter(end__gt=now()),
@@ -313,7 +311,7 @@ def prediction_windows(request):
                 {
                     'id': station.id,
                     'name': station.name,
-                    'status': station.status,
+                    'status_label': station.status_label,
                     'lng': station.lng,
                     'lat': station.lat,
                     'alt': station.alt,
@@ -494,9 +492,9 @@ def scheduling_stations(request):  # pylint: disable=too-many-return-statements
         data = [{'error': str(error)}]
         return JsonResponse(data, safe=False)
 
-    stations = Station.objects.filter(
-        status__gt=0, alt__isnull=False, lat__isnull=False, lng__isnull=False
-    ).prefetch_related('antennas', 'antennas__frequency_ranges')
+    stations = Station.objects.connected_and_located().prefetch_related(
+        'antennas', 'antennas__frequency_ranges'
+    ).order_by('-is_available', 'testing')
 
     center_frequency = request.POST.get('center_frequency', downlink)
     try:

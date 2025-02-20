@@ -1,6 +1,6 @@
 .badge-good,
 .badge-with-signal,
-.badge-online {
+.badge-connected {
     background-color: #5cb85c;
     color: white;
 }
@@ -16,7 +16,7 @@
 
 .badge-bad,
 .badge-without-signal,
-.badge-offline {
+.badge-unavailable {
     background-color: #d9534f;
     color: white;
 }
@@ -30,6 +30,7 @@
     }
 }
 
+.badge-disconnected,
 .badge-failed {
     background-color: #444;
     color: white;

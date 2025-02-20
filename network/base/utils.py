@@ -157,7 +157,7 @@ def export_as_csv(modeladmin, request, queryset):
 def export_station_status(self, request, queryset):
     """Exports status of selected stations in csv format"""
     meta = self.model._meta
-    field_names = ["id", "status"]
+    field_names = ['id', 'is_connected', 'is_available', 'testing']
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename={}.csv'.format(meta)

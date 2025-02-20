@@ -14,7 +14,8 @@
 {% block content %}
   <div class="row">
     <div class="col-7">
-      <h2 id="station-info"
+      <div class="d-flex">
+        <h2 id="station-info"
           data-name="{{ station.name }}"
           data-id="{{ station.id }}"
           data-lng="{{ station.lng }}"
@@ -22,7 +23,9 @@
           data-schedule="{{ can_schedule|yesno:"true,false" }}"
           data-new-obs="{% url 'base:observation_new' %}">
         {{ station.id }} - {{ station.name }}
-      </h2>
+        </h2>
+        <div class="ml-3 my-auto h-auto"><span class="badge badge-{{ station.status_label|lower }}">{{ station.status_label }}</span></div>
+      </div>
       <div class="timezone text-muted">
             <span class="bi bi-clock" aria-hidden="true"></span>
         Timeframes are in <span id="timezone-info" data-toggle="tooltip" title="">UTC</span>
@@ -233,14 +236,38 @@
               {% endif %}
               <tr>
                 <td>
-                  <span class="badge badge-{{ station.get_status_display|lower }}">{{ station.get_status_display }}</span>
+                  <span class="badge badge-secondary">Last Seen</span>
                 </td>
                 <td data-toggle="tooltip" title="{{ station.last_seen|date:"c" }}">
                   {% if station.last_seen %}
-                    Last seen {{ station.last_seen|timesince }} ago
+                    {{ station.last_seen|timesince }} ago
                   {% else %}
-                    Never seen online
+                    Never
                   {% endif %}
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="badge badge-secondary">Connected</span>
+                </td>
+                <td>
+                  {% if station.is_connected %}Yes{% else %}No{% endif %}
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="badge badge-secondary">Available</span>
+                </td>
+                <td>
+                  {% if station.is_available %}Yes{% else %}No{% endif %}
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="badge badge-secondary">Testing</span>
+                </td>
+                <td>
+                  {% if station.testing %}Yes{% else %}No{% endif %}
                 </td>
               </tr>
               <tr>
@@ -406,14 +433,26 @@
           <table class="table table-sm table-hover my-2">
             <thead class="bg-light">
               <th>Status</th>
+              <th>Connected</th>
+              <th>Available</th>
+              <th>Testing</th>
               <th>Datetime</th>
               <th>Time since Change</th>
             </thead>
             <tbody>
               {% for log in station_log %}
-                <tr class="bg-{{log.get_status_display|lower}} text-{{log.get_status_display|lower}}">
+                <tr class="bg-{{ log.status_label|lower }} text-{{ log.status_label|lower }}">
                   <td>
-                    <span class="badge badge-{{ log.get_status_display|lower }}">{{ log.get_status_display }}</span>
+                    <span class="badge badge-{{ log.status_label|lower }}">{{ log.status_label }}</span>
+                  </td>
+                  <td>
+                    {{ log.is_connected|yesno:"Yes,No" }}
+                  </td>
+                  <td>
+                    {{ log.is_available|yesno:"Yes,No" }}
+                  </td>
+                  <td>
+                    {{ log.testing|yesno:"Yes,No" }}
                   </td>
                   <td>
                     <span>{{ log.changed|date:"Y-m-d H:i:s" }}</span>

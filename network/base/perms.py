@@ -67,17 +67,12 @@ def schedule_perms(user):
     see: https://wiki.satnogs.org/Operation#Network_permissions_matrix
     """
     if user.is_authenticated:
-        stations_statuses = user.ground_stations.values_list('status', flat=True)
-        # User has online station (status=2)
-        if 2 in stations_statuses:
-            return True
-        # User has testing station (status=1)
-        if 1 in stations_statuses:
-            return True
         # User has special permissions
         if user.groups.filter(name='Moderators').exists():
             return True
         if user.is_superuser:
+            return True
+        if user.useable_stations.exists():
             return True
 
     return False
@@ -90,14 +85,17 @@ def schedule_station_perms(user, station):
     see: https://wiki.satnogs.org/Operation#Network_permissions_matrix
     """
     if user.is_authenticated:
-        # User has online station (status=2) and station is online
+        if station.lat is None or station.lng is None or station.alt is None:
+            return False
+
+        # User has connected and available station and the station is connected and available
         try:
-            if user.ground_stations.filter(status=2).exists() and station.status == 2:
+            if user.useable_stations.exists() and station.is_connected and station.is_available:
                 return True
         except ObjectDoesNotExist:
             pass
-        # If the station is testing (status=1) and user is its owner
-        if station.status == 1 and station.owner == user:
+        # If the station is unavailable and user is its owner
+        if station.is_connected and station.owner == user:
             return True
         # User has special permissions
         if user.groups.filter(name='Moderators').exists():
@@ -113,6 +111,9 @@ def schedule_stations_perms(user, stations):
     This context flag will determine if user can schedule an observation.
     That includes station owners, moderators, admins.
     see: https://wiki.satnogs.org/Operation#Network_permissions_matrix
+
+     @param: user The user that schedules the observations
+     @param: stations All connected stations that have non-null lat, lng and alt
     """
     if user.is_authenticated:
         # User has special permissions
@@ -120,18 +121,15 @@ def schedule_stations_perms(user, stations):
             return {station.id: True for station in stations}
         if user.is_superuser:
             return {station.id: True for station in stations}
-        # User has online station (status=2) and station is online
+        # User has connected and available station and station to schedule is available
         try:
-            if user.ground_stations.filter(status=2).exists():
-                return {
-                    s.id: s.status == 2 or (s.owner == user and s.status == 1)
-                    for s in stations
-                }
+            if user.useable_stations.exists():
+                return {s.id: s.owner == user or s.is_available for s in stations}
 
         except ObjectDoesNotExist:
             pass
-        # If the station is testing (status=1) and user is its owner
-        return {station.id: station.owner == user and station.status == 1 for station in stations}
+        # If the station is unavailable and user is its owner
+        return {station.id: station.owner == user for station in stations}
 
     return {station.id: False for station in stations}
 
@@ -176,8 +174,8 @@ def vet_perms(user, observation):
     see: https://wiki.satnogs.org/Operation#Network_permissions_matrix
     """
     if user.is_authenticated:
-        # User has online station (status=2)
-        if user.ground_stations.filter(status=2).exists():
+        # User has connected and available station
+        if user.useable_stations.exists():
             return True
         # User owns the observation
         try:

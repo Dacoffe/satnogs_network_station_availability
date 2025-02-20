@@ -39,11 +39,10 @@ class ObservationForm(ModelForm):
         }
     )
     ground_station = ModelChoiceField(
-        queryset=Station.objects.filter(
-            status__gt=0, alt__isnull=False, lat__isnull=False, lng__isnull=False
-        ),
+        queryset=Station.objects.connected_and_located(),
         error_messages={
-            'invalid_choice': 'Station(s) should exist, be online and have a defined location.',
+            'invalid_choice': 'Station(s) should exist, be available, connected '
+            'and have a defined location.',
             'required': 'Station is required.'
         }
     )
@@ -210,8 +209,8 @@ class StationForm(ModelForm):
     class Meta:
         model = Station
         fields = [
-            'name', 'image', 'alt', 'lat', 'lng', 'qthlocator', 'horizon', 'testing',
-            'description', 'target_utilization', 'violator_scheduling'
+            'name', 'image', 'alt', 'lat', 'lng', 'qthlocator', 'horizon', 'is_available',
+            'testing', 'description', 'target_utilization', 'violator_scheduling'
         ]
         image = ImageField(required=False)
 

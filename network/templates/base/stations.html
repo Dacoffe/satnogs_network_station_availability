@@ -5,6 +5,7 @@
 {% block title %} - Ground Stations{% endblock %}
 
 {% block css %}
+  <link rel="stylesheet" href="{% static 'lib/bootstrap-select/dist/css/bootstrap-select.min.css' %}">
   <link rel="stylesheet" href="{% static 'lib/maplibre-gl/dist/maplibre-gl.css' %}">
 {% endblock css %}
 
@@ -46,50 +47,26 @@
 
   <div class="collapse px-2 pt-2" id="collapseFilters" data-filtered="{{ is_filtered }}">
     <div class="filter-section card">
-      <form id="station-filter" class="row" method="get" action="{% url 'base:stations_list' %}">
+      <form id="station-filter" class="col-12 row" method="get" action="{% url 'base:stations_list' %}">
         {% for error in freq_filter_errors %}
-          <div class="alert alert-danger" role="alert">{{error}}</div>
+          <div class="alert alert-danger" role="alert">{{ error }}</div>
         {% endfor %}
-        <div class="form-group status-filter col-md-4 col-lg-3">
-          <label for="status-selector">Status</label>
-          <div id="status-selector" class="btn-group-toggle" role="group" aria-label="Group of status filters" data-toggle="buttons">
-            <label class="btn btn-good btn-sm {% if online is False %}active btn-inactive{% endif %}"
-                   aria-expanded="true"
-                   aria-controls="online"
-                   data-toggle="tooltip"
-                   data-placement="bottom"
-                   title="Online">
-              <input type="checkbox" name="online" value="0" {% if online is False %}checked{% endif %} autocomplete="off">
-              <span class="bi bi-check" aria-hidden="true"></span>
-            </label>
-            <label class="btn btn-unknown btn-sm {% if testing is False %}active btn-inactive{% endif %}"
-                   aria-expanded="true"
-                   aria-controls="testing"
-                   data-toggle="tooltip"
-                   data-placement="bottom"
-                   title="Testing">
-              <input type="checkbox" name="testing" value="0" {% if testing is False %}checked{% endif %} autocomplete="off">
-              <span class="bi bi-question-circle" aria-hidden="true"></span>
-            </label>
-            <label class="btn btn-bad btn-sm {% if offline is False %}active btn-inactive{% endif %}"
-                   aria-expanded="true"
-                   aria-controls="offline"
-                   data-toggle="tooltip"
-                   data-placement="bottom"
-                   title="Offline">
-              <input type="checkbox" name="offline" value="0" {% if offline is False %}checked{% endif %} autocomplete="off">
-              <span class="bi bi-x" aria-hidden="true"></span>
-            </label>
-            <label class="btn btn-future btn-sm {% if future is False %}active btn-inactive{% endif %}"
-                   aria-expanded="true"
-                   aria-controls="future"
-                   data-toggle="tooltip"
-                   data-placement="bottom"
-                   title="Future">
-              <input type="checkbox" name="future" value="0" {% if future is False %}checked{% endif %} autocomplete="off">
-              <span class="bi bi-clock" aria-hidden="true"></span>
-            </label>
-          </div>
+        <div class="form-group col-md-4 col-lg-4">
+          <label for="status-selection">Status</label>
+          <select class="form-control selectpicker" data-style="btn" name="status" autocomplete="off" id="status-selection" multiple>
+            <optgroup label="Connected" data-max-options="1">
+              <option value="c1" {% if 'c1' in status_filters %}selected{% endif %}>Connected</option>
+              <option value="c0" {% if 'c0' in status_filters %}selected{% endif %}>Disconnected</option>
+            </optgroup>
+            <optgroup label="Available" data-max-options="1">
+              <option value="a1" {% if 'a1' in status_filters %}selected{% endif %}>Available</option>
+              <option value="a0" {% if 'a0' in status_filters %}selected{% endif %}>Unavailable</option>
+            </optgroup>
+            <optgroup label="Testing" data-max-options="1">
+              <option value="t1" {% if 't1' in status_filters %}selected{% endif %}>Testing</option>
+              <option value="t0" {% if 't0' in status_filters %}selected{% endif %}>Non Testing</option>
+            </optgroup>
+          </select>
         </div>
         <div id="frequency-filter-formgroup" class="form-group frequency-filter col-md-4 col-lg-3 {% if freq_filter_errors %}has_error{% endif %}">
             <label class="frequency-filter-label" for="frequency-filter">Frequency</label>
@@ -122,15 +99,10 @@
             <tr class="station-row clickable-row" data-href="{% url 'base:station_view' station_id=station.id %}">
               <td>
                 <a href="{% url 'base:station_view' station_id=station.id %}">
-                  <span class="station
-                               {% if station.last_seen %}
-                                 badge badge-{{ station.get_status_display|lower }}
-                               {% else %}
-                                 badge badge-future
-                               {% endif %}"
+                  <span class="station badge badge-{{ station.status_label|lower }}"
                         data-toggle="tooltip"
                         data-placement="bottom"
-                        title="{% if station.last_seen %}
+                        title="{{ station.status_label }}, {% if station.last_seen %}
                                  Seen {{ station.last_seen|timesince }} ago
                                {% else %}
                                  Never seen online
@@ -205,7 +177,7 @@
           </button>
         </div>
         <div class="modal-body">
-          <div id="map" data-mapboxid="{{ mapbox_id }}" data-mapboxtoken="{{ mapbox_token }}" data-stations="{% url 'base:stations_all' %}"></div>
+          <div id="map" data-mapboxid="{{ mapbox_id }}" data-mapboxtoken="{{ mapbox_token }}" data-stations="{% url 'base:mapped_stations' %}"></div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
@@ -218,6 +190,8 @@
 
 {% block javascript %}
   <script src="{% static 'lib/maplibre-gl/dist/maplibre-gl.js' %}"></script>
+    {% comment %} <script src="{% static 'lib/@popperjs/core/dist/umd/popper.min.js' %}"></script> {% endcomment %}
+  <script src="{% static 'lib/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
   <script src="{% static 'js/stations.js' %}"></script>
   <script src="{% static 'js/map.js' %}"></script>
 {% endblock %}
