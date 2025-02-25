@@ -310,12 +310,17 @@ class VetObservationsChunkListView(LoginRequiredMixin, ListView):
                 obs, obs.demoddata.all(), obs.demoddata_count
             )
 
+            if obs.is_future:
+                can_vet = False
+            else:
+                can_vet = True
+
             context = {
                 "tle_datetime": calculate_datetime_from_tle(obs.id),
                 "observation": obs,
                 'satellite': satellites[obs.sat_id],
                 "from_vetting": True,
-                "can_vet": True,
+                "can_vet": can_vet,
                 "demoddata_count": obs.demoddata_count,
                 "demoddata_details": demoddata_details[0],
                 "show_hex_to_ascii_button": demoddata_details[1],
@@ -380,7 +385,10 @@ def observation_view(request, observation_id):
     """View for single observation page."""
     observation = get_object_or_404(Observation, id=observation_id)
 
-    can_vet = vet_perms(request.user, observation)
+    if observation.is_future:
+        can_vet = False
+    else:
+        can_vet = vet_perms(request.user, observation)
 
     can_delete = delete_perms(request.user, observation)
 
@@ -474,7 +482,10 @@ def waterfall_vet(request, observation_id):
         return JsonResponse(data, safe=False)
 
     status = request.POST.get('status', None)
-    can_vet = vet_perms(request.user, observation)
+    if observation.is_future:
+        can_vet = False
+    else:
+        can_vet = vet_perms(request.user, observation)
 
     if not can_vet:
         data = {'error': 'Permission denied.'}
