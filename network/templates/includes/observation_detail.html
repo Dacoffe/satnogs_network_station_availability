@@ -512,7 +512,7 @@
                     >Without Signal</div>
                   {% else %}
                     <div id="waterfall-status-badge" class="badge badge-unknown" aria-hidden="true"
-                          data-toggle="tooltip" data-placement="right" title="Waterfall needs vetting"
+                    {% if not observation.is_future %}data-toggle="tooltip" data-placement="right" title="Waterfall needs vetting"{% endif %}
                     >Unknown</div>
                   {% endif %}
                   <a class="btn btn-sm btn-outline-dark" href="https://wiki.satnogs.org/Operation#Rating_observations" data-toggle="tooltip" title="Help" target="_blank">

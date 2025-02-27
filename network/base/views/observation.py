@@ -238,6 +238,8 @@ class ObservationListBaseView(ListView):
             vet_url_query = url_query.replace('results=w0', 'results=w1')
             if vet_url_query == url_query:  # no 'results' parameter was given
                 vet_url_query += '&results=w1'
+        if 'future=0' not in vet_url_query:
+            vet_url_query += '&future=0'
         context['vet_url_query'] = vet_url_query
         return context
 
