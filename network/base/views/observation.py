@@ -25,7 +25,8 @@ from network.base.models import Observation, Station
 from network.base.perms import has_delete_obs_perms, has_schedule_perms, has_vet_perms
 from network.base.rating_tasks import rate_observation
 from network.base.stats import get_transmitters_with_stats
-from network.base.tasks import get_and_refresh_transmitters_with_stats_cache
+from network.base.tasks import get_and_refresh_transmitter_modes_cache, \
+    get_and_refresh_transmitters_with_stats_cache
 from network.base.utils import community_get_discussion_details
 from network.users.models import User
 
@@ -204,10 +205,13 @@ class ObservationListBaseView(ListView):
         start = get_one_day_ago() if not self.filtered else self.request.GET.get('start')
         end = self.request.GET.get('end', None)
         transmitter_uuid = self.request.GET.get('transmitter_uuid', None)
+        transmitter_mode = self.request.GET.get('transmitter_mode', None)
         context['display_no_filter_warning'] = not self.filtered
         context['results'] = self.request.GET.getlist('results')
         context['rated'] = self.request.GET.getlist('rated')
-        context['transmitter_mode'] = self.request.GET.get('transmitter_mode', None)
+        cached_transmitter_modes = cache.get('transmitter-modes')
+        context['transmitter_mode'
+                ] = cached_transmitter_modes or get_and_refresh_transmitter_modes_cache()
         cached_transmitters_with_stats = cache.get('transmitters-with-stats')
         context['transmitter_uuids_info'] = cached_transmitters_with_stats.values(
         ) if cached_transmitters_with_stats else get_and_refresh_transmitters_with_stats_cache(
@@ -226,6 +230,8 @@ class ObservationListBaseView(ListView):
                 pass
         if transmitter_uuid:
             context['transmitters_uuid'] = transmitter_uuid
+        if transmitter_mode:
+            context['transmitters_mode'] = transmitter_mode
         context['can_schedule'] = has_schedule_perms(self.request.user)
 
         url_query = urlparse(self.request.build_absolute_uri()).query

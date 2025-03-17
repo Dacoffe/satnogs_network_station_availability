@@ -73,6 +73,12 @@ def get_transmitter_by_uuid(uuid):
     return satnogs_db_api_request(transmitters_url)
 
 
+def get_transmitter_modes():
+    """Returns transmitter filtered by Transmitter Mode"""
+    transmitters_url = "{}modes/".format(DB_API_URL)
+    return satnogs_db_api_request(transmitters_url)
+
+
 def get_transmitters_by_sat_id(sat_id):
     """Returns transmitters filtered by Satellite ID"""
     transmitters_url = "{}transmitters/?sat_id={}".format(DB_API_URL, sat_id)

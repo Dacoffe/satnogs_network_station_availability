@@ -22,7 +22,7 @@ from tinytag import TinyTag
 from tinytag.tinytag import TinyTagException
 
 from network.base.db_api import DBConnectionError, get_tle_sets_by_sat_id_set, \
-    get_transmitters_by_uuid_set
+    get_transmitter_modes, get_transmitters_by_uuid_set
 from network.base.models import DemodData, Observation, Station, StationStatusLog
 from network.base.rating_tasks import rate_observation
 from network.base.utils import format_frequency, format_frequency_range, sync_demoddata_to_db
@@ -95,6 +95,15 @@ def get_and_refresh_transmitters_with_stats_cache(in_list_form=False):
         object_dict[transmitter['transmitter_uuid']] = transmitter
     cache.set('transmitters-with-stats', object_dict, 5 * 3600)
     return object_dict if not in_list_form else object_dict.values()
+
+
+def get_and_refresh_transmitter_modes_cache():
+    """Refreshes the cache of transmitter modes and returns them"""
+    transmitter_modes = get_transmitter_modes()
+    modes_list = [mode["name"] for mode in transmitter_modes]
+
+    cache.set('transmitter-modes', modes_list, 5 * 3600)
+    return modes_list
 
 
 def delay_task_with_lock(task, lock_id, lock_expiration, *args):
