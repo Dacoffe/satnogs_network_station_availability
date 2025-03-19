@@ -63,7 +63,7 @@
                 <option value="" selected>Select a satellite</option>
                 {% for satellite in satellites %}
                 {% if not satellite.merged_into %}
-                  <option data-sat_id="{{ satellite.sat_id }}" value="{{ satellite.sat_id }}" data-tokens="{{ satellite.sat_id }}">
+                  <option data-sat_id="{{ satellite.sat_id }}" value="{{ satellite.sat_id }}" data-tokens="{{ satellite.sat_id }} {{ satellite.names }}">
                     {{ satellite.norad_cat_id }} - {{ satellite.name }}
                   </option>
                 {% endif %}
