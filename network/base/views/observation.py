@@ -110,6 +110,7 @@ class ObservationListBaseView(ListView):
 
         # Mapping between the HTTP POST parameters and the fiter keys
         parameter_filter_mapping = {
+            'sat_id': 'sat_id',
             'observer': 'author',
             'station': 'ground_station_id',
             'start': 'start__gt',
@@ -149,9 +150,6 @@ class ObservationListBaseView(ListView):
             or filter_dict.get('transmitter_mode__icontains')
             or filter_dict.get('transmitter_uuid__icontains') or filter_dict.get('experimental')
         )
-
-        if self.filter_params['sat_id']:
-            filter_dict['sat_id'] = self.filter_params['sat_id']
 
         observations = observations.filter(**filter_dict)
 
