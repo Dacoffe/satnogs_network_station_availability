@@ -511,9 +511,10 @@ def sync_to_db():
     ).exclude(observation__transmitter_mode__in=settings.NOT_SYNCED_MODES).filter(
         observation__station_lng__isnull=False, observation__station_lat__isnull=False
     )
+    sats = cache.get('satellites') or fetch_satellites()
     for frame in frames:
         try:
-            sync_demoddata_to_db(frame)
+            sync_demoddata_to_db(frame, sats[frame.observation.sat_id])
         except requests.exceptions.RequestException:
             continue
 
@@ -522,7 +523,7 @@ def sync_to_db():
 def sync_frame_to_db(frame_id):
     """Task to send a single demod data to SatNOGS DB / SiDS"""
     frame = DemodData.objects.select_related("observation").get(pk=frame_id)
-
+    sats = cache.get('satellites') or fetch_satellites()
     missing_station_coord = not bool(
         frame.observation.station_lat and frame.observation.station_lng
     )
@@ -530,7 +531,7 @@ def sync_frame_to_db(frame_id):
     if any((frame.is_image, missing_station_coord, mode_in_nonsynced)):
         pass
     try:
-        sync_demoddata_to_db(frame)
+        sync_demoddata_to_db(frame, sats[frame.observation.sat_id])
     except requests.exceptions.RequestException:
         pass
 

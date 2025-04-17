@@ -189,13 +189,12 @@ def community_get_discussion_details(
     return {'url': discussion_url, 'slug': discussion_slug, 'has_comments': has_comments}
 
 
-def sync_demoddata_to_db(frame):
+def sync_demoddata_to_db(frame, sat):
     """
     Task to send a frame from SatNOGS Network to SatNOGS DB
 
     Raises requests.exceptions.RequestException if sync fails."""
     obs = frame.observation
-    sat = obs.satellite
     ground_station = obs.ground_station
 
     try:
@@ -208,7 +207,7 @@ def sync_demoddata_to_db(frame):
 
     # SiDS parameters
     params = {
-        'noradID': sat.norad_cat_id,
+        'noradID': sat['norad_cat_id'],
         'source': "Unknown",
         'timestamp': submit_datetime,
         'locator': 'longLat',
