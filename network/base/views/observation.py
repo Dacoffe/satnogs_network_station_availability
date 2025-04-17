@@ -536,8 +536,9 @@ def satellite_view(request, sat_id):
 
     try:
         satellite = get_satellites()[sat_id]
-    except KeyError as err:
-        raise ValueError('Unable to find that satellite.') from err
+    except KeyError:
+        data = {'error': 'Unable to find that satellite.'}
+        return JsonResponse(data, safe=False)
 
     try:
         transmitters = get_transmitters_by_sat_id(sat_id)
