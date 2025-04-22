@@ -545,7 +545,18 @@ def satellite_view(request, sat_id):
     except (DBConnectionError, ValueError) as error:
         data = [{'error': str(error)}]
         return JsonResponse(data, safe=False)
-    satellite_stats = get_satellite_stats()[satellite['sat_id']]
+    satellite_stats = get_satellite_stats().get(satellite['sat_id']) or {
+        'unknown_rate': 0,
+        'future_rate': 0,
+        'success_rate': 0,
+        'bad_rate': 0,
+        'total_count': 0,
+        'unknown_count': 0,
+        'future_count': 0,
+        'good_count': 0,
+        'bad_count': 0,
+    }
+
     data = {
         'id': sat_id,
         'norad': satellite['norad_cat_id'],
