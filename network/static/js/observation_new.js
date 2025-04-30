@@ -335,7 +335,7 @@ $(document).ready( function(){
     }
 
     function create_transmitter_option(satellite, transmitter) {
-        const transmitter_freq = (transmitter.type === 'Transponder') ? (transmitter.downlink_low/1e6).toFixed(3) + ' - ' +  (transmitter.downlink_high/1e6).toFixed(3): (transmitter.downlink_low/1e6).toFixed(3);
+        const transmitter_freq = (transmitter.type === 'Transponder' || transmitter.type === 'Range transmitter') ? (transmitter.downlink_low/1e6).toFixed(3) + ' - ' +  (transmitter.downlink_high/1e6).toFixed(3): (transmitter.downlink_low/1e6).toFixed(3);
         return `
             <option data-satellite="` + satellite + `"
                     data-transmitter-type="` + transmitter.type + `"
@@ -921,7 +921,7 @@ and once approved, it will be available for scheduling here.`;
         var downlink_high = transmitter_object.data('downlink-high');
         var downlink_low = transmitter_object.data('downlink-low');
         var downlink_drift = transmitter_object.data('downlink-drift');
-        if (transmitter_type === 'Transponder') {
+        if (transmitter_type === 'Transponder' || transmitter_type === 'Range transmitter') {
             frequency_input.attr({ 'min': (downlink_drift && downlink_drift < 0) ? downlink_low + downlink_drift : downlink_low, 'max': (downlink_drift && downlink_drift > 0) ? downlink_high + downlink_drift : downlink_high});
             frequency_input.val(Math.floor((downlink_high + downlink_low) / 2));
             frequency_input.data('is-valid', true);

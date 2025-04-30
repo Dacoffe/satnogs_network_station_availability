@@ -369,7 +369,8 @@ class NewObservationListSerializer(serializers.ListSerializer):
             station = observation.get('ground_station')
             center_frequency = observation.get('center_frequency', None)
             transmitter = self.transmitters[transmitter_uuid]
-            if transmitter["type"] == "Transponder" and center_frequency is None:
+            if (transmitter["type"] == "Transponder"
+                    or transmitter["type"] == "Range transmitter") and center_frequency is None:
                 observation["center_frequency"
                             ] = (transmitter['downlink_high'] + transmitter['downlink_low']) // 2
             transm_uuid_station_center_freq_set.add((transmitter_uuid, station, center_frequency))

@@ -85,7 +85,8 @@ def get_and_refresh_transmitters_with_stats_cache(in_list_form=False):
             'bad_rate': int(bad_rate)
         }
 
-        if transmitter['transmitter_type'] == 'Transponder':
+        if transmitter['transmitter_type'] == 'Transponder' or transmitter[
+                'transmitter_type'] == 'Range transmitter':
             transmitter['transmitter_freq'] = format_frequency_range(
                 transmitter["transmitter_downlink_low"] or 0,
                 transmitter["transmitter_downlink_high"] or 0
