@@ -50,9 +50,6 @@ services:
     depends_on:
       - 'db'
       - 'redis'
-    env_file:
-      - path: ./.env
-        required: false
     environment:
       PYTHONDONTWRITEBYTECODE: '1'
       DATABASE_URL: 'mysql://satnogsnetwork:satnogsnetwork@db/satnogsnetwork'
