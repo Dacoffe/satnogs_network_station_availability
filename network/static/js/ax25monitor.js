@@ -8,20 +8,18 @@
   } else {
     root.Ax25monitor = factory(root.KaitaiStream);
   }
-}(this, function (KaitaiStream) {
+}(typeof self !== 'undefined' ? self : this, function (KaitaiStream) {
 /**
  * :field dest_callsign: ax25_frame.ax25_header.dest_callsign_raw.callsign_ror.callsign
  * :field src_callsign: ax25_frame.ax25_header.src_callsign_raw.callsign_ror.callsign
  * :field src_ssid: ax25_frame.ax25_header.src_ssid_raw.ssid
  * :field dest_ssid: ax25_frame.ax25_header.dest_ssid_raw.ssid
- * :field rpt_callsign: ax25_frame.ax25_header.repeater.rpt_instance[0].rpt_callsign_raw.callsign_ror.callsign
+ * :field rpt_instance___callsign: ax25_frame.ax25_header.repeater.rpt_instance.___.rpt_callsign_raw.callsign_ror.callsign
+ * :field rpt_instance___ssid: ax25_frame.ax25_header.repeater.rpt_instance.___.rpt_ssid_raw.ssid
+ * :field rpt_instance___hbit: ax25_frame.ax25_header.repeater.rpt_instance.___.rpt_ssid_raw.hbit
  * :field ctl: ax25_frame.ax25_header.ctl
  * :field pid: ax25_frame.payload.pid
  * :field monitor: ax25_frame.payload.ax25_info.data_monitor
- *
- * Attention: `rpt_callsign` cannot be accessed because `rpt_instance` is an
- * array of unknown size at the beginning of the parsing process! Left an
- * example in here.
  */
 
 var Ax25monitor = (function() {
@@ -163,8 +161,16 @@ var Ax25monitor = (function() {
       get: function() {
         if (this._m_ssid !== undefined)
           return this._m_ssid;
-        this._m_ssid = ((this.ssidMask & 15) >>> 1);
+        this._m_ssid = ((this.ssidMask & 31) >>> 1);
         return this._m_ssid;
+      }
+    });
+    Object.defineProperty(SsidMask.prototype, 'hbit', {
+      get: function() {
+        if (this._m_hbit !== undefined)
+          return this._m_hbit;
+        this._m_hbit = ((this.ssidMask & 128) >>> 7);
+        return this._m_hbit;
       }
     });
 
@@ -196,7 +202,7 @@ var Ax25monitor = (function() {
       this._read();
     }
     Repeater.prototype._read = function() {
-      this.rptInstance = []
+      this.rptInstance = [];
       var i = 0;
       do {
         var _ = new Repeaters(this._io, this, this._root);
