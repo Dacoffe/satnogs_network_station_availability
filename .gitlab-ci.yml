@@ -307,7 +307,7 @@ dependency_scanning:
 gemnasium-python-dependency_scanning:
   before_script:
     - apt-get -q update
-    - apt-get -qy install libmariadb-dev python3-pil libjpeg-dev
+    - apt-get -qy install pkgconf libmariadb-dev
 sast:
   stage: security
   needs:
