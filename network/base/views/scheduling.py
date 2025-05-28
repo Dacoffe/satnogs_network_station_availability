@@ -359,7 +359,10 @@ def pass_predictions(request, station_id):
         lng__isnull=False
     )
 
-    satellites = [sat for sat in get_satellites().values() if sat['status'] == 'alive']
+    satellites = [
+        sat for sat in get_satellites().values()
+        if sat['status'] == 'alive' and 'merged_into' not in sat
+    ]
     if not schedule_station_violators_perms(request.user, station):
         satellites = [sat for sat in satellites if not sat['is_frequency_violator']]
 
