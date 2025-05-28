@@ -20,6 +20,7 @@ ROOT = Path(__file__).parent
 
 ENVIRONMENT = config('ENVIRONMENT', default='dev')
 DEBUG = config('DEBUG', default=True, cast=bool)
+USE_DEBUGPY = config('USE_DEBUGPY', default=False, cast=bool)
 AUTH0 = config('AUTH0', default=False, cast=bool)
 TESTING = 'pytest' in sys.modules
 
@@ -575,7 +576,6 @@ if AUTH0:
     ]
 
 if ENVIRONMENT == 'dev':
-    USE_DEBUGPY = config('USE_DEBUGPY', default=False, cast=bool)
     # Disable template caching
     for backend in TEMPLATES:
         del backend['OPTIONS']['loaders']
