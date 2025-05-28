@@ -456,7 +456,7 @@ class StationStatusLog(models.Model):
 
 class Observation(models.Model):
     """Model for SatNOGS observations."""
-    sat_id = models.CharField(max_length=24)
+    sat_id = models.CharField(db_index=True, max_length=24)
     tle_line_0 = models.CharField(
         max_length=69, blank=True, validators=[MinLengthValidator(1),
                                                MaxLengthValidator(69)]
