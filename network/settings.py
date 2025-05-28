@@ -575,6 +575,7 @@ if AUTH0:
     ]
 
 if ENVIRONMENT == 'dev':
+    USE_DEBUGPY = config('USE_DEBUGPY', default=False, cast=bool)
     # Disable template caching
     for backend in TEMPLATES:
         del backend['OPTIONS']['loaders']
