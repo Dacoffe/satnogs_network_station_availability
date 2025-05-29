@@ -343,14 +343,15 @@ def update_future_observations_with_new_tle_sets():
             continue
         tle_set = tle_sets[sat_id][0]
         tle_updated = datetime.strptime(tle_set['updated'], "%Y-%m-%dT%H:%M:%S.%f%z")
-        future_observations.filter(
-            sat_id=sat_id, tle_updated__lt=tle_updated
-        ).update(
-            tle_line_0=tle_set['tle0'],
-            tle_line_1=tle_set['tle1'],
-            tle_line_2=tle_set['tle2'],
-            tle_source=tle_set['tle_source'],
-            tle_updated=tle_set['updated'],
+        obs_to_update = future_observations.filter(sat_id=sat_id, tle_updated__lt=tle_updated)
+        for obs in obs_to_update:
+            obs.tle_line_0 = tle_set['tle0']
+            obs.tle_line_1 = tle_set['tle1']
+            obs.tle_line_2 = tle_set['tle2']
+            obs.tle_source = tle_set['tle_source']
+            obs.tle_updated = tle_set['updated']
+        Observation.objects.bulk_update(
+            obs_to_update, ['tle_line_0', 'tle_line_1', 'tle_line_2', 'tle_source', 'tle_updated']
         )
 
 
