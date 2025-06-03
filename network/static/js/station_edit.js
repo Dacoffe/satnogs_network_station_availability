@@ -1,4 +1,4 @@
-/*global human_frequency, bands_from_range, JSONEditor, renderConfigurationAsTable, getConfigurationDefaults*/
+/*global human_frequency, bands_from_range, JSONEditor, renderConfigurationAsTable, redactSensitiveData, getConfigurationDefaults*/
 /*eslint no-control-regex: 0*/
 $(document).ready(function() {
     'use strict';
@@ -140,7 +140,7 @@ $(document).ready(function() {
     const exportConfButton = document.getElementById('export-configuration-btn');
     exportConfButton.addEventListener('click', function() {
         const buttonContent = exportConfButton.innerHTML;
-        navigator.clipboard.writeText(JSON.stringify(configuration, null, 2))
+        navigator.clipboard.writeText(JSON.stringify(redactSensitiveData(configuration), null, 2))
             .then(() => {
                 exportConfButton.innerHTML = 'Configuration Copied!';
                 setTimeout(() => {

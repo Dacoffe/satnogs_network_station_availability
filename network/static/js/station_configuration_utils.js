@@ -1,3 +1,8 @@
+const SENSITIVE_KEYS = [
+    'Artifacts.satnogs_artifacts_api_token',
+];
+
+
 function getImplicitDefault(type) {
     switch(type) {
     case 'string':
@@ -74,6 +79,41 @@ function getSchemaTitle(path, schema) {
     return currentSchema.title || null;
 }
 
+function getKey(obj, path) {
+    var current = obj;
+    for (var i = 0; i < path.length; i++) {
+        if (current == null || typeof current !== 'object') {
+            return undefined;
+        }
+        current = current[path[i]];
+    }
+    return current;
+}
+
+function setKey(obj, path, value) {
+    var current = obj;
+    for (var i = 0; i < path.length - 1; i++) {
+        if (current[path[i]] == null || typeof current[path[i]] !== 'object') {
+            throw new Error(`Path ${path.slice(0, i + 1).join('.')} does not exist in the object.`);
+        }
+        current = current[path[i]];
+    }
+    current[path[path.length - 1]] = value;
+}
+
+/* eslint-disable-next-line no-unused-vars */
+function redactSensitiveData(configuration) {
+    const sensitiveKeysAsList = SENSITIVE_KEYS.map(str => str.split('.'));
+    const redactedConfiguration = JSON.parse(JSON.stringify(configuration));
+    for (let path of sensitiveKeysAsList) {
+        let key = getKey(redactedConfiguration, path);
+        if (key !== undefined) {
+            setKey(redactedConfiguration, path, '*** REDACTED ***');
+        }
+    }
+    return redactedConfiguration;
+}
+
 /* eslint-disable-next-line no-unused-vars */
 function renderConfigurationAsTable(elemId, configuration, schema) {
     let tableHTML = `
@@ -109,8 +149,12 @@ function renderConfigurationAsTable(elemId, configuration, schema) {
         </tr>`;
 
         for (let key of categorizedConfs[category]) {
-            const value = flatDiffConfiguration[key];
+            let value = flatDiffConfiguration[key];
             const title = getSchemaTitle(key, schema) || key;
+            if(SENSITIVE_KEYS.includes(key)) {
+                // Redact the API token for security reasons
+                value = '*** REDACTED ***';
+            }
             const variableName = key.split('.').pop();
             tableHTML += `
             <tr>
