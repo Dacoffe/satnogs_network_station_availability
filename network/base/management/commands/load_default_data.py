@@ -499,7 +499,9 @@ class Command(BaseCommand):
                         "satnogs_artifacts_api_token": {
                             "title": "Artifacts server API token",
                             "type": "string",
-                            "description": "SatNOGS DB API token associated with an account in SatNOGS DB. This token is secret. It is used to upload artifacts to SatNOGS DB. It can be found in SatNOGS DB user page."
+                            "description": "SatNOGS DB API token associated with an account in SatNOGS DB. This token is secret. It is used to upload artifacts to SatNOGS DB. It can be found in SatNOGS DB user page.",
+                            "pattern": "^$|^[a-zA-Z0-9]{40}$",
+                            "maxLength": 40
                         },
                         "satnogs_keep_artifacts": {
                             "title": "Keep artifact files",
