@@ -210,7 +210,7 @@ class Station(models.Model):
         null=True,
         blank=True
     )
-    client_id = models.CharField(max_length=128, blank=True)
+    client_id = models.UUIDField(null=True, blank=True, editable=True, db_index=True)
     active_configuration_changed = models.DateTimeField(blank=True, null=True)
 
     class Meta:

@@ -4,7 +4,7 @@ from string import ascii_letters, digits
 
 from django.conf import settings
 from django.core.cache import cache
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
 from django.db.models.query import QuerySet
 from django.http import Http404, HttpResponseRedirect
@@ -19,7 +19,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
-from rest_framework.serializers import ValidationError
+from rest_framework.serializers import ValidationError as SerializerValidationError
 from rest_framework.views import APIView
 
 from network.api import authentication, filters, pagination, serializers
@@ -103,7 +103,8 @@ class ObservationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.U
             else:
                 data = serializer.errors
                 response = Response(data, status=status.HTTP_400_BAD_REQUEST)
-        except (NegativeElevationError, SinglePassError, ValidationError, ValueError) as error:
+        except (NegativeElevationError, SinglePassError, SerializerValidationError,
+                ValueError) as error:
             response = Response(str(error), status=status.HTTP_400_BAD_REQUEST)
         except NoTleSetError as error:
             response = Response(str(error), status=status.HTTP_501_NOT_IMPLEMENTED)
@@ -373,9 +374,12 @@ def station_register_view(request):
     """
     client_id = request.POST.get('client_id', None)
     if client_id:
-        if Station.objects.filter(client_id=client_id).exists():
-            error = 'Invalid Client ID, please restart the "Station Registration" process.'
-            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+        client_id_error = 'Invalid Client ID, please restart the "Station Registration" process.'
+        try:
+            if Station.objects.filter(client_id=client_id).exists():
+                return Response(client_id_error, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError:
+            return Response(client_id_error, status=status.HTTP_400_BAD_REQUEST)
         url_hash = ''.join(choices(ascii_letters + digits, k=60))
         cache.set(url_hash, client_id, 60 * 10)
         path = reverse('base:station_register', kwargs={'step': 1}) + '?hash=' + url_hash
