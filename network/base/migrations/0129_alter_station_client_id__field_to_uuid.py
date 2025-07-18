@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0127_make_client_id_valid_uuids'),
+        ('base', '0128_make_client_id_valid_uuids'),
     ]
 
     operations = [

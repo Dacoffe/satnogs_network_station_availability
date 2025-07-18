@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0125_add_validation_to_advanced_config_schema'),
+        ('base', '0126_add_validation_to_advanced_config_schema'),
     ]
 
     operations = [

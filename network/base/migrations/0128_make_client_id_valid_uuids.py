@@ -22,7 +22,7 @@ def revert_client_ids_to_string(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0126_alter_station_client_id'),
+        ('base', '0127_alter_station_client_id'),
     ]
 
     operations = [

@@ -635,7 +635,7 @@ def reverse_alter_advanced_configuration(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0124_alter_observation_sat_id'),
+        ('base', '0125_alter_observation_transmitter_type'),
     ]
 
     operations = [
