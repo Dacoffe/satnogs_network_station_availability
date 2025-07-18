@@ -335,10 +335,11 @@ $(document).ready( function(){
     }
 
     function create_transmitter_option(satellite, transmitter) {
-        const transmitter_freq = (transmitter.type === 'Transponder' || transmitter.type === 'Range transmitter') ? (transmitter.downlink_low/1e6).toFixed(3) + ' - ' +  (transmitter.downlink_high/1e6).toFixed(3): (transmitter.downlink_low/1e6).toFixed(3);
+        const transmitter_freq = transmitter.has_downlink_range ? (transmitter.downlink_low/1e6).toFixed(3) + ' - ' +  (transmitter.downlink_high/1e6).toFixed(3): (transmitter.downlink_low/1e6).toFixed(3);
         return `
             <option data-satellite="` + satellite + `"
                     data-transmitter-type="` + transmitter.type + `"
+                    data-has-downlink-range=` + transmitter.has_downlink_range + `
                     data-downlink-low="` + transmitter.downlink_low + `"
                     data-downlink-high="` + transmitter.downlink_high + `"
                     data-downlink-drift="` + transmitter.downlink_drift + `"
@@ -917,11 +918,11 @@ and once approved, it will be available for scheduling here.`;
     $('#transmitter-selection').on('changed.bs.select', function () {
 
         var transmitter_object = $(this).find(':selected');
-        var transmitter_type = transmitter_object.data('transmitter-type');
+        var has_downlink_range = transmitter_object.data('has-downlink-range');
         var downlink_high = transmitter_object.data('downlink-high');
         var downlink_low = transmitter_object.data('downlink-low');
         var downlink_drift = transmitter_object.data('downlink-drift');
-        if (transmitter_type === 'Transponder' || transmitter_type === 'Range transmitter') {
+        if (has_downlink_range) {
             frequency_input.attr({ 'min': (downlink_drift && downlink_drift < 0) ? downlink_low + downlink_drift : downlink_low, 'max': (downlink_drift && downlink_drift > 0) ? downlink_high + downlink_drift : downlink_high});
             frequency_input.val(Math.floor((downlink_high + downlink_low) / 2));
             frequency_input.data('is-valid', true);

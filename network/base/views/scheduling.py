@@ -27,6 +27,7 @@ from network.base.scheduling import create_new_observation, get_available_statio
 from network.base.serializers import StationSerializer
 from network.base.stats import get_satellite_stats_by_transmitter_list, get_transmitters_with_stats
 from network.base.tasks import fetch_satellites
+from network.base.utils import transmitter_has_downlink_range
 from network.base.validators import NegativeElevationError, NoTleSetError, \
     ObservationOverlapError, OutOfRangeError, SchedulingLimitError, SinglePassError, \
     check_violators_scheduling_limit, is_frequency_in_transmitter_range, \
@@ -41,8 +42,7 @@ def create_new_observations(formset, user):
         transmitter_uuid = observation_data['transmitter_uuid']
         transmitter = formset.transmitters[transmitter_uuid]
         center_frequency = observation_data.get('center_frequency', None)
-        if (transmitter["type"] == "Transponder"
-                or transmitter["type"] == "Range transmitter") and center_frequency is None:
+        if transmitter_has_downlink_range(transmitter) is True and center_frequency is None:
             center_frequency = (transmitter['downlink_high'] + transmitter['downlink_low']) // 2
         tle_set = formset.tle_sets[transmitter['sat_id']]
         observations_per_sat_id[transmitter['sat_id']].append(observation_data['start'])
@@ -252,8 +252,8 @@ def prediction_windows(request):
             if not is_frequency_in_transmitter_range(params['center_frequency'], transmitter[0]):
                 raise OutOfRangeError('The center frequency is out of the transmitter\'s range.')
             downlink = params['center_frequency']
-        if (transmitter[0]["type"] == "Transponder" or transmitter[0]["type"]
-                == "Range transmitter") and not params['center_frequency']:
+        if transmitter_has_downlink_range(transmitter[0]
+                                          ) is True and not params['center_frequency']:
             downlink = (transmitter[0]['downlink_high'] + transmitter[0]['downlink_low']) // 2
         else:
             downlink = transmitter[0]['downlink_low']
@@ -553,7 +553,7 @@ def transmitters_view(request):
         return JsonResponse(data, safe=False)
 
     try:
-        transmitters = get_transmitters_by_sat_id(sat_id)
+        all_transmitters = get_transmitters_by_sat_id(sat_id)
     except DBConnectionError:
         data = [
             {
@@ -563,9 +563,13 @@ def transmitters_view(request):
         ]
         return JsonResponse(data, safe=False)
 
-    transmitters = [
-        t for t in transmitters if t["status"] != "invalid" and t['downlink_low'] is not None
-    ]
+    transmitters = []
+    for t in all_transmitters:
+        if t["status"] != "invalid" and t['downlink_low'] is not None:
+            t['has_downlink_range'] = transmitter_has_downlink_range(t)
+            transmitters.append(t)
+    del all_transmitters
+
     if station_id:
         supported_transmitters = []
         station = Station.objects.prefetch_related('antennas', 'antennas__frequency_ranges').get(

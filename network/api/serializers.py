@@ -14,6 +14,7 @@ from network.base.models import ActiveStationConfiguration, Antenna, DemodData, 
 from network.base.perms import UserNoPermissionError, \
     check_schedule_perms_of_violators_per_station, check_schedule_perms_per_station
 from network.base.scheduling import create_new_observation
+from network.base.utils import transmitter_has_downlink_range
 from network.base.validators import ObservationOverlapError, OutOfRangeError, check_end_datetime, \
     check_overlaps, check_start_datetime, check_start_end_datetimes, \
     check_transmitter_station_pairs, check_violators_scheduling_limit
@@ -362,8 +363,7 @@ class NewObservationListSerializer(serializers.ListSerializer):
             station = observation.get('ground_station')
             center_frequency = observation.get('center_frequency', None)
             transmitter = self.transmitters[transmitter_uuid]
-            if (transmitter["type"] == "Transponder"
-                    or transmitter["type"] == "Range transmitter") and center_frequency is None:
+            if transmitter_has_downlink_range(transmitter) is True and center_frequency is None:
                 observation["center_frequency"
                             ] = (transmitter['downlink_high'] + transmitter['downlink_low']) // 2
             transm_uuid_station_center_freq_set.add((transmitter_uuid, station, center_frequency))

@@ -85,16 +85,15 @@ def get_and_refresh_transmitters_with_stats_cache(in_list_form=False):
             'bad_rate': int(bad_rate)
         }
 
-        if transmitter['transmitter_type'] == 'Transponder' or transmitter[
-                'transmitter_type'] == 'Range transmitter':
-            transmitter['transmitter_freq'] = format_frequency_range(
-                transmitter["transmitter_downlink_low"] or 0,
-                transmitter["transmitter_downlink_high"] or 0
-            )
+        downlink_low = transmitter["transmitter_downlink_low"]
+        downlink_high = transmitter["transmitter_downlink_high"]
+        has_downlink_range = downlink_low is not None and downlink_high is not None and abs(
+            downlink_low - downlink_high
+        ) > 1
+        if has_downlink_range is True:
+            transmitter['transmitter_freq'] = format_frequency_range(downlink_low, downlink_high)
         else:
-            transmitter['transmitter_freq'] = format_frequency(
-                transmitter["transmitter_downlink_low"] or 0
-            )
+            transmitter['transmitter_freq'] = format_frequency(downlink_low or 0)
         object_dict[transmitter['transmitter_uuid']] = transmitter
     cache.set('transmitters-with-stats', object_dict, 5 * 3600)
     return object_dict if not in_list_form else object_dict.values()

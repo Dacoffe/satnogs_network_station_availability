@@ -6,6 +6,7 @@ from django.conf import settings
 from django.utils.timezone import make_aware
 
 from network.base.models import Observation
+from network.base.utils import transmitter_has_downlink_range
 
 
 class ObservationOverlapError(Exception):
@@ -82,8 +83,7 @@ def downlink_is_in_range(antenna, transmitter, center_frequency=None):
 
 def is_transmitter_in_station_range(transmitter, station, center_frequency=None):
     """Return true if center or transmitter frequency is in one of the station's antennas ranges"""
-    if (transmitter["type"] == "Transponder"
-            or transmitter["type"] == "Range transmitter") and center_frequency is None:
+    if transmitter_has_downlink_range(transmitter) and center_frequency is None:
         center_frequency = (transmitter['downlink_high'] + transmitter['downlink_low']) // 2
     for gs_antenna in station.antennas.all():
         if downlink_is_in_range(gs_antenna, transmitter, center_frequency):

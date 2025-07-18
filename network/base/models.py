@@ -42,7 +42,7 @@ STATION_VIOLATOR_SCHEDULING_CHOICES = (
 )
 SATELLITE_STATUS = ['alive', 'dead', 'future', 're-entered']
 TRANSMITTER_STATUS = ['active', 'inactive', 'invalid']
-TRANSMITTER_TYPE = ['Transmitter', 'Transceiver', 'Transponder', "Range transmitter"]
+TRANSMITTER_TYPE = ['Transmitter', 'Transceiver', 'Transponder']
 
 
 def _decode_pretty_hex(binary_data):
@@ -521,7 +521,7 @@ class Observation(models.Model):
     transmitter_description = models.TextField(default='')
     transmitter_type = models.CharField(
         choices=list(zip(TRANSMITTER_TYPE, TRANSMITTER_TYPE)),
-        max_length=17,
+        max_length=11,
         default='Transmitter'
     )
     transmitter_uplink_low = models.BigIntegerField(blank=True, null=True)

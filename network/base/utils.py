@@ -13,6 +13,17 @@ from django.utils.text import slugify
 from requests.exceptions import RequestException
 
 
+def transmitter_has_downlink_range(transmitter) -> bool:
+    """
+    Returns whether the transmitter's downlink is a range
+
+    :param transmitter: the transmitter dictionary as returned from SatNOGS DB endoint
+    """
+    return transmitter['downlink_low'] is not None and transmitter[
+        'downlink_high'
+    ] is not None and abs(transmitter['downlink_low'] - transmitter['downlink_high']) > 1
+
+
 def format_frequency_range(low, high):
     """Returns Hz formatted frequency range html string"""
     formatted_low = format_frequency(low, append_unit=False)
