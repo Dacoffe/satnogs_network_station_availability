@@ -115,7 +115,7 @@ class ObservationListBaseView(ListView):
             'observer': 'author',
             'station': 'ground_station_id',
             'start': 'start__gt',
-            'end': 'end__lt',
+            'end': 'end__lte',
             'transmitter_mode': 'transmitter_mode__icontains',
             'transmitter_uuid': 'transmitter_uuid__icontains',
             'experimental_observation': 'experimental'
