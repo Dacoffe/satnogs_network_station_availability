@@ -191,8 +191,6 @@ class Station(models.Model):
         validators=[MaxValueValidator(180), MinValueValidator(-180)],
         help_text='eg. 23.7314'
     )
-    # https://en.wikipedia.org/wiki/Maidenhead_Locator_System
-    qthlocator = models.CharField(max_length=8, blank=True)
     featured_date = models.DateField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     is_available = models.BooleanField(default=True)
@@ -228,6 +226,39 @@ class Station(models.Model):
                             != self.is_available or last_log.testing != self.testing):
             return True
         return False
+
+    # https://en.wikipedia.org/wiki/Maidenhead_Locator_System
+    @property
+    def qthlocator(self):
+        """Returns the QTH locator for the station."""
+
+        if self.lng is None or self.lat is None:
+            return ''
+
+        field_identifiers = [
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
+            'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+        ]
+
+        working_lon = (self.lng + 180) % 20
+        lon_field = field_identifiers[int((self.lng + 180) / 20)]
+        lon_square = int(working_lon / 2)
+        working_lon = int((working_lon % 2) * 12)
+        lon_subsquare = field_identifiers[working_lon]
+
+        working_lat = (self.lat + 90) % 10
+        lat_field = field_identifiers[int((self.lat + 90) / 10)]
+        lat_square = int(working_lat)
+        working_lat = int((working_lat - lat_square) * 24)
+        lat_subsquare = field_identifiers[working_lat]
+
+        # Combine all parts to form the QTH locator
+        qthlocator = (
+            f"{lon_field}{lat_field}{lon_square}{lat_square}"
+            f"{lon_subsquare.lower()}{lat_subsquare.lower()}"
+        )
+
+        return qthlocator
 
     @property
     def active_configuration(self):

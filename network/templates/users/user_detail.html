@@ -104,13 +104,9 @@
                     </td>
                       <td>
                         {% if station.has_location %}
-                          {% if station.qthlocator %}
                             <span data-toggle="tooltip" data-placement="bottom"
                                   title="{{ station.lat|floatformat:-3 }}°, {{ station.lng|floatformat:-3 }}°">
                             {{ station.qthlocator }}
-                          {% else %}
-                            {{ station.lat|floatformat:-1 }}°, {{ station.lng|floatformat:-1 }}°
-                          {% endif %}
                           @{{ station.alt}}m
                         {% else %}
                           Location not defined

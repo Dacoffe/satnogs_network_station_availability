@@ -541,6 +541,7 @@ class StationSerializer(serializers.ModelSerializer):
     success_rate = serializers.SerializerMethodField()
     owner = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()  # DEPRECATED
+    qthlocator = serializers.SerializerMethodField()
 
     class Meta:
         model = Station
@@ -550,6 +551,11 @@ class StationSerializer(serializers.ModelSerializer):
             'client_version', 'target_utilization', 'image', 'success_rate', 'owner',
             'is_connected', 'is_available', 'testing', 'status'
         )
+
+    @extend_schema_field(str)
+    def get_qthlocator(self, obj):
+        """Returns the QTH locator of the station"""
+        return obj.qthlocator
 
     @extend_schema_field(str)
     def get_owner(self, obj):

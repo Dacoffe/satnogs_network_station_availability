@@ -128,7 +128,6 @@
                 </td>
               </tr>
               {% if station.has_location %}
-                {% if station.qthlocator %}
                   <tr>
                     <td>
                       <span class="badge badge-secondary">QTH Locator</span>
@@ -137,7 +136,6 @@
                       {{ station.qthlocator }}
                     </td>
                   </tr>
-                {% endif %}
                 <tr>
                   <td>
                     <span class="badge badge-secondary">Coordinates(lat, lon)</span>
