@@ -19,7 +19,7 @@ from network.base.forms import AntennaInlineFormSet, FrequencyRangeInlineFormSet
     StationRegistrationForm
 from network.base.models import AntennaType, Station, StationConfiguration, \
     StationConfigurationSchema, StationStatusLog, StationType
-from network.base.perms import modify_delete_station_perms, schedule_station_perms
+from network.base.perms import has_perm_to_schedule_on_station, modify_delete_station_perms
 from network.base.serializers import StationSerializer
 from network.base.utils import populate_formset_error_messages
 
@@ -124,7 +124,7 @@ def station_view(request, station_id):
     )
     station_log = StationStatusLog.objects.filter(station=station)
 
-    can_schedule = schedule_station_perms(request.user, station)
+    can_schedule = has_perm_to_schedule_on_station(request.user, station)
     can_modify_delete_station = modify_delete_station_perms(request.user, station)
 
     # Calculate uptime

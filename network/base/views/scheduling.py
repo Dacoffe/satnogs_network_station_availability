@@ -21,7 +21,8 @@ from network.base.db_api import DBConnectionError, get_tle_set_by_sat_id, get_tl
 from network.base.decorators import ajax_required
 from network.base.forms import ObservationFormSet, SatelliteFilterForm
 from network.base.models import Observation, Station
-from network.base.perms import schedule_perms, schedule_station_violators_perms
+from network.base.perms import has_perm_to_schedule_violator, \
+    has_perm_to_schedule_violators_on_station, has_schedule_perms
 from network.base.scheduling import create_new_observation, get_available_stations, \
     over_min_duration, predict_available_observation_windows
 from network.base.serializers import StationSerializer
@@ -57,8 +58,7 @@ def create_new_observations(formset, user):
             center_frequency=center_frequency
         )
         new_observations.append(observation)
-
-    if formset.violators and not user.groups.filter(name='Operators').exists():
+    if formset.violators and not has_perm_to_schedule_violator(user):
         check_violators_scheduling_limit(formset.violators, observations_per_sat_id)
 
     for observation in new_observations:
@@ -120,8 +120,7 @@ def observation_new_post(request):
 @login_required
 def observation_new(request):
     """View for new observation"""
-    can_schedule = schedule_perms(request.user)
-    if not can_schedule:
+    if not has_schedule_perms(request.user):
         messages.error(request, 'You don\'t have permissions to schedule observations')
         return redirect(reverse('base:observations_list'))
 
@@ -361,7 +360,7 @@ def pass_predictions(request, station_id):
         sat for sat in get_satellites().values()
         if sat['status'] == 'alive' and 'merged_into' not in sat
     ]
-    if not schedule_station_violators_perms(request.user, station):
+    if not has_perm_to_schedule_violators_on_station(request.user, station):
         satellites = [sat for sat in satellites if not sat['is_frequency_violator']]
 
     nextpasses = []
@@ -573,7 +572,7 @@ def transmitters_view(request):
         station = Station.objects.prefetch_related('antennas', 'antennas__frequency_ranges').get(
             id=station_id
         )
-        if satellite['is_frequency_violator'] and not schedule_station_violators_perms(
+        if satellite['is_frequency_violator'] and not has_perm_to_schedule_violators_on_station(
                 request.user, station):
             data = [{'error': 'No permission to schedule this satellite on this station.'}]
             return JsonResponse(data, safe=False)

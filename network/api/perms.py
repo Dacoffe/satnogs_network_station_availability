@@ -1,7 +1,7 @@
 """SatNOGS Network API permissions, django rest framework"""
 from rest_framework import permissions
 
-from network.base.perms import schedule_perms
+from network.base.perms import has_schedule_perms
 
 
 class SafeMethodsOnlyPermission(permissions.BasePermission):
@@ -20,7 +20,7 @@ class StationOwnerPermission(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
-        if request.method == 'POST' and schedule_perms(request.user):
+        if request.method == 'POST' and has_schedule_perms(request.user):
             return True
         return (
             request.user.is_authenticated and obj.ground_station

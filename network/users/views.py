@@ -13,7 +13,7 @@ from rest_framework.authtoken.models import Token
 
 from network.base.cache import get_satellites
 from network.base.models import Observation, Station
-from network.base.perms import schedule_perms
+from network.base.perms import has_schedule_perms
 from network.users.forms import UserForm
 from network.users.models import User
 
@@ -78,7 +78,7 @@ def view_user(request, username):
     token = ''
     can_schedule = False
     if request.user.is_authenticated:
-        can_schedule = schedule_perms(request.user)
+        can_schedule = has_schedule_perms(request.user)
 
         if request.user == user:
             try:

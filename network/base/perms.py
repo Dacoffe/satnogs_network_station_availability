@@ -1,12 +1,19 @@
 """SatNOGS Network base permissions"""
-from django.core.exceptions import ObjectDoesNotExist
 
 
 class UserNoPermissionError(Exception):
     """Error when user has not persmission"""
 
 
-def check_stations_without_permissions(stations_perms):
+def has_perm_to_schedule_violator(user):
+    """
+    Determines whether the user can schedule violator satellites
+    for stations that allow it (violator_scheduling='Only Operators')
+    """
+    return user.is_authenticated and user.groups.filter(name='Operators').exists()
+
+
+def raise_permission_errors_for_stations(stations_perms):
     """
     Check if in the given dictionary of scheduling permissions per station, there are stations that
     don\'t have scheduling permissions.
@@ -17,96 +24,119 @@ def check_stations_without_permissions(stations_perms):
     if stations_without_permissions:
         if len(stations_without_permissions) == 1:
             raise UserNoPermissionError(
-                'No permission to schedule observations on station: {0}'.format(
-                    stations_without_permissions[0]
-                )
+                'No permission to schedule observations on station: '
+                f'{stations_without_permissions[0]}'
             )
         raise UserNoPermissionError(
-            'No permission to schedule observations on stations: {0}'.
-            format(stations_without_permissions)
+            f'No permission to schedule observations on stations: {stations_without_permissions}'
         )
 
 
-def schedule_station_violators_perms(user, station):
+def has_perm_to_schedule_violators_on_station(user, station):
     """
     This context flag will determine if user can schedule satellites that violate frequencies on
     the given station.
     """
-    if user.is_authenticated:
-        if station.violator_scheduling > 0:
-            if station.violator_scheduling == 2 or user.groups.filter(name='Operators').exists():
-                return True
-
+    if not user.is_authenticated:
+        return False
+    if station.violator_scheduling > 0:
+        if station.violator_scheduling == 2 or has_perm_to_schedule_violator(user):
+            return True
     return False
 
 
-def schedule_stations_violators_perms(user, stations):
+def has_perm_to_schedule_violators_on_stations(user, stations):
     """
     This context flag will determine if user can schedule satellites that violate frequencies on
     the given stations.
     """
-    if user.is_authenticated:
-        return {
-            station.id: schedule_station_violators_perms(user, station)
-            for station in stations
-        }
-
-    return {station.id: False for station in stations}
+    if not user.is_authenticated:
+        return {station.id: False for station in stations}
+    return {
+        station.id: has_perm_to_schedule_violators_on_station(user, station)
+        for station in stations
+    }
 
 
 def check_schedule_perms_of_violators_per_station(user, station_set):
     """Checks if user has permissions to schedule on stations"""
-    stations_perms = schedule_stations_violators_perms(user, station_set)
-    check_stations_without_permissions(stations_perms)
+    stations_perms = has_perm_to_schedule_violators_on_stations(user, station_set)
+    raise_permission_errors_for_stations(stations_perms)
 
 
-def schedule_perms(user):
+def has_schedule_perms(user):
     """
     This context flag will determine if user can schedule an observation.
-    That includes station owners, moderators, admins.
+    That includes station owners, moderators, operators, admins.
     see: https://wiki.satnogs.org/Operation#Network_permissions_matrix
     """
-    if user.is_authenticated:
-        # User has special permissions
-        if user.groups.filter(name='Moderators').exists():
-            return True
-        if user.is_superuser:
-            return True
-        if user.useable_stations.exists():
-            return True
+    if not user.is_authenticated:
+        return False
+    if user.groups.filter(name='Moderators').exists():
+        return True
+    if user.groups.filter(name='Operators').exists():
+        return True
+    if user.is_superuser:
+        return True
+    if user.connected_stations.exists():
+        return True
+    return False
+
+
+def get_scheduling_user_attributes(user):
+    """
+    Returns the user's attributes that determine their scheduling perms
+    """
+    is_authenticated = user.is_authenticated
+    if not is_authenticated:
+        return (False, ) * 5
+    is_superuser = user.is_superuser
+    is_moderator = user.groups.filter(name="Moderators").exists()
+    is_operator = user.groups.filter(name="Operators").exists()
+    has_useable_non_testing_stations = user.useable_stations.filter(testing=False).exists()
+
+    return (
+        is_authenticated, is_superuser, is_moderator, is_operator, has_useable_non_testing_stations
+    )
+
+
+def has_perm_to_schedule_on_station(
+    user,
+    target_station,
+    is_authenticated=None,
+    is_superuser=None,
+    is_moderator=None,
+    is_operator=None,
+    has_useable_non_testing_stations=None
+):
+    """
+    This context flag will determine if user can schedule an observation on the passed station
+    That includes station owners, moderators, operators, admins.
+    see: https://wiki.satnogs.org/Operation#Network_permissions_matrix
+    """
+    if all(attr is None for attr in (is_authenticated, is_superuser, is_moderator, is_operator,
+                                     has_useable_non_testing_stations)):
+        (
+            is_authenticated, is_superuser, is_moderator, is_operator,
+            has_useable_non_testing_stations
+        ) = get_scheduling_user_attributes(user)
+
+    if not is_authenticated:
+        return False
+    if is_superuser or is_moderator:
+        return True
+    if target_station.owner == user:
+        return True
+
+    # Useable stations refer to connected, available stations
+    # with set longitude, latitude and altitude
+    if has_useable_non_testing_stations or is_operator:
+        return target_station.is_available
 
     return False
 
 
-def schedule_station_perms(user, station):
-    """
-    This context flag will determine if user can schedule an observation.
-    That includes station owners, moderators, admins.
-    see: https://wiki.satnogs.org/Operation#Network_permissions_matrix
-    """
-    if user.is_authenticated:
-        if station.lat is None or station.lng is None or station.alt is None:
-            return False
-
-        # User has connected and available station and the station is connected and available
-        try:
-            if user.useable_stations.exists() and station.is_connected and station.is_available:
-                return True
-        except ObjectDoesNotExist:
-            pass
-        # If the station is unavailable and user is its owner
-        if station.is_connected and station.owner == user:
-            return True
-        # User has special permissions
-        if user.groups.filter(name='Moderators').exists():
-            return True
-        if user.is_superuser:
-            return True
-
-    return False
-
-
-def schedule_stations_perms(user, stations):
+def get_schedule_permissions_per_station(user, stations):
     """
     This context flag will determine if user can schedule an observation.
     That includes station owners, moderators, admins.
@@ -115,84 +145,70 @@ def schedule_stations_perms(user, stations):
      @param: user The user that schedules the observations
      @param: stations All connected stations that have non-null lat, lng and alt
     """
-    if user.is_authenticated:
-        # User has special permissions
-        if user.groups.filter(name='Moderators').exists():
-            return {station.id: True for station in stations}
-        if user.is_superuser:
-            return {station.id: True for station in stations}
-        # User has connected and available station and station to schedule is available
-        try:
-            if user.useable_stations.exists():
-                return {s.id: s.owner == user or s.is_available for s in stations}
 
-        except ObjectDoesNotExist:
-            pass
-        # If the station is unavailable and user is its owner
-        return {station.id: station.owner == user for station in stations}
-
-    return {station.id: False for station in stations}
+    user_attrs = get_scheduling_user_attributes(user)
+    return {
+        station.id: get_schedule_permissions_per_station(user, station, *user_attrs)
+        for station in stations
+    }
 
 
 def check_schedule_perms_per_station(user, station_set):
     """Checks if user has permissions to schedule on stations"""
-    stations_perms = schedule_stations_perms(user, station_set)
-    check_stations_without_permissions(stations_perms)
+    stations_perms = get_schedule_permissions_per_station(user, station_set)
+    raise_permission_errors_for_stations(stations_perms)
 
 
-def delete_perms(user, observation):
+def has_delete_obs_perms(user, observation):
     """
     This context flag will determine if a delete button appears for the observation.
     That includes observer, station owner involved, moderators, admins.
     see: https://wiki.satnogs.org/Operation#Network_permissions_matrix
     """
-    if not observation.is_started and user.is_authenticated:
-        # User owns the observation
-        try:
-            if observation.author == user:
-                return True
-        except AttributeError:
-            pass
-        # User owns the station
-        try:
-            if observation.ground_station and observation.ground_station.owner == user:
-                return True
-        except (AttributeError, ObjectDoesNotExist):
-            pass
-        # User has special permissions
-        if user.groups.filter(name='Moderators').exists():
-            return True
-        if user.is_superuser:
-            return True
+    if observation.is_started or not user.is_authenticated:
+        return False
+    # User owns the observation
+    if observation.author == user:
+        return True
+    # User owns the station
+    if observation.ground_station and observation.ground_station.owner == user:
+        return True
+    # User has special permissions
+    if user.groups.filter(name='Moderators').exists():
+        return True
+    if user.is_superuser:
+        return True
     return False
 
 
-def vet_perms(user, observation):
+def has_vet_perms(user, observation):
     """
     This context flag will determine if vet buttons appears for the observation.
     That includes observer, station owner involved, moderators, admins.
     see: https://wiki.satnogs.org/Operation#Network_permissions_matrix
     """
-    if user.is_authenticated:
-        # User has connected and available station
-        if user.useable_stations.exists():
-            return True
-        # User owns the observation
-        try:
-            if observation.author == user:
-                return True
-        except AttributeError:
-            pass
-        # User owns the station
-        try:
-            if observation.ground_station and observation.ground_station.owner == user:
-                return True
-        except AttributeError:
-            pass
-        # User has special permissions
-        if user.groups.filter(name='Moderators'
-                              ).exists() or user.is_superuser or user.has_perm('base.can_vet'):
-            return True
+    if not user.is_authenticated:
+        return False
+
+    # User has connected, available non-testing station
+    if user.useable_stations.filter(testing=False).exists():
+        return True
+
+    # User owns the observation
+    # Users can vet if they have a station that
+    # has connected at least once (non-future station)
+    if observation.author == user and user.ground_stations.filter(last_seen__isnull=False
+                                                                  ).exists():
+        return True
+
+    # User owns the station
+    if observation.ground_station and observation.ground_station.owner == user:
+        return True
+
+    # User has special permissions
+    if user.groups.filter(name='Moderators').exists() or user.groups.filter(
+            name='Operators').exists() or user.is_superuser or user.has_perm('base.can_vet'):
+        return True
     return False
 
 
@@ -202,16 +218,16 @@ def modify_delete_station_perms(user, station):
     or bulk-delete future observations on a station.
     That includes station owners, moderators and admins.
     """
-    if user.is_authenticated:
-        # User owns the station
-        try:
-            if user == station.owner:
-                return True
-        except AttributeError:
-            pass
-        # User has special permissions
-        if user.groups.filter(name='Moderators').exists():
-            return True
-        if user.is_superuser:
-            return True
+    if not user.is_authenticated:
+        return False
+
+    # User owns the station
+    if user == station.owner:
+        return True
+
+    # User has special permissions
+    if user.groups.filter(name='Moderators').exists():
+        return True
+    if user.is_superuser:
+        return True
     return False

@@ -22,7 +22,7 @@ from network.base.cache import get_satellite_stats, get_satellites
 from network.base.db_api import DBConnectionError, get_transmitters_by_sat_id
 from network.base.decorators import ajax_required
 from network.base.models import Observation, Station
-from network.base.perms import delete_perms, schedule_perms, vet_perms
+from network.base.perms import has_delete_obs_perms, has_schedule_perms, has_vet_perms
 from network.base.rating_tasks import rate_observation
 from network.base.stats import get_transmitters_with_stats
 from network.base.tasks import get_and_refresh_transmitters_with_stats_cache
@@ -226,7 +226,7 @@ class ObservationListBaseView(ListView):
                 pass
         if transmitter_uuid:
             context['transmitters_uuid'] = transmitter_uuid
-        context['can_schedule'] = schedule_perms(self.request.user)
+        context['can_schedule'] = has_schedule_perms(self.request.user)
 
         url_query = urlparse(self.request.build_absolute_uri()).query
         if not url_query:
@@ -340,7 +340,7 @@ class VetObservationsView(LoginRequiredMixin, ObservationListBaseView):
 
     def get_queryset(self):
         """ Limits the queryset to those observations that the user can vet.
-            works, similar to 'vet_perms' function.
+            works, similar to 'has_vet_perms' function.
         """
         queryset = super().get_queryset()
         if not (self.request.user.is_superuser
@@ -388,9 +388,9 @@ def observation_view(request, observation_id):
     if observation.is_future:
         can_vet = False
     else:
-        can_vet = vet_perms(request.user, observation)
+        can_vet = has_vet_perms(request.user, observation)
 
-    can_delete = delete_perms(request.user, observation)
+    can_delete = has_delete_obs_perms(request.user, observation)
 
     if observation.has_audio and not observation.audio_url:
         messages.error(
@@ -462,7 +462,7 @@ def calculate_datetime_from_tle(observation_id):
 def observation_delete(request, observation_id):
     """View for deleting observation."""
     observation = get_object_or_404(Observation, id=observation_id)
-    can_delete = delete_perms(request.user, observation)
+    can_delete = has_delete_obs_perms(request.user, observation)
     if can_delete:
         observation.delete()
         messages.success(request, 'Observation deleted successfully.')
@@ -485,7 +485,7 @@ def waterfall_vet(request, observation_id):
     if observation.is_future:
         can_vet = False
     else:
-        can_vet = vet_perms(request.user, observation)
+        can_vet = has_vet_perms(request.user, observation)
 
     if not can_vet:
         data = {'error': 'Permission denied.'}

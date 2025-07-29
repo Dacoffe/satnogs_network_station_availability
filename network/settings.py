@@ -408,7 +408,9 @@ CSP_CHILD_SRC = config(
 )
 
 # Database
-DATABASE_URL = config('DATABASE_URL', default='sqlite:///db.sqlite3')
+DATABASE_URL = config(
+    'DATABASE_URL', default='sqlite:///db.sqlite3'
+) if not TESTING else 'sqlite:///db.sqlite3'  # Temporary
 DATABASES = {'default': db_url(DATABASE_URL)}
 DATABASES_EXTRAS = {
     'OPTIONS': {

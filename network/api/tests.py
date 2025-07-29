@@ -14,7 +14,7 @@ from network.base.tests import AntennaFactory, FrequencyRangeFactory, Observatio
     StationFactory, create_satellite
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db()
 class JobViewApiTest(TestCase):
     """
     Tests the Job View API
@@ -40,7 +40,7 @@ class JobViewApiTest(TestCase):
         self.assertNotEqual(response_json[0]['id'], self.past_observation.id)
 
 
-@pytest.mark.django_db(transaction=True)
+# @pytest.mark.django_db()
 class StationViewApiTest(TestCase):
     """
     Tests the Station View API
@@ -119,9 +119,9 @@ class StationViewApiTest(TestCase):
             'owner': self.station.owner.username
         }
 
-        response = self.client.get('/api/stations/')
+        response = self.client.get('/api/stations/1/')
         response_json = json.loads(response.content)
-        self.assertEqual(response_json, [station_serialized])
+        self.assertEqual(response_json, station_serialized)
 
 
 class ObservationViewApiTest(TestCase):

@@ -13,7 +13,7 @@ from django.utils.timezone import make_aware, now
 from network.base.cache import get_satellites
 from network.base.db_api import DBConnectionError, get_tle_set_by_sat_id
 from network.base.models import Observation
-from network.base.perms import schedule_stations_perms
+from network.base.perms import get_schedule_permissions_per_station, has_perm_to_schedule_violator
 from network.base.utils import format_frequency
 from network.base.validators import NegativeElevationError, NoTleSetError, \
     ObservationOverlapError, OutOfRangeError, SinglePassError
@@ -662,9 +662,9 @@ def get_available_stations(stations, downlink, user, satellite):
 
     if satellite['is_frequency_violator']:
         stations = stations.exclude(violator_scheduling=0)
-        if not user.groups.filter(name='Operators').exists():
+        if not has_perm_to_schedule_violator(user):
             stations = stations.exclude(violator_scheduling=1)
-    stations_perms = schedule_stations_perms(user, stations)
+    stations_perms = get_schedule_permissions_per_station(user, stations)
     stations_with_permissions = [station for station in stations if stations_perms[station.id]]
     for station in stations_with_permissions:
         # Skip if this station is not capable of receiving the frequency
