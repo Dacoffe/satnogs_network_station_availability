@@ -148,7 +148,7 @@ def get_schedule_permissions_per_station(user, stations):
 
     user_attrs = get_scheduling_user_attributes(user)
     return {
-        station.id: get_schedule_permissions_per_station(user, station, *user_attrs)
+        station.id: has_perm_to_schedule_on_station(user, station, *user_attrs)
         for station in stations
     }
 
