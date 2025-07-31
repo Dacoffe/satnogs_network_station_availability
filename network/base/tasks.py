@@ -333,7 +333,9 @@ def update_future_observations_with_new_tle_sets():
     future_observations = Observation.objects.filter(start__gt=start).exclude(
         Q(ground_station__client_version__startswith='1.9')
         | Q(ground_station__client_version__startswith='2.0+')
-        | Q(ground_station__client_version__startswith='2.0.1')
+        | Q(ground_station__client_version__startswith='2.0.1+')
+        | Q(ground_station__client_version='2.0')
+        | Q(ground_station__client_version='2.0.1')
     )
     sat_id_set = set(future_observations.values_list('sat_id', flat=True))
     try:
@@ -369,7 +371,9 @@ def update_future_observations_with_new_transmitter_details():
     ).exclude(  # Mitigate client issue
         Q(ground_station__client_version__startswith='1.9')
         | Q(ground_station__client_version__startswith='2.0+')
-        | Q(ground_station__client_version__startswith='2.0.1')
+        | Q(ground_station__client_version__startswith='2.0.1+')
+        | Q(ground_station__client_version='2.0')
+        | Q(ground_station__client_version='2.0.1')
     )
     uuid_set = set(future_observations.values_list('transmitter_uuid', flat=True))
 
