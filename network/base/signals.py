@@ -22,6 +22,10 @@ def _station_post_save(sender, instance, created, **kwargs):  # pylint: disable=
     if created or instance.has_unlogged_status_change:
         StationStatusLog.create_from_station(instance)
 
+    future_observations = Observation.objects.filter(ground_station=instance, start__gt=now())
+
+    future_observations.update(experimental=instance.testing)
+
 
 def _station_pre_delete(sender, instance, **kwargs):  # pylint: disable=W0613
     """
