@@ -15,15 +15,13 @@ from django.utils.timezone import now
 from factory import fuzzy  # pylint: disable=C0412
 
 from network.base.cache import get_satellites
-from network.base.models import OBSERVATION_STATUSES, Antenna, AntennaType, DemodData, \
-    FrequencyRange, Observation, Station, StationConfiguration, StationConfigurationSchema
+from network.base.models import Antenna, AntennaType, DemodData, FrequencyRange, Observation, \
+    Station, StationConfiguration, StationConfigurationSchema
 from network.base.perms import has_delete_obs_perms, has_perm_to_schedule_on_station, \
     has_schedule_perms, has_vet_perms
 from network.base.test_orbital import generate_fake_tle
 from network.users.models import User
 from network.users.tests import UserFactory
-
-OBSERVATION_STATUS_IDS = [c[0] for c in OBSERVATION_STATUSES]
 
 
 def generate_payload():
@@ -149,7 +147,6 @@ class ObservationFactory(factory.django.DjangoModelFactory):  # pylint: disable=
     waterfall_status_user = factory.SubFactory(UserFactory)
     waterfall_status = fuzzy.FuzzyChoice(choices=[None, True, False])
     status = fuzzy.FuzzyInteger(-1000, 1000, step=10)
-    vetted_status = fuzzy.FuzzyChoice(choices=OBSERVATION_STATUS_IDS)
     transmitter_uuid = fuzzy.FuzzyText(length=20)
     transmitter_description = fuzzy.FuzzyText()
     transmitter_uplink_low = fuzzy.FuzzyInteger(200000000, 500000000, step=10000)

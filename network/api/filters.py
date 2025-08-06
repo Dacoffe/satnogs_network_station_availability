@@ -32,14 +32,6 @@ class ObservationViewFilter(FilterSet):
         (0, 'Without Signal'),
     ]
 
-    # DEPRECATED
-    VETTED_STATUS_CHOICES = [
-        ('failed', 'Failed'),
-        ('bad', 'Bad'),
-        ('unknown', 'Unknown'),
-        ('good', 'Good'),
-    ]
-
     start = django_filters.IsoDateTimeFilter(field_name='start', lookup_expr='gte')
     start__lt = django_filters.IsoDateTimeFilter(field_name='start', lookup_expr='lt')
     end = django_filters.IsoDateTimeFilter(field_name='end', lookup_expr='lte')
@@ -49,12 +41,6 @@ class ObservationViewFilter(FilterSet):
     )
     waterfall_status = django_filters.ChoiceFilter(
         field_name='waterfall_status', choices=WATERFALL_STATUS_CHOICES, null_label='Unknown'
-    )
-    vetted_status = django_filters.ChoiceFilter(
-        label='Vetted status (deprecated: please use Status)',
-        field_name='status',
-        choices=VETTED_STATUS_CHOICES,
-        method='filter_status'
     )
     vetted_user = django_filters.ModelChoiceFilter(
         label='Vetted user (deprecated: will be removed in next version)',
@@ -103,8 +89,8 @@ class ObservationViewFilter(FilterSet):
         model = Observation
         fields = [
             'id', 'status', 'ground_station', 'start', 'end', 'transmitter_uuid',
-            'transmitter_mode', 'transmitter_type', 'waterfall_status', 'vetted_status',
-            'vetted_user', 'observer', 'sat_id'
+            'transmitter_mode', 'transmitter_type', 'waterfall_status', 'vetted_user', 'observer',
+            'sat_id'
         ]
 
 

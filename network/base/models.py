@@ -25,12 +25,6 @@ from network.base.utils import bands_from_range
 
 User = get_user_model()
 
-OBSERVATION_STATUSES = (
-    ('unknown', 'Unknown'),
-    ('good', 'Good'),
-    ('bad', 'Bad'),
-    ('failed', 'Failed'),
-)
 STATION_STATUSES = (
     (2, 'Online'),
     (1, 'Testing'),
@@ -537,9 +531,6 @@ class Observation(models.Model):
     waterfall_status_datetime = models.DateTimeField(null=True, blank=True)
     waterfall_status_user = models.ForeignKey(
         User, related_name='waterfalls_vetted', on_delete=models.SET_NULL, null=True, blank=True
-    )
-    vetted_status = models.CharField(
-        choices=OBSERVATION_STATUSES, max_length=20, default='unknown'
     )
     """
     Meaning of values:

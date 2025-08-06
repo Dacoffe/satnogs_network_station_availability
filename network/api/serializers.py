@@ -90,7 +90,6 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
     station_alt = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
     waterfall_status = serializers.SerializerMethodField()
-    vetted_status = serializers.SerializerMethodField()  # Deprecated
     vetted_user = serializers.SerializerMethodField()  # Deprecated
     vetted_datetime = serializers.SerializerMethodField()  # Deprecated
     demoddata = DemodDataSerializer(required=False, many=True)
@@ -108,10 +107,10 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
         fields = (
             'id', 'start', 'end', 'ground_station', 'transmitter', 'norad_cat_id', 'payload',
             'waterfall', 'demoddata', 'station_name', 'station_lat', 'station_lng', 'station_alt',
-            'vetted_status', 'vetted_user', 'vetted_datetime', 'archived', 'archive_url',
-            'client_version', 'client_metadata', 'status', 'waterfall_status',
-            'waterfall_status_user', 'waterfall_status_datetime', 'rise_azimuth', 'set_azimuth',
-            'max_altitude', 'transmitter_uuid', 'transmitter_description', 'transmitter_type',
+            'archived', 'vetted_user', 'vetted_datetime', 'archive_url', 'client_version',
+            'client_metadata', 'status', 'waterfall_status', 'waterfall_status_user',
+            'waterfall_status_datetime', 'rise_azimuth', 'set_azimuth', 'max_altitude',
+            'transmitter_uuid', 'transmitter_description', 'transmitter_type',
             'transmitter_uplink_low', 'transmitter_uplink_high', 'transmitter_uplink_drift',
             'transmitter_downlink_low', 'transmitter_downlink_high', 'transmitter_downlink_drift',
             'transmitter_mode', 'transmitter_invert', 'transmitter_baud', 'transmitter_updated',
@@ -120,16 +119,16 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
         )
         read_only_fields = [
             'id', 'start', 'end', 'observation', 'ground_station', 'transmitter', 'norad_cat_id',
-            'archived', 'archive_url', 'station_name', 'station_lat', 'station_lng',
-            'waterfall_status_user', 'status', 'waterfall_status', 'station_alt', 'vetted_status',
-            'vetted_user', 'vetted_datetime', 'waterfall_status_datetime', 'rise_azimuth',
-            'set_azimuth', 'max_altitude', 'transmitter_uuid', 'transmitter_description',
-            'transmitter_type', 'transmitter_uplink_low', 'transmitter_uplink_high',
-            'transmitter_uplink_drift', 'transmitter_downlink_low', 'transmitter_downlink_high',
-            'transmitter_downlink_drift', 'transmitter_mode', 'transmitter_invert',
-            'transmitter_baud', 'transmitter_created', 'transmitter_updated', 'transmitter_status',
-            'tle0', 'tle1', 'tle2', 'tle_source', 'observer', 'center_frequency',
-            'observation_frequency', 'transmitter_unconfirmed', 'sat_id'
+            'archived', 'vetted_user', 'vetted_datetime', 'archive_url', 'station_name',
+            'station_lat', 'station_lng', 'waterfall_status_user', 'status', 'waterfall_status',
+            'station_alt', 'waterfall_status_datetime', 'rise_azimuth', 'set_azimuth',
+            'max_altitude', 'transmitter_uuid', 'transmitter_description', 'transmitter_type',
+            'transmitter_uplink_low', 'transmitter_uplink_high', 'transmitter_uplink_drift',
+            'transmitter_downlink_low', 'transmitter_downlink_high', 'transmitter_downlink_drift',
+            'transmitter_mode', 'transmitter_invert', 'transmitter_baud', 'transmitter_created',
+            'transmitter_updated', 'transmitter_status', 'tle0', 'tle1', 'tle2', 'tle_source',
+            'observer', 'center_frequency', 'observation_frequency', 'transmitter_unconfirmed',
+            'sat_id'
         ]
 
     def update(self, instance, validated_data):
@@ -252,13 +251,6 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
     def get_waterfall_status(self, obj):
         """Returns Observation status"""
         return obj.waterfall_status_badge
-
-    @extend_schema_field(str)
-    def get_vetted_status(self, obj):
-        """DEPRECATED: Returns vetted status"""
-        if obj.status_badge == 'future':
-            return 'unknown'
-        return obj.status_badge
 
     @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_vetted_user(self, obj):
