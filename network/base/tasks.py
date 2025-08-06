@@ -355,7 +355,7 @@ def update_future_observations_with_new_tle_sets():
         if not tle_sets[sat_id]:
             continue
         tle_set = tle_sets[sat_id][0]
-        tle_updated = datetime.strptime(tle_set['updated'], "%Y-%m-%dT%H:%M:%S.%f%z")
+        tle_updated = datetime.strptime(tle_set['updated'], "%Y-%m-%dT%H:%M:%S.%fZ")
         obs_to_update = future_observations.filter(sat_id=sat_id, tle_updated__lt=tle_updated)
         for obs in obs_to_update:
             obs.tle_line_0 = tle_set['tle0']
@@ -393,7 +393,7 @@ def update_future_observations_with_new_transmitter_details():
 
     for uuid in transmitters_set.keys():
         transmitter = transmitters_set[uuid]
-        transmitter_updated = datetime.strptime(transmitter['updated'], "%Y-%m-%dT%H:%M:%S.%f%z")
+        transmitter_updated = datetime.strptime(transmitter['updated'], "%Y-%m-%dT%H:%M:%S.%fZ")
 
         checked_stations = {}
         obs_to_update = future_observations.filter(
