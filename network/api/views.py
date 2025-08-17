@@ -182,11 +182,11 @@ class ObservationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.U
                 {"detail": "Cannot delete observations that already started or finished."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        else:
-            self.perform_destroy(instance)
-            return Response(
-                data={'detail': 'Observation deleted successfully.'}, status=status.HTTP_200_OK
-            )
+
+        self.perform_destroy(instance)
+        return Response(
+            data={'detail': 'Observation deleted successfully.'}, status=status.HTTP_200_OK
+        )
 
 
 class StationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
