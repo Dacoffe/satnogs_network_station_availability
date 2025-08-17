@@ -178,9 +178,9 @@ class ObservationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.U
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(
-            data = {'detail': 'Observation deleted successfully.'},
-            status=status.HTTP_200_OK
+            data={'detail': 'Observation deleted successfully.'}, status=status.HTTP_200_OK
         )
+
 
 class StationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """SatNOGS Network Station API view class"""
