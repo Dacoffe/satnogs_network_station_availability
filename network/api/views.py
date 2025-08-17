@@ -38,13 +38,13 @@ from network.base.validators import NegativeElevationError, NoTleSetError, \
 
 
 class ObservationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
-                      mixins.CreateModelMixin, viewsets.GenericViewSet):
+                      mixins.CreateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     """SatNOGS Network Observation API view class"""
     filterset_class = filters.ObservationViewFilter
     pagination_class = pagination.ObservationCursorPagination
 
     def get_permissions(self):
-        if self.action in ('update', 'create'):
+        if self.action in ('update', 'create', 'destroy'):
             self.permission_classes = [StationOwnerPermission]
         return super().get_permissions()
 
@@ -173,6 +173,14 @@ class ObservationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.U
             )
         return Response(status=status.HTTP_200_OK)
 
+    def destroy(self, request, *args, **kwargs):
+        """Deletes an observation."""
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(
+            data = {'detail': 'Observation deleted successfully.'},
+            status=status.HTTP_200_OK
+        )
 
 class StationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """SatNOGS Network Station API view class"""
