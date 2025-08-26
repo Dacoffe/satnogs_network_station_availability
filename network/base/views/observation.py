@@ -127,7 +127,11 @@ class ObservationListBaseView(ListView):
             if self.filter_params[parameter_key] == '':
                 continue
 
-            filter_dict[filter_key] = self.filter_params[parameter_key]
+            if parameter_key == 'sat_id':
+                sat_id = self.filter_params['sat_id']
+                filter_dict['sat_id__in'] = self.resolve_satellite_ids(sat_id, get_satellites())
+            else:
+                filter_dict[filter_key] = self.filter_params[parameter_key]
 
         self.filtered = bool(
             (
@@ -191,6 +195,16 @@ class ObservationListBaseView(ListView):
                 observations = observations.filter(waterfall_status=False)
 
         return observations
+    
+    def resolve_satellite_ids(self, sat_id: str, satellites: dict) -> list[str]:
+        """Return list of satellite IDs to filter on (primary + associated)."""
+        if sat_id not in satellites:
+            return [sat_id]
+
+        sat_info = satellites[sat_id]
+        primary_id = sat_info.get('merged_into', sat_id)
+        associated_ids = satellites.get(primary_id, {}).get('associated_satellites', [])
+        return [primary_id] + associated_ids
 
     def get_context_data(self, **kwargs):  # pylint: disable=W0221
         """
