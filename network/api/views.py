@@ -177,10 +177,10 @@ class ObservationView(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.U
         """Deletes an future observation."""
         instance = self.get_object()
 
-        if instance.start <= now():
+        if instance.is_started:
             return Response(
                 {"detail": "Cannot delete observations that already started or finished."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_403_FORBIDDEN
             )
 
         self.perform_destroy(instance)
