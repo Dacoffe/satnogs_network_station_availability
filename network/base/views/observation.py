@@ -195,7 +195,7 @@ class ObservationListBaseView(ListView):
                 observations = observations.filter(waterfall_status=False)
 
         return observations
-    
+
     def resolve_satellite_ids(self, sat_id: str, satellites: dict) -> list[str]:
         """Return list of satellite IDs to filter on (primary + associated)."""
         if sat_id not in satellites:
