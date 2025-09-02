@@ -123,15 +123,7 @@ class ObservationListBaseView(ListView):
 
         # Create observations filter based on the received HTTP POST parameters
         filter_dict = {}
-        for parameter_key, filter_key in parameter_filter_mapping.items():
-            if self.filter_params[parameter_key] == '':
-                continue
-
-            if parameter_key == 'sat_id':
-                sat_id = self.filter_params['sat_id']
-                filter_dict['sat_id__in'] = self.resolve_satellite_ids(sat_id, get_satellites())
-            else:
-                filter_dict[filter_key] = self.filter_params[parameter_key]
+        filter_dict = self.apply_parameter_filters(filter_dict, parameter_filter_mapping)
 
         self.filtered = bool(
             (
@@ -195,6 +187,19 @@ class ObservationListBaseView(ListView):
                 observations = observations.filter(waterfall_status=False)
 
         return observations
+
+    def apply_parameter_filters(self, filter_dict: dict, parameter_filter_mapping: dict):
+        """Apply filter params to filter_dict based on mapping."""
+        for parameter_key, filter_key in parameter_filter_mapping.items():
+            if self.filter_params[parameter_key] == '':
+                continue
+
+            if parameter_key == 'sat_id':
+                sat_id: str = self.filter_params['sat_id']
+                filter_dict['sat_id__in'] = self.resolve_satellite_ids(sat_id, get_satellites())
+            else:
+                filter_dict[filter_key] = self.filter_params[parameter_key]
+        return filter_dict
 
     def resolve_satellite_ids(self, sat_id: str, satellites: dict) -> list[str]:
         """Return list of satellite IDs to filter on (primary + associated)."""
