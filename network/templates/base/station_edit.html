@@ -9,6 +9,7 @@
   <link href="{% static 'lib/bootstrap-slider/dist/css/bootstrap-slider.min.css' %}" rel="stylesheet" >
   <link href="{% static 'lib/bootstrap-fileinput/css/fileinput.min.css' %}" rel="stylesheet" >
   <link rel="stylesheet" href="{% static 'lib/jquery.json-viewer/json-viewer/jquery.json-viewer.css' %}">
+  <link rel="stylesheet" href="{% static 'css/station_availability_modal.css' %}">
 {% endblock css %}
 
 {% block content %}
@@ -24,7 +25,7 @@
     </div>
   </div>
 
-  <form id="station-edit-form" role="form" enctype="multipart/form-data" method="post">{% csrf_token %}
+  <form id="station-edit-form" role="form" enctype="multipart/form-data" method="post" data-station-id="{{ station_form.instance.id }}">{% csrf_token %}
     <div class="row">
       <div class="card w-100 my-2">
         <div class="card-header categories" data-toggle="collapse" data-target="#general-card-body">
@@ -45,7 +46,7 @@
           </div>
         </div>
       </div>
-      
+
       {% with station_form.instance.active_configuration as configuration_instance %}
       <div class="card w-100 my-2">
         <div class="card-header categories" data-toggle="collapse" data-target="#configuration-card-body">
@@ -82,7 +83,7 @@
           {% if configuration_instance %}
             {{ configuration_instance.configuration|json_script:"current-configuration" }}
           {% endif %}
-          
+
           <div id="configuration-schema-selection-container" class="form-group {% if not registered %}d-none{% endif %}">
             <label for="configuration-schema-selection">Configuration Type</label>
             <select id="configuration-schema-selection" class="form-control selectpicker" data-style="btn"
@@ -104,7 +105,7 @@
                         If it's a station under creation, select all schemas and let javascript display one for each station type.
                       {% endcomment %}
                       {% if schema.name == "Unregistered Configuration" %}
-                      <option data-station-type="{{schema.station_type_id}}" value="{{ schema.id }}" 
+                      <option data-station-type="{{schema.station_type_id}}" value="{{ schema.id }}"
                         {% if configuration_instance|not_true or schema.id == configuration_instance.schema.id %}selected{% endif %}>
                         {{ schema.name }}
                       </option>
@@ -122,7 +123,7 @@
                 </div>
                 <button id="export-configuration-btn" type="button" class="btn btn-primary btn-sm"><span class="bi bi-clipboard"></span> Export Configuration</button>
               </div>
-              
+
 
               <div class="mb-3 bg-light border border-secondary table-responsive" id="json-renderer"></div>
 
@@ -427,4 +428,5 @@
   <script src="{% static 'lib/jquery.json-viewer/json-viewer/jquery.json-viewer.js' %}"></script>
   <script src="{% static 'js/station_configuration_utils.js' %}"></script>
   <script src="{% static 'js/station_edit.js' %}"></script>
+  <script src="{% static 'js/station_availability_modal.js' %}"></script>
 {% endblock javascript %}

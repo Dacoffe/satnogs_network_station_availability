@@ -1,0 +1,32 @@
+<div class="station-availability-modal" data-csrf-token="{{ csrf_token }}">
+    <h2>Station Availability Change</h2>
+
+    <div class="alert alert-warning">
+        <strong>{{ station.name }}</strong> is being set to unavailable, but it has
+        <strong>{{ scheduled_count }}</strong> future scheduled observation{{ scheduled_count|pluralize }}.
+    </div>
+
+    <p>What would you like to do with the scheduled observations?</p>
+
+    {% if observations_link %}
+    <p>
+        <a href="{{ observations_link }}" target="_blank" class="button">
+            View affected observations →
+        </a>
+    </p>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-actions">
+            <button type="submit" name="action" value="delete" class="button default delete-btn">
+                Delete scheduled observations
+            </button>
+
+            <button type="submit" name="action" value="keep" class="button default keep-btn">
+                Keep scheduled observations
+            </button>
+        </div>
+    </form>
+</div>

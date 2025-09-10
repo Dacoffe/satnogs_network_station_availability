@@ -13,6 +13,12 @@ $(document).ready(function() {
     let configuration;
     let earlierConfiguration = null;
 
+    $('input[name="is_available"]:checkbox').each(function() {
+        var checkbox = $(this);
+        var initialValue = checkbox.is(':checked');
+        checkbox.data('initial-value', initialValue);
+    });
+
     if(currentConfigurationScript) {
         configuration = JSON.parse(document.getElementById('current-configuration').textContent);
         earlierConfiguration = configuration;
@@ -94,7 +100,7 @@ $(document).ready(function() {
         let jsonEditorSettings = {
             theme: 'bootstrap4',
             schema: schema,
-            // If it's a registered station but hasn't changed the unregistered configuration, 
+            // If it's a registered station but hasn't changed the unregistered configuration,
             // keep the common settings as startval when moving to another schema
             show_errors: 'interaction',
             iconlib: 'bootstrap',
@@ -124,7 +130,7 @@ $(document).ready(function() {
             renderConfigurationAsTable('json-renderer', configuration, schema);
             $('#submit').prop('disabled', !$('form')[0].checkValidity() || !configuration);
         });
-        
+
         jsonEditor.on('change',function() {
             const errors = jsonEditor.validate();
             if(errors.length) {
@@ -188,7 +194,7 @@ $(document).ready(function() {
             jsonEditor = null;
             configuration = null;
             $('#submit').prop('disabled', true);
-        } 
+        }
         else {
             $('#configuration-schema-selection-container').removeClass('is-invalid');
             $('#config-required-asterisk').removeClass('schema-invalid');
@@ -213,7 +219,7 @@ $(document).ready(function() {
             $('#edit-conf-modal').modal('hide');
         }
     });
-    
+
     // Discards non-saved edits when closing the edit modal
     $('#edit-conf-modal').on('hide.bs.modal', function() {
         selectSchemaById(schemaId);
@@ -778,16 +784,16 @@ $(document).ready(function() {
         }
     });
 
-    $('form').on('submit', function(){
+    window.prepareAndSubmitForm = function() {
+        var form = $('#station-edit-form');
         $('#antenna-type').remove();
         let antennas_total = 0;
         let antennas_initial = 0;
-        let form = $('form');
-        // Prepare station form
+
         if(send_remove_file){
             form.append('<input type="checkbox" name="image-clear" style="display: none" checked>');
         }
-        // Prepare antennas forms
+
         antennas.forEach(function(antenna, order){
             antennas_total++;
             let antenna_prefix = 'ant-' + order;
@@ -800,7 +806,6 @@ $(document).ready(function() {
             }
             form.append('<input type="hidden" name="' + antenna_prefix + '-antenna_type" value="' + antenna.type_id + '">');
 
-            //Prepare frequency ranges forms
             let frequency_ranges_total = 0;
             let frequency_ranges_initial = 0;
             antenna.frequency_ranges.forEach(function(range, range_order){
@@ -831,5 +836,13 @@ $(document).ready(function() {
         form.append('<input type="hidden" name="schema" value="' + schemaId + '">');
         form.append('<input id="station-configuration-form-input" type="hidden" name="station_configuration" value="">');
         $('#station-configuration-form-input').val(JSON.stringify(configuration));
+
+        form.off('submit').submit();
+    };
+
+    $('form').on('submit', function(e){
+        e.preventDefault();
+        // eslint-disable-next-line no-undef
+        prepareAndSubmitForm();
     });
 });

@@ -10,6 +10,8 @@ from django.db.models import BooleanField, Case, Q, Value, When
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
+from django.utils.http import urlencode
 from django.utils.timezone import now
 from django.views.generic import ListView
 from jsonschema import Draft202012Validator, ValidationError
@@ -195,6 +197,95 @@ def station_view(request, station_id):
 
 
 @login_required
+def check_availability_modal(request, station_id):
+    """Check if we should show the availability modal"""
+    session_key = f'station_availability_change_{station_id}'
+    show_modal = session_key in request.session
+
+    modal_url = reverse(
+        'base:station_availability_modal', args=[station_id]
+    ) if show_modal else None
+
+    return JsonResponse({'show_modal': show_modal, 'modal_url': modal_url})
+
+
+@login_required
+def station_availability_modal(request, station_id):
+    """Station availability modal"""
+    station = get_object_or_404(Station, id=station_id, owner=request.user)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'delete':
+            deleted_count = station.observations.filter(
+                start__gt=timezone.now(), status=0
+            ).delete()[0]
+            messages.success(
+                request, 'Station set to unavailable. '
+                f'{deleted_count} future observations were deleted.'
+            )
+        elif action == 'keep':
+            messages.success(
+                request, 'Station set to unavailable. '
+                'Scheduled observations were kept.'
+            )
+
+        if action in ['delete', 'keep']:
+            station.is_available = False
+            station.save()
+
+        session_key = f'station_availability_change_{station_id}'
+        if session_key in request.session:
+            del request.session[session_key]
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse(
+                {
+                    'success': True,
+                    'action': action,
+                    'redirect': reverse('base:station_view', args=[station_id])
+                }
+            )
+        return redirect('base:station_edit', station_id=station_id)
+
+    scheduled_count = station.observations.filter(start__gt=timezone.now(), status=0).count()
+
+    if scheduled_count == 0:
+        station.is_available = False
+        station.save()
+        messages.success(request, "Station set to unavailable.")
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse(
+                {
+                    'success': True,
+                    'no_observations': True,
+                    'redirect': reverse('base:station_edit', args=[station_id])
+                }
+            )
+        return redirect('base:station_edit', station_id=station_id)
+
+    observations_link = None
+    if scheduled_count > 0:
+        filter_params = {
+            'ground_station__id__exact': station.id,
+            'start__gte': timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'status__exact': 0,
+        }
+        observations_link = f"/observations/?{urlencode(filter_params)}"
+
+    context = {
+        'station': station,
+        'scheduled_count': scheduled_count,
+        'observations_link': observations_link,
+        'csrf_token': request.META.get('CSRF_COOKIE'),
+    }
+
+    return render(request, 'admin/station_availability_modal.html', context)
+
+
+@login_required
 def station_delete(request, station_id):
     """View for deleting a station."""
     username = request.user
@@ -365,6 +456,28 @@ def handle_station_edit_post_forms(request, station):
 
 def handle_station_edit_post(request, station, registered):
     """Handles the form submission for creating or editing a station"""
+    if request.POST.get('check_availability') == '1':
+        was_available = station.is_available
+        will_be_available = request.POST.get('is_available') == 'on'
+
+        if was_available and not will_be_available:
+            scheduled_count = station.observations.filter(
+                start__gt=timezone.now(), status=0
+            ).count()
+
+            if scheduled_count > 0:
+                session_key = f'station_availability_change_{station.id}'
+                request.session[session_key] = True
+
+                return JsonResponse(
+                    {
+                        'success': True,
+                        'show_modal': True,
+                        'modal_url': reverse('base:station_availability_modal', args=[station.id])
+                    }
+                )
+
+        return JsonResponse({'success': True, 'show_modal': False})
     (all_forms_valid, station_form, antenna_formset,
      frequency_range_formsets) = handle_station_edit_post_forms(request, station)
 

@@ -73,6 +73,16 @@ BASE_URLPATTERNS = (
         re_path(
             r'^stations/edit/(?P<station_id>[0-9]+)/$', station.station_edit, name='station_edit'
         ),
+        re_path(
+            r'^stations/(?P<station_id>[0-9]+)/check-availability-modal/$',
+            station.check_availability_modal,
+            name='check_availability_modal'
+        ),
+        re_path(
+            r'^stations/(?P<station_id>[0-9]+)/availability-modal/$',
+            station.station_availability_modal,
+            name='station_availability_modal'
+        ),
 
         # Scheduling
         path('observations/new/', scheduling.observation_new, name='observation_new'),
