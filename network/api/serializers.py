@@ -101,6 +101,7 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
     observation_frequency = serializers.SerializerMethodField()
     transmitter_status = serializers.SerializerMethodField()
     transmitter_unconfirmed = serializers.SerializerMethodField()
+    transmitter_parameters = serializers.SerializerMethodField()
 
     class Meta:
         model = Observation
@@ -115,7 +116,8 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
             'transmitter_downlink_low', 'transmitter_downlink_high', 'transmitter_downlink_drift',
             'transmitter_mode', 'transmitter_invert', 'transmitter_baud', 'transmitter_updated',
             'transmitter_status', 'tle0', 'tle1', 'tle2', 'tle_source', 'center_frequency',
-            'observer', 'observation_frequency', 'transmitter_unconfirmed', 'sat_id'
+            'observer', 'observation_frequency', 'transmitter_unconfirmed', 'sat_id',
+            'transmitter_parameters'
         )
         read_only_fields = [
             'id', 'start', 'end', 'observation', 'ground_station', 'transmitter', 'norad_cat_id',
@@ -128,7 +130,7 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
             'transmitter_mode', 'transmitter_invert', 'transmitter_baud', 'transmitter_created',
             'transmitter_updated', 'transmitter_status', 'tle0', 'tle1', 'tle2', 'tle_source',
             'observer', 'center_frequency', 'observation_frequency', 'transmitter_unconfirmed',
-            'sat_id'
+            'sat_id', 'transmitter_parameters'
         ]
 
     def update(self, instance, validated_data):
@@ -285,6 +287,11 @@ class ObservationSerializer(serializers.ModelSerializer):  # pylint: disable=R09
         if obj.author:
             return obj.author.username
         return ""
+
+    @extend_schema_field(serializers.DictField(allow_null=True))
+    def get_transmitter_parameters(self, obj):
+        """Returns cached transmitter parameters"""
+        return obj.transmitter_parameters
 
 
 class NewObservationListSerializer(serializers.ListSerializer):
@@ -692,7 +699,7 @@ class JobSerializer(serializers.ModelSerializer):
         model = Observation
         fields = (
             'id', 'start', 'end', 'ground_station', 'tle0', 'tle1', 'tle2', 'frequency', 'mode',
-            'transmitter', 'baud', 'max_altitude', 'norad_cat_id'
+            'transmitter', 'transmitter_parameters', 'baud', 'max_altitude', 'norad_cat_id'
         )
 
     @extend_schema_field(str)
@@ -742,6 +749,11 @@ class JobSerializer(serializers.ModelSerializer):
         """Returns Satellite NORAD ID"""
         satellite = get_satellites()[obj.sat_id]
         return satellite['norad_cat_id']
+
+    @extend_schema_field(serializers.DictField(allow_null=True))
+    def get_transmitter_parameters(self, obj):
+        """Returns cached transmitter parameters"""
+        return obj.transmitter_parameters
 
 
 class TransmitterSerializer(serializers.Serializer):

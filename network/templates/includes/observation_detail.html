@@ -174,7 +174,9 @@
             <span class="badge badge-secondary">Transmitter</span>
           </td>
           <td>
-            {{ observation.transmitter_description }}
+            <a href="#" data-toggle="modal" data-target="#TransmitterParamsModal"  data-observation-id="{{ observation.id }}">
+              {{ observation.transmitter_description }}
+            </a>
           </td>
         </tr>
         <tr>
@@ -650,6 +652,9 @@
 
   <!-- Satellite Modal -->
   {% include 'includes/satellite.html' %}
+
+  <!-- Transmitter Parameters Modal -->
+  {% include 'includes/transmitter_params.html' %}
 
   <!-- Hotkeys Modal -->
   {% include 'includes/observation-hotkeys.html' %}

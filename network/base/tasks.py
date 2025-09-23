@@ -419,6 +419,7 @@ def update_future_observations_with_new_transmitter_details():
                 obs.transmitter_invert = transmitter['invert']
                 obs.transmitter_baud = transmitter['baud']
                 obs.transmitter_created = transmitter['updated']
+                obs.transmitter_parameters = transmitter.get('params', {})
         Observation.objects.bulk_update(
             obs_to_update, [
                 'transmitter_description',
@@ -433,6 +434,7 @@ def update_future_observations_with_new_transmitter_details():
                 'transmitter_invert',
                 'transmitter_baud',
                 'transmitter_created',
+                'transmitter_parameters',
             ]
         )
 
@@ -516,7 +518,7 @@ def clean_observations():
     """Task to clean up old observations that lack actual data."""
     threshold = now() - timedelta(days=int(settings.OBSERVATION_OLD_RANGE))
     observations = Observation.objects.filter(end__lt=threshold, archived=False) \
-                                      .exclude(payload='')
+        .exclude(payload='')
     for obs in observations:
         if settings.ENVIRONMENT == 'stage':
             if not obs.status >= 100:

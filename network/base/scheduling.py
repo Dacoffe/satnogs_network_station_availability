@@ -652,7 +652,8 @@ def create_new_observation(
         station_antennas=json.dumps(antennas),
         center_frequency=center_frequency or None,
         transmitter_status=transmitter["status"] == "active",
-        transmitter_unconfirmed=transmitter["unconfirmed"]
+        transmitter_unconfirmed=transmitter["unconfirmed"],
+        transmitter_parameters=transmitter.get('params', {})
     )
 
 
