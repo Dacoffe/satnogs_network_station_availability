@@ -193,7 +193,12 @@ class Station(models.Model):
     violator_scheduling = models.IntegerField(
         choices=STATION_VIOLATOR_SCHEDULING_CHOICES, default=0
     )
+    # Allows 0
     horizon = models.PositiveIntegerField(help_text='In degrees above 0', default=10)
+    horizon_hard_limit = models.BooleanField(default=False)
+    # Allows 0
+    min_culmination = models.PositiveIntegerField(help_text='In degrees above 0', default=10)
+    min_culmination_hard_limit = models.BooleanField(default=False)
     description = models.TextField(max_length=2000, blank=True, help_text='Max 2000 characters')
     client_version = models.CharField(max_length=45, blank=True)
     target_utilization = models.IntegerField(
@@ -210,6 +215,32 @@ class Station(models.Model):
 
     class Meta:
         indexes = [models.Index(fields=['last_seen'])]
+
+    def get_allowed_horizon(self, requested_horizon: int | None) -> int:
+        """Returns the minumum allowed horizon value given a requested value"""
+        if requested_horizon is None:
+            return self.horizon
+        if not isinstance(requested_horizon, int):
+            raise TypeError("requested_horizon must be an int")
+        if not requested_horizon >= 0:
+            raise ValueError("requested_horizon must be non-negative")
+        hard_limit = self.horizon_hard_limit
+        if not hard_limit:
+            return requested_horizon
+        return max(requested_horizon, self.horizon)
+
+    def get_allowed_min_culmination(self, requested_min_culmination: int | None) -> int:
+        """Returns the minumum allowed min_culmination value given a requested value"""
+        if requested_min_culmination is None:
+            return self.min_culmination
+        if not isinstance(requested_min_culmination, int):
+            raise TypeError("requested_min_culmination must be an int")
+        if not requested_min_culmination >= 0:
+            raise ValueError("requested_min_culmination must be non-negative")
+        hard_limit = self.min_culmination_hard_limit
+        if not hard_limit:
+            return requested_min_culmination
+        return max(requested_min_culmination, self.min_culmination)
 
     @property
     def has_unlogged_status_change(self):

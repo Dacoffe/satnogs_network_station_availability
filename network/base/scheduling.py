@@ -394,16 +394,19 @@ def generate_overhead_observation_window(observer, satellite):
     return pass_params
 
 
+# pylint: disable=too-many-statements
 def predict_available_observation_windows(
-    station, min_horizon, overlapped, tle, start, end, duration
+    station, min_horizon, min_culmination, overlapped, tle, start, end, duration
 ):
     '''Calculate available observation windows for a certain station and satellite during
     the given time period.
 
     :param station: Station for scheduling
     :type station: Station django.db.model.Model
-    :param min_horizon: Overwrite station minimum horizon if defined
+    :param min_horizon: Overwrite station minimum horizon if defined and not hard limit
     :type min_horizon: integer or None
+    :param min_culmination: Overwrite station minimum culmination if defined and not hard limit
+    :type min_culmination: integer or None
     :param overlapped: Calculate and return overlapped observations fully, truncated or not at all
     :type overlapped: integer values: 0 (no return), 1(truncated overlaps), 2(full overlaps)
     :param tle: Satellite current TLE
@@ -431,10 +434,15 @@ def predict_available_observation_windows(
     observer.date = ephem.Date(start)
     # Speeds up calculations by removing refraction
     observer.pressure = 0
-    if min_horizon is not None:
+    if min_horizon is not None and not station.horizon_hard_limit:
         observer.horizon = str(min_horizon)
     else:
-        observer.horizon = str(station.horizon)
+        observer.horizon = str(max(station.horizon, min_horizon or 0))
+
+    if min_culmination is not None and not station.min_culmination_hard_limit:
+        pass_min_culmination = min_culmination
+    else:
+        pass_min_culmination = max(station.min_culmination, min_culmination or 0)
 
     try:
         try:
@@ -459,16 +467,20 @@ def predict_available_observation_windows(
                     return passes_found, station_windows
             except TypeError:
                 return passes_found, station_windows
-            passes_found.append(pass_params)
-            # Check if overlaps with existing scheduled observations
-            # Adjust or discard window if overlaps exist
-            scheduled_obs = station.scheduled_obs
 
-            station_windows.extend(
-                create_station_windows(
-                    scheduled_obs, overlapped, pass_params, observer, satellite, tle, duration
+            if pass_params['tca_alt'] >= pass_min_culmination:
+                # Station has hard limit on the minimum maximum elevation of the pass
+                passes_found.append(pass_params)
+                # Check if overlaps with existing scheduled observations
+                # Adjust or discard window if overlaps exist
+                scheduled_obs = station.scheduled_obs
+
+                station_windows.extend(
+                    create_station_windows(
+                        scheduled_obs, overlapped, pass_params, observer, satellite, tle, duration
+                    )
                 )
-            )
+
             time_start_new = pass_params['set_time'] + timedelta(minutes=1)
             observer.date = time_start_new.strftime("%Y-%m-%d %H:%M:%S.%f")
             if geo_pass:
@@ -494,16 +506,18 @@ def predict_available_observation_windows(
             # end of next pass outside of window bounds
             pass_params['set_time'] = end
 
-        passes_found.append(pass_params)
-        # Check if overlaps with existing scheduled observations
-        # Adjust or discard window if overlaps exist
-        scheduled_obs = station.scheduled_obs
+        if pass_params['tca_alt'] >= pass_min_culmination:
+            # Station has hard limit on the minimum maximum elevation of the pass
+            passes_found.append(pass_params)
+            # Check if overlaps with existing scheduled observations
+            # Adjust or discard window if overlaps exist
+            scheduled_obs = station.scheduled_obs
 
-        station_windows.extend(
-            create_station_windows(
-                scheduled_obs, overlapped, pass_params, observer, satellite, tle, duration
+            station_windows.extend(
+                create_station_windows(
+                    scheduled_obs, overlapped, pass_params, observer, satellite, tle, duration
+                )
             )
-        )
         time_start_new = pass_params['set_time'] + timedelta(minutes=1)
         observer.date = time_start_new.strftime("%Y-%m-%d %H:%M:%S.%f")
     return passes_found, station_windows

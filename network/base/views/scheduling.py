@@ -188,6 +188,14 @@ def observation_new(request):
 
 def prediction_windows_parse_parameters(request):
     """ Parse HTTP parameters with defaults"""
+
+    min_horizon = request.POST.get('min_horizon', None)
+    if min_horizon is not None:
+        min_horizon = int(min_horizon)
+    min_culmination = request.POST.get('min_culmination', None)
+    if min_culmination is not None:
+        min_culmination = int(min_culmination)
+
     params = {
         'sat_id': request.POST['satellite'],
         'transmitter': request.POST['transmitter'],
@@ -196,7 +204,8 @@ def prediction_windows_parse_parameters(request):
         ),
         'end': make_aware(datetime.strptime(request.POST['end'], '%Y-%m-%d %H:%M'), timezone.utc),
         'station_ids': request.POST.getlist('stations[]', []),
-        'min_horizon': request.POST.get('min_horizon', None),
+        'min_horizon': min_horizon,
+        'min_culmination': min_culmination,
         'split_duration': int(
             request.POST.get('split_duration', settings.OBSERVATION_SPLIT_DURATION)
         ),
@@ -298,8 +307,8 @@ def prediction_windows(request):
     passes_found = defaultdict(list)
     for station in available_stations:
         station_passes, station_windows = predict_available_observation_windows(
-            station, params['min_horizon'], params['overlapped'], tle, params['start'],
-            params['end'], {
+            station, params['min_horizon'], params['min_culmination'], params['overlapped'], tle,
+            params['start'], params['end'], {
                 'split': params['split_duration'],
                 'break': params['break_duration']
             }
@@ -397,7 +406,7 @@ def pass_predictions(request, station_id):
                 continue
 
             _, station_windows = predict_available_observation_windows(
-                station, None, 2, tle, start, end, {
+                station, None, None, 2, tle, start, end, {
                     'split': settings.OBSERVATION_SPLIT_DURATION,
                     'break': settings.OBSERVATION_SPLIT_BREAK_DURATION
                 }

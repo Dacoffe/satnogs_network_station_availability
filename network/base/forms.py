@@ -210,8 +210,20 @@ class StationForm(ModelForm):
     class Meta:
         model = Station
         fields = [
-            'name', 'image', 'alt', 'lat', 'lng', 'horizon', 'is_available', 'testing',
-            'description', 'target_utilization', 'violator_scheduling'
+            'name',
+            'image',
+            'alt',
+            'lat',
+            'lng',
+            'horizon',
+            'horizon_hard_limit',
+            'min_culmination',
+            'min_culmination_hard_limit',
+            'is_available',
+            'testing',
+            'description',
+            'target_utilization',
+            'violator_scheduling',
         ]
         image = ImageField(required=False)
 

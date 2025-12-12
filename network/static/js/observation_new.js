@@ -46,6 +46,26 @@ $(document).ready( function(){
         }
     });
 
+    $('#default-min-culmination').click(function() {
+        $('#min-culmination').slider('destroy');
+        $('#min-culmination').remove();
+    });
+
+    $('#custom-min-culmination').click(function() {
+        if (!$('#min-culmination').length){
+            $('#min-culmination-status').append('<input type="hidden" name="min_culmination" id="min-culmination"/>');
+            $('#min-culmination').slider({
+                id: 'min-culmination-slider',
+                min: 0,
+                max: 90,
+                step: 1,
+                value: 0,
+                ticks: [0, 30, 60, 90],
+                ticks_labels: ['0', '30', '60', '90']
+            });
+        }
+    });
+
     const custom_split_formgroup = $('#split-duration-formgroup');
     function reset_split_duration() {
         custom_split_formgroup.removeClass('has-error');
@@ -998,6 +1018,10 @@ and once approved, it will be available for scheduling here.`;
         var is_custom_horizon = $('#horizon-status input[type=radio]').filter(':checked').val() == 'custom';
         if(is_custom_horizon) {
             data.min_horizon = $('#min-horizon').val();
+        }
+        var is_custom_min_culmination = $('#min-culmination-status input[type=radio]').filter(':checked').val() == 'custom';
+        if(is_custom_min_culmination) {
+            data.min_culmination = $('#min-culmination').val();
         }
         var trancate_overlapped = $('#overlapped input[type=radio]').filter(':checked').val() == 'truncate-overlapped';
         if(trancate_overlapped) {

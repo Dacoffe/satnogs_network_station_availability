@@ -712,6 +712,14 @@ $(document).ready(function() {
         step: 1,
         value: horizon_value});
 
+    var min_culmination_value = $('#min-culmination').val();
+    $('#min-culmination').slider({
+        id: 'min_culmination_value',
+        min: 0,
+        max: 90,
+        step: 1,
+        value: min_culmination_value});
+
     var utilization_value = $('#utilization').val();
     $('#utilization').slider({
         id: 'utilization_value',
@@ -719,6 +727,7 @@ $(document).ready(function() {
         max: 100,
         step: 1,
         value: utilization_value});
+
 
     var image_exists = Object.prototype.hasOwnProperty.call($('#station-image').data(), 'existing');
     var send_remove_file = false;
