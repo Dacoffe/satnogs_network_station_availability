@@ -131,13 +131,13 @@ parse_args() {
 	arg="$1"
 	case $arg in
 		compose)
-			has_command "docker-compose"
+			has_command "$COMPOSE_CMD"
 			shift
 			"$COMPOSE_CMD" "$@"
 			return
 			;;
 		up)
-			has_command "docker-compose"
+			has_command "$COMPOSE_CMD"
 			frontend_deps install
 			shift
 			"$COMPOSE_CMD" "$arg" -d "$@"
@@ -147,7 +147,7 @@ parse_args() {
 			return
 			;;
 		shell)
-			has_command "docker-compose"
+			has_command "$COMPOSE_CMD"
 			shift
 			if [ -z "$1" ]; then
 				echo "ERROR: No service name specified!" >&2
@@ -160,13 +160,13 @@ parse_args() {
 			return
 			;;
 		clean)
-			has_command "docker-compose"
+			has_command "$COMPOSE_CMD"
 			yesno "This action will delete all installation data! Are you sure? [Yes/No]"
 			"$COMPOSE_CMD" down -v
 			return
 			;;
 		django-admin)
-			has_command "docker-compose"
+			has_command "$COMPOSE_CMD"
 			shift
 			if ! "$COMPOSE_CMD" exec "$SERVICE_WEB" "$MANAGE_CMD" "$@"; then
 				echo "Please make sure that the services are up!" >&2
