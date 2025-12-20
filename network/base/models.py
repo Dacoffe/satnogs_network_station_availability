@@ -194,7 +194,7 @@ class Station(models.Model):
         choices=STATION_VIOLATOR_SCHEDULING_CHOICES, default=0
     )
     horizon = models.PositiveIntegerField(help_text='In degrees above 0', default=10)
-    description = models.TextField(max_length=500, blank=True, help_text='Max 500 characters')
+    description = models.TextField(max_length=2000, blank=True, help_text='Max 2000 characters')
     client_version = models.CharField(max_length=45, blank=True)
     target_utilization = models.IntegerField(
         validators=[MaxValueValidator(100), MinValueValidator(0)],
