@@ -1,6 +1,7 @@
 """SatNOGS Network django base Forms class"""
 from collections import defaultdict
 
+import nh3
 from django.conf import settings
 from django.forms import BaseFormSet, BaseInlineFormSet, CharField, DateTimeField, FloatField, \
     Form, ImageField, IntegerField, JSONField, ModelChoiceField, ModelForm, TypedChoiceField, \
@@ -213,6 +214,40 @@ class StationForm(ModelForm):
             'description', 'target_utilization', 'violator_scheduling'
         ]
         image = ImageField(required=False)
+
+    def clean_description(self):
+        """Filters rendered station description to only contain explicitly
+        allowed html tags.
+        """
+        # pylint:disable=no-member
+        return nh3.clean(
+            html=self.cleaned_data["description"],
+            tags={
+                "p",
+                "b",
+                "i",
+                "u",
+                "em",
+                "strong",
+                "ul",
+                "ol",
+                "li",
+                "a",
+                "table",
+                "thead",
+                "tbody",
+                "tr",
+                "th",
+                "td",
+                "blockquote",
+                "h1",
+                "h2",
+                "h3",
+                "h4",
+                "h5",
+                "h6",
+            },
+        )
 
 
 AntennaInlineFormSet = inlineformset_factory(  # pylint: disable=C0103
