@@ -267,6 +267,16 @@
         </tr>
         <tr>
           <td>
+            <span class="badge badge-secondary">Duration</span>
+          </td>
+          <td>
+            <span data-toggle="tooltip" data-placement="bottom" title="{{ observation.end|readable_time_delta:observation.start }}">
+              <span class="datetime-date">{{ observation.end|time_delta_in_seconds:observation.start }} seconds</span>
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td>
             <span class="badge badge-secondary">Rise</span>
           </td>
           <td>

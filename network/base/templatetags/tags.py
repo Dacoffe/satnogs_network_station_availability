@@ -92,3 +92,21 @@ def percentagerest(value):
 def lookup_with_key(dictionary, key):
     """Returns a value from dictionary for a given key"""
     return dictionary.get(key)
+
+
+@register.filter
+def time_delta_in_seconds(date_1, date_2):
+    """Returns the total of seconds between two dates"""
+    return int((date_1 - date_2).total_seconds())
+
+
+@register.filter
+def readable_time_delta(date_1, date_2):
+    """Returns the time between two dates in a readable format"""
+    minutes, seconds = divmod((date_1 - date_2).total_seconds(), 60)
+    hours, minutes = divmod(minutes, 60)
+
+    if hours > 0:
+        return "%d hours %d minutes %d seconds" % (hours, minutes, seconds)
+
+    return "%d minutes %d seconds" % (minutes, seconds)
