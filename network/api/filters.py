@@ -8,8 +8,9 @@ from django.db.models import Q
 from django.utils.timezone import now
 from django_filters.rest_framework import FilterSet
 
-from network.base.cache import get_satellite_by_norad
+from network.base.cache import get_satellite_by_norad, get_satellites
 from network.base.models import Observation, Station
+from network.base.utils import resolve_satellite_ids
 from network.users.models import User
 
 
@@ -58,6 +59,8 @@ class ObservationViewFilter(FilterSet):
 
     norad_cat_id = django_filters.NumberFilter(label="Norad ID", method='filter_by_norad_cat_id')
 
+    sat_id = django_filters.CharFilter(method='get_satellite_by_ids', label='Satellite ID')
+
     def filter_by_norad_cat_id(self, queryset, name, value):  # pylint: disable=W0613
         """
         Filters by norad_cat_id using the satellite cache.
@@ -66,9 +69,17 @@ class ObservationViewFilter(FilterSet):
         sat = get_satellite_by_norad(int(value))
 
         if sat:
-            return queryset.filter(sat_id=sat['sat_id'])
+            sat_ids = resolve_satellite_ids(sat['sat_id'], get_satellites())
+            return queryset.filter(sat_id__in=sat_ids)
 
         return queryset.none()
+
+    def get_satellite_by_ids(self, queryset, name, value):  # pylint: disable=W0613
+        """Apply the satellite IDs to filter on (primary + associated)."""
+        sat_id = str(value)
+        sat_ids = resolve_satellite_ids(sat_id, get_satellites())
+
+        return queryset.filter(sat_id__in=sat_ids)
 
     # see https://django-filter.readthedocs.io/en/master/ref/filters.html for W0613
     def filter_status(self, queryset, name, value):  # pylint: disable=W0613

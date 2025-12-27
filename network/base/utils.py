@@ -254,3 +254,14 @@ def get_api_url():
         api_url = 'https://' + domain + '/api'
 
     return api_url
+
+
+def resolve_satellite_ids(sat_id: str, satellites: dict) -> list[str]:
+    """Return list of satellite IDs to filter on (primary + associated)."""
+    if sat_id not in satellites:
+        return [sat_id]
+
+    sat_info = satellites[sat_id]
+    primary_id = sat_info.get('merged_into', sat_id)
+    associated_ids = satellites.get(primary_id, {}).get('associated_satellites', [])
+    return [primary_id] + associated_ids

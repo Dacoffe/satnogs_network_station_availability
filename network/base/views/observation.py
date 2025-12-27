@@ -27,7 +27,7 @@ from network.base.rating_tasks import rate_observation
 from network.base.stats import get_transmitters_with_stats
 from network.base.tasks import get_and_refresh_transmitter_modes_cache, \
     get_and_refresh_transmitters_with_stats_cache
-from network.base.utils import community_get_discussion_details
+from network.base.utils import community_get_discussion_details, resolve_satellite_ids
 from network.users.models import User
 
 
@@ -196,20 +196,10 @@ class ObservationListBaseView(ListView):
 
             if parameter_key == 'sat_id':
                 sat_id: str = self.filter_params['sat_id']
-                filter_dict['sat_id__in'] = self.resolve_satellite_ids(sat_id, get_satellites())
+                filter_dict['sat_id__in'] = resolve_satellite_ids(sat_id, get_satellites())
             else:
                 filter_dict[filter_key] = self.filter_params[parameter_key]
         return filter_dict
-
-    def resolve_satellite_ids(self, sat_id: str, satellites: dict) -> list[str]:
-        """Return list of satellite IDs to filter on (primary + associated)."""
-        if sat_id not in satellites:
-            return [sat_id]
-
-        sat_info = satellites[sat_id]
-        primary_id = sat_info.get('merged_into', sat_id)
-        associated_ids = satellites.get(primary_id, {}).get('associated_satellites', [])
-        return [primary_id] + associated_ids
 
     def get_context_data(self, **kwargs):  # pylint: disable=W0221
         """
