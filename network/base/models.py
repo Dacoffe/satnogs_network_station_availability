@@ -730,6 +730,53 @@ def observation_remove_files(sender, instance, **kwargs):  # pylint: disable=W06
         instance.waterfall.delete(save=False)
 
 
+class ArtifactVetting(models.Model):
+    """Model for individual vetting actions on observation artifacts."""
+
+    # artifact types (extensible for future artifact types)
+    ARTIFACT_TYPE = [
+        ('waterfall', 'Waterfall'),
+    ]
+
+    VETTING_STATUS = [
+        ('good', 'Good'),
+        ('bad', 'Bad'),
+        ('unknown', 'Unknown'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='artifact_vettings')
+    observation = models.ForeignKey(
+        'Observation', on_delete=models.CASCADE, related_name='artifact_vettings'
+    )
+    artifact_type = models.CharField(max_length=50, choices=ARTIFACT_TYPE, default='waterfall')
+
+    vetted_status = models.CharField(max_length=20, choices=VETTING_STATUS)
+    vetted_datetime = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Database indexes
+        indexes = [
+            models.Index(fields=['observation', 'artifact_type']),
+            models.Index(fields=['user']),
+            models.Index(fields=['-vetted_datetime']),
+        ]
+
+        ordering = ['-vetted_datetime']
+
+        unique_together = [['user', 'observation', 'artifact_type']]
+
+        verbose_name = 'Artifact Vetting'
+
+        # Permissions
+        permissions = (('can_vet_artifacts', 'Can vet observation artifacts'), )
+
+    def __str__(self):
+        return (
+            f"{self.user.username} "
+            f"- Obs #{self.observation.id} - {self.artifact_type}: {self.vetted_status}"
+        )
+
+
 class DemodData(models.Model):
     """Model for DemodData."""
     observation = models.ForeignKey(

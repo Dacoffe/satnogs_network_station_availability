@@ -13,9 +13,9 @@ from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.timezone import now
 
-from network.base.models import ActiveStationConfiguration, Antenna, AntennaType, DemodData, \
-    FrequencyRange, Observation, Station, StationConfiguration, StationConfigurationSchema, \
-    StationStatusLog, StationType
+from network.base.models import ActiveStationConfiguration, Antenna, AntennaType, \
+    ArtifactVetting, DemodData, FrequencyRange, Observation, Station, StationConfiguration, \
+    StationConfigurationSchema, StationStatusLog, StationType
 from network.base.utils import export_as_csv, export_station_status
 
 
@@ -377,6 +377,19 @@ class ObservationAdmin(admin.ModelAdmin):
     inlines = [
         DemodDataInline,
     ]
+
+
+@admin.register(ArtifactVetting)
+class ArtifactVettingAdmin(admin.ModelAdmin):
+    """Define ArtifactVetting view in django admin UI"""
+
+    list_display = (
+        'id', 'observation', 'user', 'artifact_type', 'vetted_status', 'vetted_datetime'
+    )
+    list_filter = ('artifact_type', 'vetted_status', 'vetted_datetime')
+    search_fields = ('observation__id', 'user__username')
+    raw_id_fields = ('observation', 'user')
+    ordering = ('-vetted_datetime', )
 
 
 @admin.register(DemodData)
