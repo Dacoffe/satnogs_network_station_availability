@@ -730,6 +730,31 @@ def observation_remove_files(sender, instance, **kwargs):  # pylint: disable=W06
         instance.waterfall.delete(save=False)
 
 
+def get_waterfall_status(self):
+    """Get waterfall status with backward compatibility."""
+
+    latest_vetting = self.artifact_vettings.filter(artifact_type='waterfall').first()
+
+    # Try new model first
+    if latest_vetting:
+        return {
+            'status': latest_vetting.vetted_status,
+            'user': latest_vetting.user,
+            'datetime': latest_vetting.vetted_datetime,
+        }
+    # Fallback to old fields
+    if self.waterfall_status is not None:
+        status = 'good' if self.waterfall_status else 'bad'
+    else:
+        status = 'unknown'
+
+    return {
+        'status': status,
+        'user': self.waterfall_status_user,
+        'datetime': self.waterfall_status_datetime,
+    }
+
+
 class ArtifactVetting(models.Model):
     """Model for individual vetting actions on observation artifacts."""
 
@@ -762,9 +787,7 @@ class ArtifactVetting(models.Model):
         ]
 
         ordering = ['-vetted_datetime']
-
         unique_together = [['user', 'observation', 'artifact_type']]
-
         verbose_name = 'Artifact Vetting'
 
         # Permissions

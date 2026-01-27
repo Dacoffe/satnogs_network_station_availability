@@ -21,7 +21,7 @@ from django.views.generic import ListView
 from network.base.cache import get_satellite_stats, get_satellites
 from network.base.db_api import DBConnectionError, get_transmitters_by_sat_id
 from network.base.decorators import ajax_required
-from network.base.models import Observation, Station
+from network.base.models import ArtifactVetting, Observation, Station
 from network.base.perms import has_delete_obs_perms, has_schedule_perms, has_vet_perms
 from network.base.rating_tasks import rate_observation
 from network.base.stats import get_transmitters_with_stats
@@ -518,11 +518,21 @@ def waterfall_vet(request, observation_id):
         return JsonResponse(data, safe=False)
 
     if status == 'with-signal':
+        vetted_status = 'good'
         observation.waterfall_status = True
     elif status == 'without-signal':
+        vetted_status = 'bad'
         observation.waterfall_status = False
     elif status == 'unknown':
+        vetted_status = 'unknown'
         observation.waterfall_status = None
+
+    ArtifactVetting.objects.update_or_create(
+        observation=observation,
+        user=request.user,
+        artifact_type='waterfall',
+        defaults={'vetted_status': vetted_status}
+    )
 
     observation.waterfall_status_user = request.user
     observation.waterfall_status_datetime = now()
