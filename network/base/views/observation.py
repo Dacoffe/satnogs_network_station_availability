@@ -555,6 +555,68 @@ def waterfall_vet(request, observation_id):
     return JsonResponse(data, safe=False)
 
 
+def observation_vettings(request, observation_id):
+    """Returns vetting statistics and details for an observation."""
+    try:
+        observation = Observation.objects.get(id=observation_id)
+    except Observation.DoesNotExist:
+        data = {'error': 'Observation not found'}
+        return JsonResponse(data, status=404, safe=False)
+
+    vettings_qs = observation.artifact_vettings.filter(artifact_type='waterfall'
+                                                       ).order_by('-vetted_datetime')
+
+    total_count = vettings_qs.count()
+
+    if total_count == 0:
+        data = {
+            'stats': {
+                'total_count': 0,
+                'good_count': 0,
+                'bad_count': 0,
+                'unknown_count': 0,
+                'good_percentage': 0.0,
+                'bad_percentage': 0.0,
+                'unknown_percentage': 0.0
+            },
+            'vettings': []
+        }
+        return JsonResponse(data, safe=False)
+
+    good_count = vettings_qs.filter(vetted_status='good').count()
+    bad_count = vettings_qs.filter(vetted_status='bad').count()
+    unknown_count = vettings_qs.filter(vetted_status='unknown').count()
+
+    good_percentage = round(good_count / total_count * 100, 1)
+    bad_percentage = round(bad_count / total_count * 100, 1)
+    unknown_percentage = round(unknown_count / total_count * 100, 1)
+
+    vetting_list = []
+    for vetting in vettings_qs:
+        vetting_list.append(
+            {
+                'user': vetting.user.username,
+                'status': vetting.vetted_status,
+                'datetime': vetting.vetted_datetime.isoformat()
+            }
+        )
+
+    data = {
+        'stats': {
+            'total_count': total_count,
+            'good_count': good_count,
+            'bad_count': bad_count,
+            'unknown_count': unknown_count,
+            'good_percentage': good_percentage,
+            'bad_percentage': bad_percentage,
+            'unknown_percentage': unknown_percentage
+        },
+        'vettings': vetting_list
+    }
+
+    return JsonResponse(data, safe=False)
+
+
 def satellite_view(request, sat_id):
     """Returns a satellite JSON object with information and statistics"""
 

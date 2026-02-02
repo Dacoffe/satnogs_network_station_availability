@@ -145,28 +145,36 @@
               </div>
             </span>
             <span id="rating-status">
-              {% if observation.is_future %}
-                <span class="badge badge-future" aria-hidden="true"
-                      data-toggle="tooltip" data-placement="right"
-                      title="This observation is in the future">Pending</span>
-              {% elif observation.status < -100 %}
+            {% if observation.is_future %}
+              <span class="badge badge-future" aria-hidden="true"
+                    data-toggle="tooltip" data-placement="right"
+                    title="This observation is in the future">Pending</span>
+            {% elif observation.status < -100 %}
+              <a href="#" data-toggle="modal" data-target="#VettingModal" data-observation-id="{{ observation.id }}" style="text-decoration: none;">
                 <span class="badge badge-failed" aria-hidden="true"
                       data-toggle="tooltip" data-placement="right"
-                      title="{{ observation.status }}">Failed</span>
-              {% elif observation.status >= -100  and observation.status < 0 %}
+                      title="Click to see vetting details">Failed</span>
+              </a>
+            {% elif observation.status >= -100  and observation.status < 0 %}
+              <a href="#" data-toggle="modal" data-target="#VettingModal" data-observation-id="{{ observation.id }}" style="text-decoration: none;">
                 <span class="badge badge-bad" aria-hidden="true"
                       data-toggle="tooltip" data-placement="right"
-                      title="{{ observation.status }}">Bad</span>
-              {% elif observation.status >= 0  and observation.status < 100 %}
+                      title="Click to see vetting details">Bad</span>
+              </a>
+            {% elif observation.status >= 0  and observation.status < 100 %}
+              <a href="#" data-toggle="modal" data-target="#VettingModal" data-observation-id="{{ observation.id }}" style="text-decoration: none;">
                 <span class="badge badge-unknown" aria-hidden="true"
                       data-toggle="tooltip" data-placement="right"
-                      title="{{ observation.status }}">Unknown</span>
-              {% elif observation.status >= 100 %}
+                      title="Click to see vetting details">Unknown</span>
+              </a>
+            {% elif observation.status >= 100 %}
+              <a href="#" data-toggle="modal" data-target="#VettingModal" data-observation-id="{{ observation.id }}" style="text-decoration: none;">
                 <span class="badge badge-good" aria-hidden="true"
                       data-toggle="tooltip" data-placement="right"
-                      title="{{ observation.status }}">Good</span>
-              {% endif %}
-            </span>
+                      title="Click to see vetting details">Good</span>
+              </a>
+            {% endif %}
+          </span>
           </td>
         </tr>
         <tr>
@@ -644,6 +652,9 @@
 
   <!-- Transmitter Parameters Modal -->
   {% include 'includes/transmitter_params.html' %}
+
+  <!-- Vetting Modal -->
+  {% include 'includes/vetting_modal.html' %}
 
   <!-- Hotkeys Modal -->
   {% include 'includes/observation-hotkeys.html' %}

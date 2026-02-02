@@ -30,6 +30,11 @@ BASE_URLPATTERNS = (
             name='vet_observations'
         ),
         path(
+            'observations/<int:observation_id>/vettings/',
+            observation.observation_vettings,
+            name='observation-vettings'
+        ),
+        path(
             'vet-observations-chunks/',
             observation.VetObservationsChunkListView.as_view(),
             name='vet_observations_chunks'

@@ -33,7 +33,7 @@
   <div id="obs-loading" class="mx-auto spinner-border text-muted"></div>
 </div>
 {% endif %}
-<div id="vet-obs-container" data-chunks_buffer_headstart="{{ chunks_buffer_headstart }}" data-fwd_buffer_chunks="{{ fwd_buffer_chunks }}" 
+<div id="vet-obs-container" data-chunks_buffer_headstart="{{ chunks_buffer_headstart }}" data-fwd_buffer_chunks="{{ fwd_buffer_chunks }}"
   data-bwd_buffer_chunks="{{ bwd_buffer_chunks }}" data-page_size="{{ page_size }}" data-query_url="{{ query_url }}">
   {% if not obs_ids %}
     <p class="my-3">No completed observations with waterfall to vet. Check your search parameters and your vetting permissions and try again. <a href="{{ observation_search_url }}"> Back to the observations search</a>.</p>
@@ -54,6 +54,8 @@
   <script src="{% static 'js/polar_svg.js' %}"></script>
   <script src="{% static 'js/observation_view.js' %}"></script>
   <script src="{% static 'js/satellite.js' %}"></script>
+  <script src="{% static 'js/transmitter.js' %}"></script>
+  <script src="{% static 'js/vetting_modal.js' %}"></script>
   <script src="{% static 'js/ax25monitor.js' %}"></script>
   {% endblock javascript %}
-  
+
