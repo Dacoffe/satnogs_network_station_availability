@@ -247,6 +247,12 @@ class StationForm(ModelForm):
                 "h5",
                 "h6",
             },
+            attributes={
+                "a": {"href", "title"},
+                "th": {"colspan", "rowspan"},
+                "td": {"colspan", "rowspan"},
+            },
+            url_schemes={"http", "https", "mailto"}
         )
 
 
