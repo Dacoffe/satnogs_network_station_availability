@@ -527,6 +527,7 @@ class Observation(models.Model):
     False -> Waterfall has not signal of the observed satellite (without-signal)
     None -> Uknown whether waterfall has or hasn't signal of the observed satellite (unknown)
     """
+    # old fields
     waterfall_status = models.BooleanField(blank=True, null=True, default=None)
     waterfall_status_datetime = models.DateTimeField(null=True, blank=True)
     waterfall_status_user = models.ForeignKey(
@@ -623,25 +624,29 @@ class Observation(models.Model):
             return "Unknown"
         return "Good"
 
-    # The values bellow are used as returned values in the API and for css rules in templates
     @property
     def waterfall_status_badge(self):
         """Return badge for waterfall_status field"""
-        if self.waterfall_status is None:
-            return 'unknown'
-        if self.waterfall_status:
-            return 'with-signal'
-        return 'without-signal'
+        status_info = self.get_waterfall_status()
+        status = status_info['status']
 
-    # The values bellow are used as displayed values in templates
+        if status == 'good':
+            return 'with-signal'
+        if status == 'bad':
+            return 'without-signal'
+        return 'unknown'
+
     @property
     def waterfall_status_display(self):
         """Return display name for waterfall_status field"""
-        if self.waterfall_status is None:
-            return 'Unknown'
-        if self.waterfall_status:
+        status_info = self.get_waterfall_status()
+        status = status_info['status']
+
+        if status == 'good':
             return 'With Signal'
-        return 'Without Signal'
+        if status == 'bad':
+            return 'Without Signal'
+        return 'Unknown'
 
     @property
     def has_waterfall(self):
@@ -709,26 +714,35 @@ class Observation(models.Model):
         return int(round(frequency + ((frequency * frequency_drift) / 1e9)))
 
     def get_waterfall_status(self):
-        """Get waterfall status with backward compatibility."""
+        """Get waterfall status via majority voting."""
+        vettings = self.artifact_vettings.filter(artifact_type='waterfall')
 
-        latest_vetting = self.artifact_vettings.filter(artifact_type='waterfall').first()
+        if not vettings.exists():
+            return {'status': 'unknown', 'user': None, 'datetime': None}
 
-        if latest_vetting:
-            return {
-                'status': latest_vetting.vetted_status,
-                'user': latest_vetting.user,
-                'datetime': latest_vetting.vetted_datetime,
-            }
-        if self.waterfall_status is not None:
-            status = 'good' if self.waterfall_status else 'bad'
-        else:
+        good_count = vettings.filter(vetted_status='good').count()
+        bad_count = vettings.filter(vetted_status='bad').count()
+        unknown_count = vettings.filter(vetted_status='unknown').count()
+
+        # Determine status by majority (ties go to bad)
+        if good_count > bad_count and good_count > unknown_count:
+            status = 'good'
+        elif bad_count > good_count and bad_count > unknown_count:
+            status = 'bad'
+        elif unknown_count > good_count and unknown_count > bad_count:
             status = 'unknown'
+        elif good_count == bad_count and good_count > unknown_count:
+            status = 'bad'
+        elif good_count == unknown_count and good_count > bad_count:
+            status = 'unknown'
+        elif bad_count == unknown_count and bad_count > good_count:
+            status = 'bad'
+        else:
+            status = 'bad'
 
-        return {
-            'status': status,
-            'user': self.waterfall_status_user,
-            'datetime': self.waterfall_status_datetime,
-        }
+        latest = vettings.order_by('-vetted_datetime').first()
+
+        return {'status': status, 'user': latest.user, 'datetime': latest.vetted_datetime}
 
     class Meta:
         ordering = ['-start', '-end']
@@ -778,8 +792,6 @@ class ArtifactVetting(models.Model):
     class Meta:
         # Database indexes
         indexes = [
-            models.Index(fields=['observation', 'artifact_type']),
-            models.Index(fields=['user']),
             models.Index(fields=['-vetted_datetime']),
         ]
 

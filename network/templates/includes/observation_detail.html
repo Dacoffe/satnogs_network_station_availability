@@ -144,7 +144,7 @@
                 <div class="bounce3"></div>
               </div>
             </span>
-            <span id="rating-status">
+            <span id="rating-status" title="Click to see vetting details">
             {% if observation.is_future %}
               <span class="badge badge-future" aria-hidden="true"
                     data-toggle="tooltip" data-placement="right"
@@ -513,23 +513,18 @@
                                               <div class="bounce3"></div>
                                           </div>
                                       </div>
-                                      {% if observation.waterfall_status == True %}
+                                      {% with wf_status=observation.get_waterfall_status %}
+                                      {% if wf_status.status == 'good' %}
                                           <div id="waterfall-status-badge" class="badge badge-with-signal" aria-hidden="true"
                                                data-toggle="tooltip" data-placement="right"
-                                               title="Vetted With Signal on {{ observation.waterfall_status_datetime|date:"Y-m-d H:i:s" }}
-                                               {% if observation.waterfall_status_user %} by {{ observation.waterfall_status_user.displayname }}
-                                               {% else %} automatically
-                                               {% endif %}">With Signal</div>
-                                      {% elif observation.waterfall_status == False %}
+                                               title="">With Signal</div>
+                                      {% elif wf_status.status == 'bad' %}
                                           <div id="waterfall-status-badge" class="badge badge-without-signal" aria-hidden="true"
                                                data-toggle="tooltip" data-placement="right"
-                                               title="Vetted Without Signal on {{ observation.waterfall_status_datetime|date:"Y-m-d H:i:s" }}
-                                               {% if observation.waterfall_status_user %} by {{ observation.waterfall_status_user.displayname }}
-                                               {% else %} automatically
-                                               {% endif %}">Without Signal</div>
+                                               title="">Without Signal</div>
                                       {% else %}
                                           <div id="waterfall-status-badge" class="badge badge-unknown" aria-hidden="true"
-                                               {% if not observation.is_future %}data-toggle="tooltip" data-placement="right" title="Waterfall needs vetting"{% endif %}>Unknown</div>
+                                               {% if not observation.is_future %}data-toggle="tooltip" data-placement="right" title=""{% endif %}>Unknown</div>
                                       {% endif %}
                                       <a class="btn btn-sm btn-outline-dark" href="https://wiki.satnogs.org/Operation#Rating_observations" data-toggle="tooltip" title="Help" target="_blank">
                                           <i class="bi bi-info-circle" aria-hidden="true"></i>
@@ -539,22 +534,23 @@
                                       <div id="waterfall-status-form">
                                           <form class="d-none">{% csrf_token %}</form>
                                           <button id="unknown-status" type="button" title="Unknown (u)"
-                                                  class="btn btn-sm btn-warning {% if observation.waterfall_status is None %}d-none{% endif %}"
+                                                  class="btn btn-sm btn-warning {% if user_vetting_status == 'unknown' %}d-none{% endif %}"
                                                   data-id="{{ observation.id }}" data-status="unknown" data-toggle="tooltip">
                                               <i class="bi bi-question-circle"></i>
                                           </button>
                                           <button id="with-signal-status" type="button" title="With Signal (g)"
-                                                  class="btn btn-sm btn-success {% if observation.waterfall_status == True %}d-none{% endif %}"
+                                                  class="btn btn-sm btn-success {% if user_vetting_status == 'good' %}d-none{% endif %}"
                                                   data-id="{{ observation.id }}" data-status="with-signal" data-toggle="tooltip">
                                               <i class="bi bi-check"></i>
                                           </button>
                                           <button id="without-signal-status" type="button" title="Without Signal (b)"
-                                                  class="btn btn-sm btn-danger {% if observation.waterfall_status == False %}d-none{% endif %}"
+                                                  class="btn btn-sm btn-danger {% if user_vetting_status == 'bad' %}d-none{% endif %}"
                                                   data-id="{{ observation.id }}" data-status="without-signal" data-toggle="tooltip">
                                               <i class="bi bi-x"></i>
                                           </button>
                                       </div>
                                   {% endif %}
+                                  {% endwith %}
                               </div>
                               <div id="waterfall-{{ observation.id }}">
                                   {% if from_vetting %}
@@ -568,7 +564,7 @@
                               <div class="notice">Waiting for waterfall</div>
                           {% endif %}
                       </div>
-                      <div role="tabpanel" class="tab-pane {% if not has_waterfall %} active {% endif %}" id="tab-audio">
+                      <div role="tabpanel" class="tab-pane {% if not has_waterfall %}active{% endif %}" id="tab-audio">
                           {% if has_audio %}
                               {% if observation.audio_url %}
                                   <div id="loading-{{ observation.id }}" class="notice">Loading audio...</div>
@@ -589,7 +585,7 @@
                               {% endif %}
                           {% endif %}
                       </div>
-                      <div role="tabpanel" class="tab-pane tab-data {% if not has_waterfall and not has_audio %} active {% endif %}" id="tab-data">
+                      <div role="tabpanel" class="tab-pane tab-data {% if not has_waterfall and not has_audio %}active{% endif %}" id="tab-data">
                           {% if demoddata_count > 0 %}
                               <div class="row justify-content-between align-items-center">
                                   <div class="col-">
@@ -627,7 +623,7 @@
                               {% endfor %}
                           {% endif %}
                       </div>
-                      <div role="tabpanel" class="tab-pane tab-metadata {% if not has_waterfall and not has_audio and not has_demoddata and client_metadata != '' %} active {% endif %}" id="tab-metadata">
+                      <div role="tabpanel" class="tab-pane tab-metadata {% if not has_waterfall and not has_audio and not has_demoddata and client_metadata != '' %}active{% endif %}" id="tab-metadata">
                           {% if client_metadata %}
                               <pre class="mt-3 bg-light border border-secondary" id="json-metadata" data-json="{{ observation.client_metadata }}"></pre>
                           {% endif %}

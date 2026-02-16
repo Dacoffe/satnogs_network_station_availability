@@ -432,6 +432,14 @@ def observation_view(request, observation_id):
         observation, demoddata, demoddata_count
     )
 
+    user_vetting_status = None
+    if request.user.is_authenticated:
+        user_vote = observation.artifact_vettings.filter(
+            artifact_type='waterfall', user=request.user
+        ).first()
+        if user_vote:
+            user_vetting_status = user_vote.vetted_status
+
     return render(
         request, 'base/observation_view.html', {
             'observation': observation,
@@ -445,7 +453,8 @@ def observation_view(request, observation_id):
             'can_delete': can_delete,
             'has_comments': has_comments,
             'discuss_url': discuss_url,
-            'discuss_slug': discuss_slug
+            'discuss_slug': discuss_slug,
+            'user_vetting_status': user_vetting_status
         }
     )
 
@@ -531,7 +540,10 @@ def waterfall_vet(request, observation_id):
         observation=observation,
         user=request.user,
         artifact_type='waterfall',
-        defaults={'vetted_status': vetted_status}
+        defaults={
+            'vetted_status': vetted_status,
+            'vetted_datetime': now()
+        }
     )
 
     observation.waterfall_status_user = request.user
@@ -539,34 +551,54 @@ def waterfall_vet(request, observation_id):
     observation.save(
         update_fields=['waterfall_status', 'waterfall_status_user', 'waterfall_status_datetime']
     )
+
+    wf_status = observation.get_waterfall_status()
+
+    # Convert string status to boolean for rate_observation
+    if wf_status['status'] == 'good':
+        waterfall_bool = True
+    elif wf_status['status'] == 'bad':
+        waterfall_bool = False
+    else:
+        waterfall_bool = None
+
     (observation_status, observation_status_badge, observation_status_display
-     ) = rate_observation(observation.id, 'set_waterfall_status', observation.waterfall_status)
+     ) = rate_observation(observation.id, 'set_waterfall_status', waterfall_bool)
+
     data = {
-        'waterfall_status_user': observation.waterfall_status_user.displayname,
-        'waterfall_status_datetime': observation.waterfall_status_datetime.
-        strftime('%Y-%m-%d %H:%M:%S'),
-        'waterfall_status': observation.waterfall_status,
+        'waterfall_status_user': wf_status['user'].displayname if wf_status['user'] else None,
+        'waterfall_status_datetime': wf_status['datetime'].strftime('%Y-%m-%d %H:%M:%S')
+        if wf_status['datetime'] else None,
+        'waterfall_status': observation.
+        waterfall_status,  # Keep boolean for backward compatibility
         'waterfall_status_badge': observation.waterfall_status_badge,
         'waterfall_status_display': observation.waterfall_status_display,
         'status': observation_status,
         'status_badge': observation_status_badge,
         'status_display': observation_status_display,
+        'user_vote': vetted_status
     }
     return JsonResponse(data, safe=False)
 
 
+@ajax_required
 def observation_vettings(request, observation_id):
     """Returns vetting statistics and details for an observation."""
-    try:
-        observation = Observation.objects.get(id=observation_id)
-    except Observation.DoesNotExist:
-        data = {'error': 'Observation not found'}
-        return JsonResponse(data, status=404, safe=False)
 
-    vettings_qs = observation.artifact_vettings.filter(artifact_type='waterfall'
-                                                       ).order_by('-vetted_datetime')
+    observation = Observation.objects.get(id=observation_id)
 
-    total_count = vettings_qs.count()
+    vettings_qs = observation.artifact_vettings.filter(
+        artifact_type='waterfall'
+    ).select_related('user').order_by('-vetted_datetime')
+
+    stats = vettings_qs.aggregate(
+        total_count=Count('id'),
+        good_count=Count('id', filter=Q(vetted_status='good')),
+        bad_count=Count('id', filter=Q(vetted_status='bad')),
+        unknown_count=Count('id', filter=Q(vetted_status='unknown'))
+    )
+
+    total_count = stats['total_count']
 
     if total_count == 0:
         data = {
@@ -583,23 +615,23 @@ def observation_vettings(request, observation_id):
         }
         return JsonResponse(data, safe=False)
 
-    good_count = vettings_qs.filter(vetted_status='good').count()
-    bad_count = vettings_qs.filter(vetted_status='bad').count()
-    unknown_count = vettings_qs.filter(vetted_status='unknown').count()
+    good_count = stats['good_count']
+    bad_count = stats['bad_count']
+    unknown_count = stats['unknown_count']
 
     good_percentage = round(good_count / total_count * 100, 1)
     bad_percentage = round(bad_count / total_count * 100, 1)
     unknown_percentage = round(unknown_count / total_count * 100, 1)
 
-    vetting_list = []
-    for vetting in vettings_qs:
-        vetting_list.append(
-            {
-                'user': vetting.user.username,
-                'status': vetting.vetted_status,
-                'datetime': vetting.vetted_datetime.isoformat()
-            }
-        )
+    vettings = list(vettings_qs)
+
+    vetting_list = [
+        {
+            'user': vetting.user.username,
+            'status': vetting.vetted_status,
+            'datetime': vetting.vetted_datetime.isoformat()
+        } for vetting in vettings
+    ]
 
     data = {
         'stats': {

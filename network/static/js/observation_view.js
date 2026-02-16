@@ -190,22 +190,34 @@ function observationView() {
              </div>`);
     }
 
+    $('#rating-status span').attr('title', 'Click to see vetting details');
+    $('[data-toggle="tooltip"]').tooltip();
+
     function change_vetting_badges(user, datetime, waterfall_status_badge, waterfall_status_display,
-        status, status_badge, status_display){
+        status, status_badge, status_display, user_vote){
         $('#waterfall-status').find('button').each(function(){
-            if(this.dataset.status == waterfall_status_badge){
+            var buttonStatus = this.dataset.status;
+            var buttonVote;
+            if(buttonStatus == 'with-signal'){
+                buttonVote = 'good';
+            } else if(buttonStatus == 'without-signal'){
+                buttonVote = 'bad';
+            } else {
+                buttonVote = 'unknown';
+            }
+
+            if(buttonVote == user_vote){
                 $(this).addClass('d-none');
             } else {
                 $(this).removeClass('d-none');
             }
         });
-
         var waterfall_badge_classes = 'badge-unknown badge-with-signal badge-without-signal';
         $('#waterfall-status-badge').removeClass(waterfall_badge_classes).addClass('badge-' + waterfall_status_badge);
         $('#waterfall-status-badge').text(waterfall_status_display);
-        var waterfall_status_title = 'Vetted ' + waterfall_status_display + ' on ' + datetime + ' by ' + user;
+        var waterfall_status_title = 'Vetted on ' + datetime + ' by ' + user;
         if(waterfall_status_badge == 'unknown'){
-            waterfall_status_title = 'Waterfall needs vetting';
+            waterfall_status_title = 'Waterfall status is Unknown';
         }
         $('#waterfall-status-badge').prop('title', waterfall_status_title);
 
@@ -253,11 +265,19 @@ function observationView() {
                 handling_vetting_elements(true);
                 return;
             }
-            show_alert('success', 'Waterfall is vetted succesfully as "' + results.waterfall_status_display + '" and observation status changed to "' + results.status_display + '"');
+            var status;
+            if (results.user_vote == 'good'){
+                status = 'With Signal';
+            }else if (results.user_vote == 'bad'){
+                status = 'Without Signal';
+            }else{
+                status = 'Unknown';
+            }
+            show_alert('success', 'Waterfall is vetted succesfully as "' + status + '" and based on majority Observation status is "' + results.status_display + '"');
             change_vetting_badges(results.waterfall_status_user, results.waterfall_status_datetime,
                 results.waterfall_status_badge, results.waterfall_status_display,
                 results.status, results.status_badge,
-                results.status_display);
+                results.status_display, results.user_vote);
             handling_vetting_elements(true);
             document.dispatchEvent(obs_vetted);
             return;

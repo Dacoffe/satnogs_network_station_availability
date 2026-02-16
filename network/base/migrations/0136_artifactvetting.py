@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('base', '0134_observation_transmitter_parameters'),
+        ('base', '0135_alter_station_description'),
     ]
 
     operations = [
@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
                 'verbose_name': 'Artifact Vetting',
                 'ordering': ['-vetted_datetime'],
                 'permissions': (('can_vet_artifacts', 'Can vet observation artifacts'),),
-                'indexes': [models.Index(fields=['observation', 'artifact_type'], name='base_artifa_observa_4f3131_idx'), models.Index(fields=['user'], name='base_artifa_user_id_3e9980_idx'), models.Index(fields=['-vetted_datetime'], name='base_artifa_vetted__e7b98c_idx')],
+                'indexes': [models.Index(fields=['-vetted_datetime'], name='base_artifa_vetted__e7b98c_idx')],
                 'unique_together': {('user', 'observation', 'artifact_type')},
             },
         ),
