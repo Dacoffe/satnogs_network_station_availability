@@ -181,7 +181,15 @@ def process_audio(observation_id, force_zip=False):
     with transaction.atomic():
         observation = observations.get(pk=observation_id)
         try:
-            audio_metadata = TinyTag.get(observation.payload.path)
+            # we cannot read s3 file from local fs
+            # so we need to pass payload data directly
+            # via  file_obj
+            if settings.USE_S3_STORAGE_FOR_AUDIO:
+                with observation.payload.open("rb") as f:
+                    audio_metadata = TinyTag.get(file_obj=f)
+            else:
+                audio_metadata = TinyTag.get(observation.payload.path)
+
             # Remove audio if it is less than 1 sec
             if audio_metadata.duration is None or audio_metadata.duration < 1:
                 observation.payload.delete()
