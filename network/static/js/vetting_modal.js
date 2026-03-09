@@ -27,7 +27,6 @@ function vetting_modal() {
             url: '/observations/' + observation_id + '/vettings/',
             dataType: 'json'
         }).done(function (data) {
-            console.log('Received data:', data); // Debug
 
             if (!data || !data.stats || data.stats.total_count === 0) {
                 modal.find('#vetting-list').html('<p class="text-center text-muted">No vettings yet</p>');
