@@ -213,7 +213,7 @@ def sync_demoddata_to_db(frame, sat):
         file_datetime = frame.demodulated_data.name.split('/')[-1].split('_')[2]
         frame_datetime = datetime.strptime(file_datetime, '%Y-%m-%dT%H-%M-%S')
         submit_datetime = datetime.strftime(frame_datetime, '%Y-%m-%dT%H:%M:%S.000Z')
-    except ValueError:
+    except (ValueError, IndexError):
         return
 
     # SiDS parameters
