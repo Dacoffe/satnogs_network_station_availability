@@ -1,6 +1,6 @@
 """SatNOGS Network API serializers, django rest framework"""
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 
 from django.core.validators import MaxValueValidator, MinValueValidator
 from drf_spectacular.utils import extend_schema_field, inline_serializer
@@ -16,9 +16,9 @@ from network.base.perms import UserNoPermissionError, \
     check_schedule_perms_of_violators_per_station, check_schedule_perms_per_station
 from network.base.scheduling import create_new_observation
 from network.base.utils import transmitter_has_downlink_range
-from network.base.validators import ObservationOverlapError, OutOfRangeError, check_end_datetime, \
-    check_overlaps, check_start_datetime, check_start_end_datetimes, \
-    check_transmitter_station_pairs, check_violators_scheduling_limit
+from network.base.validators import FrameDateTimeError, ObservationOverlapError, OutOfRangeError, \
+    check_demoddata_datetime, check_end_datetime, check_overlaps, check_start_datetime, \
+    check_start_end_datetimes, check_transmitter_station_pairs, check_violators_scheduling_limit
 
 
 class CreateDemodDataSerializer(serializers.ModelSerializer):
@@ -30,6 +30,21 @@ class CreateDemodDataSerializer(serializers.ModelSerializer):
             'observation',
             'demodulated_data',
         )
+
+    def validate(self, attrs):
+        """Validate frame datetime in data filename is in observations start-end time range"""
+        try:
+            file_datetime = attrs['demodulated_data'].name.split('/')[-1].split('_')[2]
+            frame_datetime = datetime.strptime(file_datetime,
+                                               '%Y-%m-%dT%H-%M-%S').replace(tzinfo=timezone.utc)
+            obs_start = attrs['observation'].start
+            obs_end = attrs['observation'].end
+            check_demoddata_datetime(frame_datetime, obs_start, obs_end)
+        except FrameDateTimeError as error:
+            raise serializers.ValidationError(error, code='invalid')
+        except Exception:  # pylint: disable=W0703
+            pass
+        return attrs
 
     def create(self, validated_data):
         """Creates demoddata from a list of validated data after checking if demodulated_data is an

@@ -33,6 +33,32 @@ class SchedulingLimitError(Exception):
     """Error when observations exceed scheduling limit"""
 
 
+class FrameDateTimeError(Exception):
+    """
+    Error when extracted datetime from data (filename)
+    is outside of observation's start-end range
+    """
+
+
+def check_demoddata_datetime(frame_datetime, start, end):
+    """
+    Validate frame datetime to be in start-end range
+    with a 5min tolerance before and after observation's time
+    """
+    if start - timedelta(minutes=5) > frame_datetime:
+        raise FrameDateTimeError(
+            "Frame/Data timestamp ({0}) is before observation's start time ({1})".format(
+                frame_datetime, start
+            )
+        )
+    if frame_datetime > end - timedelta(minutes=5):
+        raise FrameDateTimeError(
+            "Frame/Data timestamp ({0}) is after observation's end time ({1})".format(
+                frame_datetime, end
+            )
+        )
+
+
 def check_start_datetime(start):
     """Validate start datetime"""
     if start < make_aware(datetime.now(), timezone.utc):
