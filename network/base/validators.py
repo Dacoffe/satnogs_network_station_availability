@@ -51,7 +51,7 @@ def check_demoddata_datetime(frame_datetime, start, end):
                 frame_datetime, start
             )
         )
-    if frame_datetime > end - timedelta(minutes=5):
+    if frame_datetime > end + timedelta(minutes=5):
         raise FrameDateTimeError(
             "Frame/Data timestamp ({0}) is after observation's end time ({1})".format(
                 frame_datetime, end
