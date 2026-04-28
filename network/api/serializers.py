@@ -575,10 +575,11 @@ class StationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Station
         fields = (
-            'id', 'name', 'altitude', 'min_horizon', 'lat', 'lng', 'qthlocator', 'antenna',
-            'created', 'last_seen', 'observations', 'future_observations', 'description',
-            'client_version', 'target_utilization', 'image', 'success_rate', 'owner',
-            'is_connected', 'is_available', 'testing', 'status'
+            'id', 'name', 'altitude', 'min_horizon', 'horizon_hard_limit', 'min_culmination',
+            'min_culmination_hard_limit', 'lat', 'lng', 'qthlocator', 'antenna', 'created',
+            'last_seen', 'observations', 'future_observations', 'description', 'client_version',
+            'target_utilization', 'image', 'success_rate', 'owner', 'is_connected', 'is_available',
+            'testing', 'status'
         )
 
     @extend_schema_field(str)
