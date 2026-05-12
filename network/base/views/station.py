@@ -33,7 +33,7 @@ def mapped_stations_view(request):
     cache_key = 'mapped_stations'
     data = cache.get(cache_key)
     if not data:
-        stations = Station.objects.connected().filter(is_available=True)
+        stations = Station.objects.filter(lat__isnull=False, lng__isnull=False, alt__isnull=False)
         data = StationSerializer(stations, many=True).data
         # STATION_HEARTBEAT_TIME is in minutes, timeout is in seconds
         cache.set(cache_key, data, timeout=settings.STATION_HEARTBEAT_TIME * 10)
