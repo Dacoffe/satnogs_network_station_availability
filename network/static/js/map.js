@@ -105,30 +105,43 @@ $(document).ready(function() {
             }
         };
 
-        $.ajax({
-            url: stations
-        }).done(function(data) {
-            data.forEach(function(station) {
-                var label = station.status_label;
-                if (label === 'Connected') {
-                    create_station_point(connected_points, station);
-                } else if (label === 'Testing') {
-                    create_station_point(testing_points, station);
-                } else if (label === 'Unavailable') {
-                    create_station_point(unavailable_points, station);
-                } else {
-                    create_station_point(disconnected_points, station);
-                }
+        function loadStations() {
+            $.ajax({
+                url: stations
+            }).done(function(data) {
+                data.forEach(function(station) {
+                    var label = station.status_label;
+                    if (label === 'Connected') {
+                        create_station_point(connected_points, station);
+                    } else if (label === 'Testing') {
+                        create_station_point(testing_points, station);
+                    } else if (label === 'Unavailable') {
+                        create_station_point(unavailable_points, station);
+                    } else {
+                        create_station_point(disconnected_points, station);
+                    }
+                });
+
+                // Add layers to map
+                map.addLayer(disconnected_points);
+                map.addLayer(unavailable_points);
+                map.addLayer(testing_points);
+                map.addLayer(connected_points);
+
+                map.repaint = false;
             });
+        }
 
-            // Add layers to map
-            map.addLayer(disconnected_points);
-            map.addLayer(unavailable_points);
-            map.addLayer(testing_points);
-            map.addLayer(connected_points);
-
-            map.repaint = false;
-        });
+        // If map is in a modal, defer loading until modal opens.
+        // Otherwise load immediately (e.g. home page).
+        if ($('#MapModal').length) {
+            $('#MapModal').on('shown.bs.modal', function() {
+                map.resize();
+                loadStations();
+            });
+        } else {
+            loadStations();
+        }
     });
 
     function create_station_point(array, station) {
@@ -136,6 +149,7 @@ $(document).ready(function() {
         var index = array.source.data.features.findIndex(e => e.key === key);
         if (index > -1){
             array.source.data.features[index].properties.description += '</br><a href="/stations/' + station.id + '">' + station.id + ' - ' + station.name + '</a>';
+            return;
         }
         array.source.data.features.push({
             'key': key,
