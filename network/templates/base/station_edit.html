@@ -10,6 +10,7 @@
   <link href="{% static 'lib/bootstrap-fileinput/css/fileinput.min.css' %}" rel="stylesheet" >
   <link rel="stylesheet" href="{% static 'lib/jquery.json-viewer/json-viewer/jquery.json-viewer.css' %}">
   <link rel="stylesheet" href="{% static 'css/station_availability_modal.css' %}">
+  <link rel="stylesheet" href="{% static 'lib/@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css' %}">
 {% endblock css %}
 
 {% block content %}
@@ -414,6 +415,104 @@
         </div>
       </div>
 
+      {% if station_form.instance.id %}
+      <!-- For edit station only -->
+      <div class="card w-100 my-2">
+        <div class="card-header categories" data-toggle="collapse" data-target="#unavailability-card-body">
+          <h6 class="card-title">
+            Station Unavailability
+            <i class="bi bi-arrows-collapse float-right" aria-hidden="true"></i>
+          </h6>
+        </div>
+        <div class="card-body collapse in" id="unavailability-card-body">
+          <p>Define planned periods during which this station will be unavailable for scheduling.</p>
+
+          <!-- Initial data parsed by station_unavailability.js -->
+          <div id="unavailability-data-to-parse">
+            {% for form in unavailability_formset %}
+              {% if form.instance.pk %}
+                <div data-id="{{ form.instance.pk }}"
+                     data-start="{{ form.instance.start|date:'Y-m-d H:i' }}"
+                     data-end="{{ form.instance.end|date:'Y-m-d H:i' }}"></div>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <table class="table table-sm table-hover my-2" id="unavailability-table">
+            <thead class="bg-light">
+              <tr>
+                <th scope="col">Start (UTC)</th>
+                <th scope="col">End (UTC)</th>
+                <th scope="col">Duration</th>
+                <th scope="col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Period rows are added by station_unavailability.js -->
+            </tbody>
+          </table>
+
+          <div class="row" id="new-period">
+            <div class="col-md-12 text-right">
+              <button type="button" class="btn btn-success" data-toggle="modal" data-target="#unavailability-modal" data-action="new">
+                <span class="bi bi-plus" aria-hidden="true"></span>
+                New Period
+              </button>
+            </div>
+          </div>
+
+          <!-- Edit/New Period Modal -->
+          <div class="modal fade" id="unavailability-modal" tabindex="-1" role="dialog" aria-labelledby="UnavailabilityModalTitle">
+            <div class="modal-dialog modal-lg" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h3 class="modal-title" id="UnavailabilityModalTitle"></h3>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <div class="form-row">
+                    <div class="form-group col-md-6">
+                      <label class="control-label">Start (UTC)</label>
+                      <div class='input-group datetimepicker' id="unavailability-datetimepicker-start"
+                           data-td-target-input="nearest" data-td-target-toggle="nearest">
+                        <input data-td-target="#unavailability-datetimepicker-start" type="text" class="form-control" autocomplete="off"/>
+                        <span class="input-group-append" data-td-target="#unavailability-datetimepicker-start" data-td-toggle="datetimepicker">
+                          <i class="input-group-text bi bi-calendar3"></i>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label class="control-label">End (UTC)</label>
+                      <div class='input-group datetimepicker' id="unavailability-datetimepicker-end"
+                           data-td-target-input="nearest" data-td-target-toggle="nearest">
+                        <input data-td-target="#unavailability-datetimepicker-end" type="text" class="form-control" autocomplete="off"/>
+                        <span class="input-group-append" data-td-target="#unavailability-datetimepicker-end" data-td-toggle="datetimepicker">
+                          <i class="input-group-text bi bi-calendar3"></i>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="alert alert-danger" id="unavailability-modal-errors" style="display: none;"></div>
+                </div>
+                <div class="modal-footer justify-content-between align-items-center">
+                  <div class='col-'>
+                    <button id="unavailability-delete" data-action="delete" type="button" class="btn btn-danger modal-action">Delete</button>
+                  </div>
+                  <div class='col-'>
+                    <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
+                    <button data-action="save" type="button" class="btn btn-primary modal-action">Save Period</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- End of Edit/New Period Modal -->
+        </div>
+      </div>
+      {% endif %}
+
       <div class="card w-100 my-2">
         <div class="card-header categories" data-toggle="collapse" data-target="#image-card-body">
           <h6 class="card-title">
@@ -449,6 +548,10 @@
   <script src="{% static 'lib/bootstrap-fileinput/js/fileinput.min.js' %}"></script>
   <script src="{% static 'lib/jquery.json-viewer/json-viewer/jquery.json-viewer.js' %}"></script>
   <script src="{% static 'js/station_configuration_utils.js' %}"></script>
+  <script src="{% static 'lib/moment/min/moment.min.js' %}"></script>
+  <script src="{% static 'lib/@popperjs/core/dist/umd/popper.min.js' %}"></script>
+  <script src="{% static 'lib/@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
   <script src="{% static 'js/station_edit.js' %}"></script>
+  <script src="{% static 'js/station_unavailability.js' %}"></script>
   <script src="{% static 'js/station_availability_modal.js' %}"></script>
 {% endblock javascript %}

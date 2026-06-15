@@ -18,7 +18,7 @@ from jsonschema import Draft202012Validator, ValidationError
 
 from network.base.decorators import ajax_required
 from network.base.forms import AntennaInlineFormSet, FrequencyRangeInlineFormSet, StationForm, \
-    StationRegistrationForm
+    StationRegistrationForm, StationUnavailabilityPeriodInlineFormSet
 from network.base.models import AntennaType, Station, StationConfiguration, \
     StationConfigurationSchema, StationStatusLog, StationType
 from network.base.perms import has_perm_to_schedule_on_station, modify_delete_station_perms
@@ -191,7 +191,8 @@ def station_view(request, station_id):
             'can_schedule': can_schedule,
             'can_modify_delete_station': can_modify_delete_station,
             'uptime_since': uptime_since,
-            'station_log': station_log
+            'station_log': station_log,
+            'unavailability_periods': station.unavailable_periods.all()
         }
     )
 
@@ -420,8 +421,12 @@ def handle_station_edit_get(request, station, registered):
         station_form = StationForm()
         antenna_formset = AntennaInlineFormSet(prefix='ant')
 
+    unavailability_formset = StationUnavailabilityPeriodInlineFormSet(
+        instance=station_form.instance, prefix='unavail'
+    )
     return render_station_edit_form(
-        request, station_form, registered, antenna_formset, frequency_range_formsets
+        request, station_form, registered, antenna_formset, frequency_range_formsets,
+        unavailability_formset
     )
 
 
@@ -430,6 +435,9 @@ def handle_station_edit_post_forms(request, station):
     station_form = StationForm(request.POST, request.FILES, instance=station)
     antenna_formset = AntennaInlineFormSet(
         request.POST, instance=station_form.instance, prefix='ant'
+    )
+    unavailability_formset = StationUnavailabilityPeriodInlineFormSet(
+        request.POST, instance=station_form.instance, prefix='unavail'
     )
     frequency_range_formsets = {
         form.prefix: FrequencyRangeInlineFormSet(
@@ -440,18 +448,31 @@ def handle_station_edit_post_forms(request, station):
 
     if not antenna_formset.is_valid():
         populate_formset_error_messages(messages, request, antenna_formset)
-        return (False, station_form, antenna_formset, frequency_range_formsets)
+        return (
+            False, station_form, antenna_formset, frequency_range_formsets, unavailability_formset
+        )
 
     if not station_form.is_valid():
         messages.error(request, str(station_form.errors))
-        return (False, station_form, antenna_formset, frequency_range_formsets)
+        return (
+            False, station_form, antenna_formset, frequency_range_formsets, unavailability_formset
+        )
 
     for frequency_range_formset_value in frequency_range_formsets.values():
         if not frequency_range_formset_value.is_valid():
             populate_formset_error_messages(messages, request, frequency_range_formset_value)
-            return (False, station_form, antenna_formset, frequency_range_formsets)
+            return (
+                False, station_form, antenna_formset, frequency_range_formsets,
+                unavailability_formset
+            )
 
-    return (True, station_form, antenna_formset, frequency_range_formsets)
+    if not unavailability_formset.is_valid():
+        populate_formset_error_messages(messages, request, unavailability_formset)
+        return (
+            False, station_form, antenna_formset, frequency_range_formsets, unavailability_formset
+        )
+
+    return (True, station_form, antenna_formset, frequency_range_formsets, unavailability_formset)
 
 
 def handle_station_edit_post(request, station, registered):
@@ -478,12 +499,15 @@ def handle_station_edit_post(request, station, registered):
                 )
 
         return JsonResponse({'success': True, 'show_modal': False})
-    (all_forms_valid, station_form, antenna_formset,
-     frequency_range_formsets) = handle_station_edit_post_forms(request, station)
+    (
+        all_forms_valid, station_form, antenna_formset, frequency_range_formsets,
+        unavailability_formset
+    ) = handle_station_edit_post_forms(request, station)
 
     if not all_forms_valid:
         return render_station_edit_form(
-            request, station_form, registered, antenna_formset, frequency_range_formsets
+            request, station_form, registered, antenna_formset, frequency_range_formsets,
+            unavailability_formset
         )
 
     station_configuration = station_form.cleaned_data.get('station_configuration')
@@ -511,6 +535,7 @@ def handle_station_edit_post(request, station, registered):
                 station.active_configuration_changed = now()
             station.save()
             antenna_formset.save()
+            unavailability_formset.save()
             for frequency_range_formset_value in frequency_range_formsets.values():
                 frequency_range_formset_value.save()
             if conf_changed:
@@ -540,12 +565,14 @@ def handle_station_edit_post(request, station, registered):
         )
 
     return render_station_edit_form(
-        request, station_form, registered, antenna_formset, frequency_range_formsets
+        request, station_form, registered, antenna_formset, frequency_range_formsets,
+        unavailability_formset
     )
 
 
 def render_station_edit_form(
-    request, station_form, registered, antenna_formset, frequency_range_formsets
+    request, station_form, registered, antenna_formset, frequency_range_formsets,
+    unavailability_formset
 ):
     """Creates the context and renders template for the station_edit page"""
     return render(
@@ -570,5 +597,6 @@ def render_station_edit_form(
             's_min_frequency': settings.S_MIN_FREQUENCY,
             's_max_frequency': settings.S_MAX_FREQUENCY,
             'image_changed': 'image' in station_form.changed_data,
+            'unavailability_formset': unavailability_formset,
         }
     )

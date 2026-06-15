@@ -15,7 +15,7 @@ from django.utils.timezone import now
 
 from network.base.models import ActiveStationConfiguration, Antenna, AntennaType, \
     ArtifactVetting, DemodData, FrequencyRange, Observation, Station, StationConfiguration, \
-    StationConfigurationSchema, StationStatusLog, StationType
+    StationConfigurationSchema, StationStatusLog, StationType, StationUnavailabilityPeriod
 from network.base.utils import export_as_csv, export_station_status
 
 
@@ -358,6 +358,14 @@ class StationStatusLogAdmin(admin.ModelAdmin):
     list_display = ('id', 'station', 'is_connected', 'is_available', 'testing', 'changed')
     list_filter = ('station', 'is_connected', 'is_available', 'testing')
     search_fields = ('id', 'station__id')
+
+
+@admin.register(StationUnavailabilityPeriod)
+class StationUnavailabilityPeriodAdmin(admin.ModelAdmin):
+    """Define StationUnavailabilityPeriod view in django admin UI"""
+    list_display = ('id', 'station', 'start', 'end', 'modified')
+    list_filter = ('station', )
+    search_fields = ('id', 'station__id', 'station__name')
 
 
 class DemodDataInline(admin.TabularInline):
