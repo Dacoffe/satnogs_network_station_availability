@@ -5,17 +5,9 @@ import pytest
 
 from network.base.models import Antenna, AntennaType, FrequencyRange, Station
 from network.base.scheduling import get_available_stations
-from network.base.test_scheduling import (  # noqa: F401
-    add_frequency_range_to_station,
-    antenna_uhf,
-    antenna_vhf,
-    station_basic,
-    station_no_antennas,
-    station_violator_restricted,
-    station_violator_special_perm,
-    station_with_multiple_frequency_ranges,
-    user,
-)
+from network.base.test_scheduling import add_frequency_range_to_station
+
+pytest_plugins = ['network.base.test_scheduling']
 
 
 class TestGetAvailableStationsBasic:

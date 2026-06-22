@@ -246,11 +246,6 @@ def add_frequency_range_to_station(
     return antenna
 
 
-# ============================================================================
-# FIXTURES FOR test_scheduling_available.py
-# ============================================================================
-
-
 @pytest.fixture
 def user(db):
     """Create a test user for scheduling tests."""
