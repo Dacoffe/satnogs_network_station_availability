@@ -25,12 +25,12 @@ class TestGetAltitude:
     def test_get_altitude_negative_elevation(self):
         """Test satellite below horizon (negative altitude)"""
         observer = make_observer()
-        satellite = make_satellite(-0.7854)  # ~45 degrees in radians
+        satellite = make_satellite(-0.7854)  # ~-45 degrees in radians
 
         result = get_altitude(observer, satellite, now())
 
         assert isinstance(result, float)
-        assert result == 0
+        assert result < 0
 
     def test_get_altitude_restores_observer_date(self):
         """Critical: Verify observer.date is restored after calculation"""

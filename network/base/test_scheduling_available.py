@@ -5,7 +5,17 @@ import pytest
 
 from network.base.models import Antenna, AntennaType, FrequencyRange, Station
 from network.base.scheduling import get_available_stations
-from network.base.test_scheduling import add_frequency_range_to_station
+from network.base.test_scheduling import (  # noqa: F401
+    add_frequency_range_to_station,
+    antenna_uhf,
+    antenna_vhf,
+    station_basic,
+    station_no_antennas,
+    station_violator_restricted,
+    station_violator_special_perm,
+    station_with_multiple_frequency_ranges,
+    user,
+)
 
 
 class TestGetAvailableStationsBasic:
@@ -281,8 +291,8 @@ class TestGetAvailableStationsViolator:
             ]
         )
 
-        # Add antennas to other stations using helper
-        for station in [station_violator_restricted, station_violator_special_perm]:
+        # Add antennas to all stations using helper
+        for station in [station_basic, station_violator_restricted, station_violator_special_perm]:
             add_frequency_range_to_station(station)
 
         monkeypatch.setattr(
@@ -331,7 +341,8 @@ class TestGetAvailableStationsViolator:
             id__in=[station_basic.id, station_violator_restricted.id]
         )
 
-        # Add antenna to restricted station using helper
+        # Add antenna to both stations using helper
+        add_frequency_range_to_station(station_basic)
         add_frequency_range_to_station(station_violator_restricted)
 
         mock_has_perm = Mock(return_value=False)
@@ -468,8 +479,8 @@ class TestGetAvailableStationsViolator:
             ]
         )
 
-        # Add antennas to other stations
-        for station in [station_violator_restricted, station_violator_special_perm]:
+        # Add antennas to all stations
+        for station in [station_basic, station_violator_restricted, station_violator_special_perm]:
             add_frequency_range_to_station(station)
 
         mock_has_perm = Mock(return_value=True)  # User HAS special permission

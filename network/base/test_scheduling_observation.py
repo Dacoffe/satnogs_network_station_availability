@@ -262,6 +262,7 @@ class TestCreateNewObservationSuccess:
         user,
         future_window,
         satellite_tle,
+        valid_orbital_mocks,
     ):
         """Test that antenna data is correctly serialized to JSON"""
         start, end = future_window
@@ -633,6 +634,7 @@ class TestCreateNewObservationFrequency:
         user,
         future_window,
         satellite_tle,
+        valid_orbital_mocks,
     ):
         """Test that center frequency outside antenna range raises OutOfRangeError"""
         start, end = future_window
@@ -705,6 +707,7 @@ class TestCreateNewObservationFrequency:
         user,
         future_window,
         satellite_tle,
+        valid_orbital_mocks,
     ):
         """Test that center_frequency=None is accepted"""
         start, end = future_window
@@ -730,6 +733,7 @@ class TestCreateNewObservationFrequency:
         user,
         future_window,
         satellite_tle,
+        valid_orbital_mocks,
     ):
         """Test that center_frequency=0 is treated as None (falsy value)"""
         start, end = future_window
@@ -754,6 +758,7 @@ class TestCreateNewObservationFrequency:
         user,
         future_window,
         satellite_tle,
+        valid_orbital_mocks,
     ):
         """Test that station without antennas accepts None center_frequency"""
         start, end = future_window
@@ -780,6 +785,7 @@ class TestCreateNewObservationFrequency:
         user,
         future_window,
         satellite_tle,
+        valid_orbital_mocks,
     ):
         """Test that station without antennas rejects any center_frequency"""
         start, end = future_window
@@ -818,6 +824,7 @@ class TestCreateNewObservationTransmitterStatus:
         user,
         future_window,
         satellite_tle,
+        valid_orbital_mocks,
     ):
         """Test that transmitter status is correctly mapped to boolean"""
         start, end = future_window
@@ -847,6 +854,7 @@ class TestCreateNewObservationMultipleAntennas:
         user,
         future_window,
         satellite_tle,
+        valid_orbital_mocks,
     ):
         """Test that multiple antennas with multiple ranges are all serialized"""
         antenna_type_uhf, _ = AntennaType.objects.get_or_create(name='UHF')
@@ -929,6 +937,7 @@ class TestCreateNewObservationTransmitterStatusEdgeCases:
         user,
         future_window,
         satellite_tle,
+        valid_orbital_mocks,
     ):
         """Test that transmitter status comparison is case-sensitive"""
         start, end = future_window
