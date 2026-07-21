@@ -1,0 +1,82 @@
+{% load tags %}
+{% load humanize %}
+
+<table class="table table-sm table-hover my-2">
+  <thead class="bg-light">
+    <th>ID</th>
+    <th>Name</th>
+    <th>Location</th>
+    <th>Total</th>
+    <th>Future</th>
+    {% if show_client_version %}<th>Client Version</th>{% endif %}
+    <th>Antennas</th>
+    {% if show_owner %}<th>Owner</th>{% endif %}
+  </thead>
+  <tbody>
+    {% for station in stations %}
+      <tr class="station-row">
+        <td>
+          <a href="{% url 'base:station_view' station_id=station.id %}">
+            <span class="station badge badge-{{ station.status_label|lower }}"
+                  data-toggle="tooltip"
+                  data-placement="bottom"
+                  title="{{ station.status_label }}, {% if station.last_seen %}Seen {{ station.last_seen|timesince }} ago{% else %}Never seen online{% endif %}">
+              {{ station.id }}
+            </span>
+          </a>
+        </td>
+        <td>{{ station.name }}</td>
+        <td>
+          {% if station.has_location %}
+            <span data-toggle="tooltip" data-placement="bottom"
+                  title="{{ station.lat|floatformat:-3 }}°, {{ station.lng|floatformat:-3 }}°">
+              {{ station.qthlocator }} @{{ station.alt }}m
+            </span>
+          {% else %}
+            Location not defined
+          {% endif %}
+        </td>
+        <td>
+          <a href="{% url 'base:observations_list' %}?station={{ station.id }}"
+             class="badge badge-success badge-pill"
+             data-toggle="tooltip"
+             data-placement="bottom"
+             title="{{ station.observations_stats.total }} total observations">
+            {{ station.observations_stats.total }}
+          </a>
+        </td>
+        <td>
+          <a href="{% url 'base:observations_list' %}?future=1&good=0&bad=0&unknown=0&failed=0&station={{ station.id }}"
+             class="badge badge-info badge-pill"
+             data-toggle="tooltip"
+             data-placement="bottom"
+             title="{{ station.observations_stats.future }} future observations">
+            {{ station.observations_stats.future }}
+          </a>
+        </td>
+        {% if show_client_version %}
+          <td><span>{{ station.client_version|default:"N/A" }}</span></td>
+        {% endif %}
+        <td class="antennas">
+          {% for antenna in station.antennas.all %}
+            <span class="antenna-pill" data-toggle="tooltip" data-placement="bottom"
+                  title="{% for range in antenna.frequency_ranges.all %}{{ range.min_frequency|frq }} - {{ range.max_frequency|frq }}&#xA{% endfor %}">
+              {{ antenna.antenna_type }} ({{ antenna.bands }})
+            </span>
+          {% endfor %}
+        </td>
+        {% if show_owner %}
+          <td>
+            {% if station.owner %}
+              <a href="{% url 'users:view_user' username=station.owner.username %}">
+                {{ station.owner.displayname }}
+              </a>
+            {% else %}
+              -
+            {% endif %}
+          </td>
+        {% endif %}
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
