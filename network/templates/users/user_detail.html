@@ -72,71 +72,7 @@
       {% if stations %}
         <div class="row">
           <div class="col-md-12">
-            <table class="table table-sm table-hover my-2">
-              <thead class="bg-light">
-                <th>ID</th>
-                <th>Name</th>
-                <th>Location</th>
-                <th>Total</th>
-                <th>Future</th>
-                <th>Client Version</th>
-                <th>Antennas</th>
-              </thead>
-              <tbody>
-                {% for station in stations %}
-                  <tr class="station-row clickable-row" data-href="{% url 'base:station_view' station_id=station.id %}">
-                    <td>
-                      <a href="{% url 'base:station_view' station_id=station.id %}">
-                        <span class="station badge badge-{{ station.status_label|lower }}"
-                              data-toggle="tooltip"
-                              data-placement="bottom"
-                              title="{{ station.status_label }}, {% if station.last_seen %}
-                                      Seen {{ station.last_seen|timesince }} ago
-                                    {% else %}
-                                      Never seen online
-                                    {% endif %}">
-                          {{ station.id }}
-                        </span>
-                      </a>
-                    </td>
-                    <td>
-                      {{ station.name }}
-                    </td>
-                      <td>
-                        {% if station.has_location %}
-                            <span data-toggle="tooltip" data-placement="bottom"
-                                  title="{{ station.lat|floatformat:-3 }}°, {{ station.lng|floatformat:-3 }}°">
-                            {{ station.qthlocator }}
-                          @{{ station.alt}}m
-                        {% else %}
-                          Location not defined
-                        {% endif %}
-                      </td>
-                    <td>
-                      <a href="{% url 'base:observations_list' %}?station={{ station.id }}" class="badge badge-success badge-pill" data-toggle="tooltip" data-placement="bottom" title={% if not station.success_rate %}"No data" {% else %}"{{ station.success_rate }}% Success" {% endif %}>
-                        {{ station.observations_stats.total }}
-                      </a>
-                    </td>
-                    <td>
-                      <a href="{% url 'base:observations_list' %}?future=1&good=0&bad=0&unknown=0&failed=0&station={{ station.id }}" class="badge badge-info badge-pill">
-                        {{ station.observations_stats.future }}
-                      </a>
-                    </td>
-                    <td>
-                      <span>{{ station.client_version|default:"N/A" }}</span>
-                    </td>
-                    <td class="antennas">
-                      {% for antenna in station.antennas.all %}
-                        <span class="antenna-pill" data-toggle="tooltip" data-placement="bottom"
-                              title="{% for range in antenna.frequency_ranges.all %} {{ range.min_frequency|frq }} - {{ range.max_frequency|frq }}&#xA{% endfor %}">
-                          {{ antenna.antenna_type }} ({{ antenna.bands}})
-                        </span>
-                      {% endfor %}
-                    </td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+            {% include 'includes/stations_table.html' with show_client_version=True %}
           </div>
         </div>
       {% else %}
@@ -162,76 +98,7 @@
       {% if observations %}
         <div class="row">
           <div class="col-md-12">
-            <table class="table table-sm table-hover my-2">
-              <thead class="bg-light">
-                <th>ID</th>
-                <th>Satellite</th>
-                <th>Frequency</th>
-                <th>Mode</th>
-                <th>Timeframe</th>
-                <th>Station</th>
-              </thead>
-              <tbody>
-                {% for observation in observations %}
-                  <tr class="clickable-row" data-href="{% url 'base:observation_view' observation_id=observation.id %}">
-                    <td class="text-nowrap">
-                      <a href="{% url 'base:observation_view' observation_id=observation.id %}">
-                        {% if observation.is_future %}
-                          <span class="badge badge-future">{{ observation.id }}</span>
-                        {% elif observation.status < -100 %}
-                          <span class="badge badge-failed">{{ observation.id }}</span>
-                        {% elif observation.status >= -100  and observation.status < 0 %}
-                          <span class="badge badge-bad">{{ observation.id }}</span>
-                        {% elif observation.status >= 0  and observation.status < 100 %}
-                          <span class="badge badge-unknown">{{ observation.id }}</span>
-                        {% elif observation.status >= 100 %}
-                          <span class="badge badge-good">{{ observation.id }}</span>
-                        {% endif %}
-                      </a>
-                    </td>
-                    {% with satellites|get_item:observation.sat_id as sat %}
-                    <td class="text-nowrap">
-                      <a href="#" data-toggle="modal" data-target="#SatelliteModal" data-id="{{ sat.sat_id }}">
-                        {{ sat.name }}
-                      </a>
-                    </td>
-                    {% endwith %}
-                    <td class="text-nowrap">
-                      {% if observation.center_frequency %}
-                        {{ observation.center_frequency|frq }}
-                      {% else %}
-                        {{ observation.transmitter_downlink_low|frq }}
-                      {% endif %}
-                    </td>
-                    <td class="text-nowrap">
-                      <span data-toggle="tooltip" data-placement="bottom" title="{{ observation.transmitter_description }}">
-                        {{ observation.transmitter_mode|default:"-" }}
-                      </span>
-                      <span>
-                        {{ observation.transmitter_baud|floatformat|default:"" }}
-                      </span>
-                    </td>
-                    <td class="text-nowrap">
-                      <span data-toggle="tooltip" data-placement="bottom" title="{{ observation.start|naturaltime }}">
-                        <span class="datetime-date">{{ observation.start|date:"Y-m-d" }}</span>
-                        <span class="datetime-time">{{ observation.start|date:"H:i:s" }}</span><br>
-                      </span>
-                      <span data-toggle="tooltip" data-placement="bottom" title="{{ observation.end|naturaltime }}">
-                        <span class="datetime-date">{{ observation.end|date:"Y-m-d" }}</span>
-                        <span class="datetime-time">{{ observation.end|date:"H:i:s" }}</span>
-                      </span>
-                    </td>
-                    <td>
-                      {% if observation.ground_station %}
-                        <a href="{% url 'base:station_view' station_id=observation.ground_station.id %}">
-                          {{ observation.ground_station }}
-                        </a>
-                      {% endif %}
-                    </td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+            {% include 'includes/observations_table.html' %}
           </div>
         </div>
       {% else %}

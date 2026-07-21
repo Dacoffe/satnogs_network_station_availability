@@ -519,6 +519,34 @@ class StationStatusLog(models.Model):
         return '{0} - {1}'.format(self.station, self.status_label)
 
 
+class StationUnavailabilityPeriod(models.Model):
+    """Model for scheduled unavailability periods of a Station.
+
+    During such a period the station is considered unavailable for scheduling.
+    """
+    station = models.ForeignKey(
+        Station, related_name='unavailable_periods', on_delete=models.CASCADE
+    )
+    start = models.DateTimeField()
+    end = models.DateTimeField()
+    modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['start']
+        indexes = [
+            models.Index(fields=['station', 'start', 'end'], name='base_unavail_period_idx'),
+        ]
+
+    def clean(self):
+        """Validates that the period's end is after its start"""
+        super().clean()
+        if self.start and self.end and self.start >= self.end:
+            raise ValidationError({'end': 'End datetime should be after start datetime.'})
+
+    def __str__(self):
+        return '{0}: {1} - {2}'.format(self.station, self.start, self.end)
+
+
 class Observation(models.Model):
     """Model for SatNOGS observations."""
     sat_id = models.CharField(db_index=True, max_length=24)

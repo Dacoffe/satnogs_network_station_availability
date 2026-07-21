@@ -17,7 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-COMPOSE_CMD="docker-compose"
+if ! command -v docker-compose > /dev/null 2>&1
+then
+	COMPOSE_CMD="docker"
+	COMPOSE_ARG="compose"
+else
+	COMPOSE_CMD="docker-compose"
+fi
+
 COMPOSE_FILE="docker-compose.yml"
 SERVICE_WEB="web"
 SHELL_CMD="/bin/bash"
@@ -88,14 +95,14 @@ frontend_deps() {
 
 wait_prepare() {
 	echo "Collecting static assets, compressing and migrating..."
-	while ! "$COMPOSE_CMD" exec "$SERVICE_WEB" ps -p 1 -o args= | grep -q "runserver"; do
+	while ! "$COMPOSE_CMD" ${COMPOSE_ARG:+"$COMPOSE_ARG"} exec "$SERVICE_WEB" ps -p 1 -o args= | grep -q "runserver"; do
 		sleep 5
 	done
 }
 
 docker_initialize() {
-	if ! "$COMPOSE_CMD" exec "$SERVICE_WEB" "$MANAGE_CMD" dumpdata --no-color --format yaml users.user | grep -q "is_superuser: true"; then
-		"$COMPOSE_CMD" exec "$SERVICE_WEB" djangoctl.sh initialize
+	if ! "$COMPOSE_CMD" ${COMPOSE_ARG:+"$COMPOSE_ARG"} exec "$SERVICE_WEB" "$MANAGE_CMD" dumpdata --no-color --format yaml users.user | grep -q "is_superuser: true"; then
+		"$COMPOSE_CMD" ${COMPOSE_ARG:+"$COMPOSE_ARG"} exec "$SERVICE_WEB" djangoctl.sh initialize
 	fi
 }
 
@@ -133,14 +140,14 @@ parse_args() {
 		compose)
 			has_command "$COMPOSE_CMD"
 			shift
-			"$COMPOSE_CMD" "$@"
+			"$COMPOSE_CMD" ${COMPOSE_ARG:+"$COMPOSE_ARG"} "$@"
 			return
 			;;
 		up)
 			has_command "$COMPOSE_CMD"
 			frontend_deps install
 			shift
-			"$COMPOSE_CMD" "$arg" -d "$@"
+			"$COMPOSE_CMD" ${COMPOSE_ARG:+"$COMPOSE_ARG"} "$arg" -d "$@"
 			wait_prepare
 			docker_initialize
 			echo "Services start-up completed."
@@ -153,7 +160,7 @@ parse_args() {
 				echo "ERROR: No service name specified!" >&2
 				usage
 			fi
-			if ! "$COMPOSE_CMD" exec "$1" "$SHELL_CMD"; then
+			if ! "$COMPOSE_CMD" ${COMPOSE_ARG:+"$COMPOSE_ARG"} exec "$1" "$SHELL_CMD"; then
 				echo "Please make sure that the services are up!" >&2
 				exit 1
 			fi
@@ -162,13 +169,13 @@ parse_args() {
 		clean)
 			has_command "$COMPOSE_CMD"
 			yesno "This action will delete all installation data! Are you sure? [Yes/No]"
-			"$COMPOSE_CMD" down -v
+			"$COMPOSE_CMD" ${COMPOSE_ARG:+"$COMPOSE_ARG"} down -v
 			return
 			;;
 		django-admin)
 			has_command "$COMPOSE_CMD"
 			shift
-			if ! "$COMPOSE_CMD" exec "$SERVICE_WEB" "$MANAGE_CMD" "$@"; then
+			if ! "$COMPOSE_CMD" ${COMPOSE_ARG:+"$COMPOSE_ARG"} exec "$SERVICE_WEB" "$MANAGE_CMD" "$@"; then
 				echo "Please make sure that the services are up!" >&2
 				exit 1
 			fi

@@ -328,6 +328,9 @@ def prediction_windows(request):
             )
 
     if not data:
+        if satellite.get('is_frequency_violator') and not has_perm_to_schedule_violator(
+                request.user):
+            error_message = 'This satellite misuses frequencies.'
         error_message = 'Satellite is always below horizon or ' \
                         'no free observation time available on visible stations.'
         error_details = {}

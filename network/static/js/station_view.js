@@ -334,7 +334,7 @@ $(document).ready(function() {
                                     <br>
                                     <div  class="badge badge-danger" aria-hidden="true" data-toggle="tooltip"
                                           title="A scheduled observation overlaps">
-                                      ${overlap}% overlap
+                                      ${overlap}%&nbsp;overlap
                                     </div>
                                   ` : `
                                   `}
@@ -347,7 +347,7 @@ $(document).ready(function() {
                                     <br>
                                     <div  class="badge badge-danger" aria-hidden="true" data-toggle="tooltip"
                                           title="A scheduled observation overlaps">
-                                      ${overlap}% overlap
+                                      ${overlap}%&nbsp;overlap
                                     </div>
                                   ` : `
                                   `}

@@ -846,6 +846,11 @@ $(document).ready(function() {
         form.append('<input id="station-configuration-form-input" type="hidden" name="station_configuration" value="">');
         $('#station-configuration-form-input').val(JSON.stringify(configuration));
 
+        // Append station unavailability periods (defined in station_unavailability.js)
+        if (typeof window.appendUnavailabilityPeriods === 'function') {
+            window.appendUnavailabilityPeriods(form);
+        }
+
         form.off('submit').submit();
     };
 
